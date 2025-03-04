@@ -1,0 +1,12 @@
+services:
+  enzy-web-dev-service:
+    env_file: ".env.local"
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # target: development
+    image: enzy/enzy-web-app-dev
+    container_name: enzy-web-app-dev
+    # restart: always
+    ports:
+      - "3000:3000"
