@@ -216,7 +216,7 @@ async function regenAccessToken(token: any) {
 
       const resultRefreshToken = await validateRefreshToken(refreshToken);
 
-      // console.log("resultRefreshToken :", resultRefreshToken);
+      console.log("resultRefreshToken :", resultRefreshToken);
       // if Refreshtoken is valid then create new access token and store in cookies
       if (resultRefreshToken.status != false) {
         const newAccessToken = await jwtGenerate(userObject);
