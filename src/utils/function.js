@@ -115,6 +115,7 @@ export async function jwtRefreshTokenGenerate(user) {
 }
 
 export async function validateToken(token) {
+  console.log(token)
   try {
     const { payload } = await jwtVerify(
       token,

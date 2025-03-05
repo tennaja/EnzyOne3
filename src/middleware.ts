@@ -50,7 +50,7 @@ export async function middleware(request: NextRequest) {
   // Getting cookies from the request using the `RequestCookies` API
   let requestToken = request.cookies.get("token");
   let token = requestToken?.value;
-  // console.log("token from backend", token);
+  console.log("token from backend", token);
 
   if (token == undefined || token == null) {
     const headersList = headers();
@@ -95,6 +95,7 @@ export async function middleware(request: NextRequest) {
             response.cookies.set("token", resultToken?.token);
             return response;
           } else {
+            console.log("ERROR IN ELSE 1 !!!!!!!!!!!!!")
             return NextResponse.json(
               {
                 message: "Unauthorized",
@@ -106,6 +107,7 @@ export async function middleware(request: NextRequest) {
           }
         }
       } catch (error) {
+        console.log("CASH !!!!!!!!!!!!!!!!!!!")
         return NextResponse.json(
           {
             message: "Unauthorized",
