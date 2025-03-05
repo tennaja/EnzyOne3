@@ -141,10 +141,13 @@ export async function middleware(request: NextRequest) {
       const resultToken = await regenAccessToken(token);
       console.log(resultToken)
       if (resultToken.status != false) {
+        console.log("Tokennnnnnnn เข้า")
         response.cookies.set("token", resultToken?.token);
         return response;
       } else {
+        console.log("Tokennnnnnnn ไม่เข้า")
         return NextResponse.redirect(
+          
           new URL(`/?err=${result.message}`, request.url)
         );
       }
