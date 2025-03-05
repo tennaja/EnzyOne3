@@ -54,7 +54,7 @@ export async function middleware(request: NextRequest) {
 
   if (token == undefined || token == null) {
     const headersList = headers();
-    const authorization = headersList.get("Authorization");
+    const authorization = (await headersList).get("Authorization");
     console.log("authorization", authorization);
     // console.log("request.headers", request.headers);
     // const authorization =  request.headers.authorization
@@ -70,6 +70,7 @@ export async function middleware(request: NextRequest) {
   }
 
   /** API Middleware */
+  console.log(pathName)
   if (pathName.startsWith("/api")) {
     // Bypass api route ที่ไม่ต้องการใช้ TOKEN
     if (
@@ -85,8 +86,8 @@ export async function middleware(request: NextRequest) {
     } else {
       try {
         const result = await validateToken(token);
-        // console.log("result", result);
-        // console.log("response", response);
+        console.log("result", result);
+        console.log("response", response);
         if (result.status != false) return response;
         else {
           const resultToken = await regenAccessToken(token);
