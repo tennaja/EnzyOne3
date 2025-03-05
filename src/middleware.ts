@@ -15,6 +15,7 @@ class jwtPayload {
 }
 
 export async function middleware(request: NextRequest) {
+  console.log("INSIDE >......................")
   const response = NextResponse.next();
 
   const pathName = request.nextUrl.pathname;
@@ -128,16 +129,17 @@ export async function middleware(request: NextRequest) {
   try {
     const result = await validateToken(token);
 
-    // console.log("result run middleware", result);
+    console.log("result run middleware", result);
 
     if (result.status != false) return response;
     else {
       /**
        * Try get Refreshtoken from Database by using username from accessToken
        */
-
+      
       console.log("run else function try get RefreshToken");
       const resultToken = await regenAccessToken(token);
+      console.log(resultToken)
       if (resultToken.status != false) {
         response.cookies.set("token", resultToken?.token);
         return response;
