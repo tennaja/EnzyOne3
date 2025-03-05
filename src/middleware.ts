@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
 
     const allowedOrigins = [
       "http://localhost:3000",
-      "https://enzy-oneweb.vercel.app",
+      "https://enzy-one3.vercel.app",
     ];
     const origin = request.headers.get("origin");
 
