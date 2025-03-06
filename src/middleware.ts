@@ -188,13 +188,13 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/api/:path*",
-    "/cpms/:path*",
-    "/device/:path*",
-    "/energy/:path*",
-    "/overview/:path*",
-    "/powergen/:path*",
-    "/recommend/:path*",
-    "/report/:path*",
+    // "/cpms/:path*",
+    // "/device/:path*",
+    // "/energy/:path*",
+    // "/overview/:path*",
+    // "/powergen/:path*",
+    // "/recommend/:path*",
+    // "/report/:path*",
   ],
 };
 
