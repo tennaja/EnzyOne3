@@ -1666,3 +1666,62 @@ export async function ChillerSetTemp(devId, value) {
     return error;
   }
 }
+
+//---------------- Smart Street Light --------------------//
+export async function getSiteListData() {
+  const res = await axios.get(
+    'https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/sites-list',
+    {
+      headers: {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+      },
+    }
+  );
+  let siteData = res.data;
+  return siteData;
+}
+export async function getGroupListData(siteid) {
+  const res = await axios.get(
+    `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/groups-list/${siteid}`,
+    {
+      headers: {
+        ...authorizationHeader,
+      },
+    }
+  );
+
+  let groupData = res.data;
+  return groupData;
+}
+
+export async function getDeviceListData(req) {
+  const siteId = req.siteId;
+  const groupId = req.groupId;
+  
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/devices-list?groupId=${groupId}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getDevicebyId(devid) {
+  const res = await axios.get(
+    `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/device/${devid}`,
+    {
+      headers: {
+        ...authorizationHeader,
+      },
+    }
+  );
+
+  let devicebyIdData = res.data;
+  return devicebyIdData;
+}

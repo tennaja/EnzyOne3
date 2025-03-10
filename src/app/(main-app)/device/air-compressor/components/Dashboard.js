@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo ,useEffect} from "react";
 import ArrowForwardIosOutlinedIcon from '@mui/icons-material/ArrowForwardIosOutlined';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
@@ -7,9 +7,14 @@ import Map from "./Thaimap";
 import DeviceDetail from "./DeviceDetail";
 import MapTH from "./MapTest";
 import CreateIcon from '@mui/icons-material/Create';
-const Dashboard = ({ deviceData }) => {
+import {
+  getDevicebyId
+} from "@/utils/api";
+const Dashboard = ({ deviceData , FetchDevice }) => {
+  console.log(deviceData)
   const [activeTab, setActiveTab] = useState("table");
-  const [selectedDevice, setSelectedDevice] = useState(null);
+  const [selectedDevice, setSelectedDevice] = useState();
+  const [selectedStatus, setSelectedStatus] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -17,10 +22,11 @@ const Dashboard = ({ deviceData }) => {
   // const [mapZoomLevel, setMapZoomLevel] = useState(15); //default zoom level
   // const [locationDataList, setLocationDataList] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: "device", direction: "asc" });
-
+  const [mapCenter, setMapCenter] = useState({ lat: 15.8700, lng: 100.9925 }); // เก็บค่าตำแหน่ง
+  const [mapZoom, setMapZoom] = useState(15); // เก็บค่าซูม
 
   const [mapZoomLevel, setMapZoomLevel] = useState(15); // กำหนดค่า zoom เริ่มต้น
-  
+
   const schedules = [
     {
       title: "ประตูทางเข้า เปิดทุกวัน ตอนเช้า",
@@ -53,7 +59,7 @@ const Dashboard = ({ deviceData }) => {
 
   // ฟิลเตอร์ข้อมูลตามคำค้นหา
   const filteredData = deviceData.filter((item) =>
-    item.device.toLowerCase().includes(searchQuery.toLowerCase())
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // ฟังก์ชั่นการ sort
@@ -92,16 +98,39 @@ const Dashboard = ({ deviceData }) => {
     setCurrentPage(1);
   };
   const handleDeviceClick = (Data) => {
-    setSelectedDevice(Data); // เมื่อคลิกหมุด, จะได้รับข้อมูลทั้งหมดของหมุด
+    getdevicebyId(Data.id); // เมื่อคลิกหมุด, จะได้รับข้อมูลทั้งหมดของหมุด
     console.log("Selected device data:", Data); // หรือใช้ข้อมูลนี้ในการแสดงรายละเอียด
   };
 
+  const getdevicebyId = async (id) => {
+    console.log("Device Id:", id);
+    
+    try {
+        const result = await getDevicebyId(id);
+        console.log("Group List Result:", result);
+        
+        if (result) {
+            setSelectedDevice(result);
+            setSelectedStatus(result.status); // ✅ เก็บค่า status ของอุปกรณ์
+        } else {
+            console.log("No groups found!");
+        }
+    } catch (error) {
+        console.error("Error fetching device data:", error);
+    }
+};
+ useEffect(() => {
+        // Check if the active tab is 'dashboard'
+        if (activeTab === "table") {
+          FetchDevice();
+        }
+    }, [activeTab]);  // This will run whenever `activeTab` changes.
   return (
     <>
-    <div className="flex gap-3">
-      <div className="w-[450px] ">
-      <div className="flex justify-center w-full h-[450px] justify-items-center overflow-hidden mt-10 mb-7">
-                          {/* <MapTH
+      <div className="flex gap-3">
+        <div className="w-[450px] ">
+          <div className="flex justify-center w-full h-[500px] justify-items-center overflow-hidden mt-10 mb-7">
+            {/* <MapTH
                             zoom={mapZoomLevel}
                             selectedLocation={selectedLocation} // ส่งพิกัดที่เลือกไป
                             locationList={locationDataList}
@@ -109,57 +138,67 @@ const Dashboard = ({ deviceData }) => {
                             setActiveTab={setActiveTab}  // ใช้ฟังก์ชันที่เรียก setActiveTab
                             isGotoLatLon
                           ></MapTH> */}
-                          <MapTH
-                              locationList={deviceData.map((loca, index) => ({
-                                id: index + 1,  // เพิ่ม id ให้กับแต่ละหมุด
-                                device: `Device ${index + 1}`, // เพิ่มชื่ออุปกรณ์
-                                kW: Math.random() * 100, // ข้อมูลสมมุติ
-                                kWh: Math.random() * 1000, // ข้อมูลสมมุติ
-                                runningHrs: Math.random() * 100, // ข้อมูลสมมุติ
-                                status: "active", // ข้อมูลสมมุติ
-                                connection: "wifi", // ข้อมูลสมมุติ
-                                dimming: Math.random() * 100, // ข้อมูลสมมุติ
-                                ...loca,
-                              }))}
-                              className={"w-full h-[450px] justify-items-center"}
-                              zoom={mapZoomLevel}
-                              selectedLocation={selectedLocation}
-                              setSelectedLocation={setSelectedLocation}  // Pass setSelectedLocation function
-                              onDeviceClick={handleDeviceClick} 
-                              setActiveTab={setActiveTab}
-                            />
+           <MapTH
+  locationList={deviceData.map((loca, index) => ({
+    id: index + 1,
+    name: loca.name,
+    kW: loca.kW,
+    kWh: loca.kWh,
+    runningHour: loca.runningHour,
+    status: loca.status,
+    connection: loca.connection || "",
+    percentDimming: loca.percentDimming,
+    lat: loca.latitude,  // แปลงเป็นตัวเลข
+    lng: loca.longitude,  // แปลงเป็นตัวเลข
+  }))}
+  className={"w-full h-[500px] justify-items-center"}
+  zoom={mapZoomLevel}
+  selectedLocation={selectedLocation} // ใช้ selectedLocation เพื่อแสดงตำแหน่งที่เลือก
+  setSelectedLocation={setSelectedLocation}
+  onDeviceClick={handleDeviceClick} // คลิกที่อุปกรณ์จะทำการ fetch ข้อมูลอุปกรณ์
+  setActiveTab={setActiveTab}
+  mapCenter={mapCenter} // ถ้าไม่เปลี่ยนแปลง mapCenter จะใช้ค่าเดิม
+  selectedStatus={selectedStatus} // ส่ง selectedStatus เข้าไปที่ MapTH
+/>
 
-                            
-                        </div>
-                        {activeTab === "table" ? (
-                        <>
-                        </>) : (
-                          <>
-                          
-                          
-      <h1 className="text-base font-bold mb-2">Active Schedule</h1>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white rounded-lg shadow-md border-t border-gray-300 text-sm">
-          <tbody>
-            {schedules.map((schedule, index) => (
-              <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} border-b border-gray-300`}>
-                <td className="py-2 px-4">{schedule.title}</td>
-                <td className="py-2 px-4">{schedule.dimming}</td>
-                <td className="py-2 px-4">{schedule.time}</td>
-                <td className="py-2 px-4">
-                  <button className="text-gray-500 hover:text-gray-700"><CreateIcon/></button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    
-                          </>) }
-      </div>
 
-      <div className="w-60 flex-1">
-        {activeTab === "table" ? (
+
+
+          </div>
+          {activeTab === "table" ? (
+            <>
+            </>) : (
+            <>
+
+
+              <h1 className="text-base font-bold mb-2">Active Schedule</h1>
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white rounded-lg shadow-md border-t border-gray-300 text-sm">
+                  <tbody>
+                    {selectedDevice?.schedules?.map((schedule, index) => (
+                      <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} border-b border-gray-300`}>
+                        <td className="py-2 px-4">
+                        <div className="font-bold">{schedule.name}</div>
+                        <div className="font-bold">{schedule.percentDimming}% Dimming</div>
+                        <div className="font-bold">{schedule.startTime} - {schedule.endTime}</div>
+                        <div className="text-xs">{schedule.repeat}</div>
+                        </td>
+                        
+                        
+                        <td className="py-2 px-4">
+                          <button className="text-gray-500 hover:text-gray-700"><CreateIcon /></button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+            </>)}
+        </div>
+
+        <div className="w-60 flex-1">
+          {activeTab === "table" ? (
           <div className="flex-1 ml-6">
             <div className="flex justify-between items-center mb-2">
               <span className="text-xs font-semibold">{filteredData.length} Devices</span>
@@ -222,7 +261,7 @@ const Dashboard = ({ deviceData }) => {
                     <th className="px-2 py-1 text-center text-gray-700" >Status</th>
                     <th className="px-2 py-1 text-center text-gray-700">% Dimming</th>
                     <th className="px-2 py-1 text-center text-gray-700">Last Updated</th>
-                    <th className="px-2 py-1 text-center text-gray-700"></th>
+                    
                   </tr>
                 </thead>
                 <tbody>
@@ -232,37 +271,42 @@ const Dashboard = ({ deviceData }) => {
                       className={`hover:bg-gray-100 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}
                       style={{ borderBottom: '1px solid #e0e0e0' }}
                     >
-                      <td className="px-2 py-1 text-left">{record.device}</td>
+                      <td className="px-2 py-1 text-left">
+                      <div 
+  className="text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] text-base mb-1" 
+  onClick={() => {
+    getdevicebyId(record.id);
+    setActiveTab("detail");
+    setSelectedLocation({ lat: record.latitude, lng: record.longitude }); // อัพเดตตำแหน่งที่เลือก
+    setMapZoomLevel(15); // ซูมเข้าเมื่อเลือกอุปกรณ์
+  }}
+>
+  {record.name}
+</div>
+
+  <div>{record.groupName}</div>
+</td>
                       <td className="px-2 py-1 text-center">{record.kW}</td>
                       <td className="px-2 py-1 text-center">{record.kWh}</td>
-                      <td className="px-2 py-1 text-center">{record.runningHrs}</td>
+                      <td className="px-2 py-1 text-center">{record.runningHour}</td>
                       <td className="px-2 py-1 text-center">
                         <span
-                          className={`inline-block px-2 py-1 text-xs font-bold  ${
-                            record.status === "On"
-                              ? "text-[#33BFBF]"
-                              : record.status === "Offline"
-                              ? "text-red-500"
-                              : "text-gray-400"
+                          className={`inline-block px-2 py-1 text-sm font-bold  ${
+                            record.status === "on"
+                              ? "text-[#12B981]"
+                              : record.status === "off"
+                              ? "text-[#9DA8B9]"
+                              : "text-[#FF3D4B]"
                           }`}
                         >
                           {record.status}
                         </span>
                       </td>
-                      <td className="px-2 py-1 text-center" >{record.dimming}</td>
-                      <td className="px-2 py-2 text-center">{record.lastupdate}</td>
+                      <td className="px-2 py-1 text-center" >{record.percentDimming}</td>
+                      <td className="px-2 py-2 text-center">{record.lastUpdated}</td>
                       
-                      <td className="px-2 py-1 text-center">
-                      <ArrowForwardIosOutlinedIcon
-                          onClick={() => {
-                            setSelectedDevice(record);
-                            setActiveTab("detail");
-                            setSelectedLocation({ lat: record.lat, lng: record.lng }); // อัพเดตตำแหน่งที่เลือก
-                            setMapZoomLevel(15); // ซูมเข้าเมื่อเลือกอุปกรณ์
-                          }}
-                          style={{ color: 'var(--primary)', cursor: 'pointer' }}
-                        />
-                      </td>
+                  
+                    
                     </tr>
                   ))}
                 </tbody>

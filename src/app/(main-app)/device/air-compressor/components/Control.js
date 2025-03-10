@@ -11,6 +11,8 @@ export default function DeviceControl() {
   const [currentPage, setCurrentPage] = useState(1);  // Track current page
   const [rowsPerPage, setRowsPerPage] = useState(5);  // Rows per page
 
+  
+
   const devices = [
     { id: 1, name: "หลอด 1", description : "xxxxxxxxxxxxx",  group: "สาขาอาคาร ชั้น 2", status: "on",lastupdate:"2025-02-18 15:00:00" },
     { id: 2, name: "หลอด 2", description : "xxxxxxxxxxxxx",group: "สาขาอาคาร ชั้น 2", status: "offline",lastupdate:"2025-02-18 15:00:00" },
@@ -78,7 +80,7 @@ export default function DeviceControl() {
     placeholder="ค้นหา"
     value={searchTerm}
     onChange={(e) => setSearchTerm(e.target.value)}
-    className="w-1/2 p-2 text-sm border rounded"
+    className="w-1/2 p-2 text-sm border rounded "
   />
 </div>
 
@@ -91,7 +93,7 @@ export default function DeviceControl() {
           type="checkbox"
           checked={selectedDevices.length === filteredDevices.length && filteredDevices.length > 0}
           onChange={toggleSelectAll}
-          className="mr-2"
+          className="mr-2 accent-[#12B981]"
         />
         Device 
       </th>
@@ -185,33 +187,33 @@ export default function DeviceControl() {
           <div className="flex items-center">
   <p className="text-sm">Dimming Level</p>
   <div className="relative w-full">
-    <input
-      type="range"
-      min="0"
-      max="100"
-      value={dimming}
-      step="1"
-      onChange={(e) => setDimming(e.target.value)}
-      className="w-full h-1 rounded-md accent-[#33BFBF] bg-gray-300 appearance-none cursor-pointer"
-    />
-    {/* Tick Marks */}
-    <div className="absolute top-1/2 w-full flex justify-between pointer-events-none"
-      style={{ transform: "translateY(-125%)" }}>
-      {[0, 25, 50, 75, 100].map((val) => (
-        <span
-          key={val}
-          className="w-2 h-2 bg-[#33BFBF] rounded-full"
-          style={{ transform: "translateY(-1px)" }} // ปรับจุดขึ้นเล็กน้อย
-        ></span>
-      ))}
-    </div>
-    {/* Tick Labels */}
-    <div className="flex justify-between text-xs text-gray-500 mt-1 scroll-px-0">
-      {[0, 25, 50, 75, 100].map((val) => (
-        <span key={val}>{val}</span>
-      ))}
-    </div>
-  </div>
+  {/* Slider with datalist */}
+  <input
+    type="range"
+    min="0"
+    max="100"
+    value={dimming}
+    step="1"
+    onChange={(e) => setDimming(e.target.value)}
+    list="tickmarks"
+    className="w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm"
+  />
+
+  {/* Datalist for tickmarks */}
+  <datalist id="tickmarks">
+    <option value="0" style={{ color: '#33BFBF' }}/>
+    <option value="25" />
+    <option value="50" />
+    <option value="75" />
+    <option value="100" />
+  </datalist>
+
+  
+
+  {/* แสดงค่า */}
+  <div className="text-right text-xs mt-2">{dimming}%</div>
+</div>
+
   <span className="text-sm font-semibold">{dimming}%</span>
 </div>
 
