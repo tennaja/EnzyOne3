@@ -22,16 +22,17 @@ const ZoomToMarker = ({ selectedMarker }) => {
 };
 
 const MapTH = ({
-  locationList = [], 
-  selectedLocation = null, 
+  locationList = [],
+  selectedLocation = null,
   setSelectedLocation,
-  isCanZoom = true, 
+  isCanZoom = true,
   onDeviceClick,
-  setActiveTab, 
-  selectedStatus,  // รับ selectedStatus ที่จะใช้เปลี่ยนสี
+  setActiveTab,
+  selectedStatus,
   className = "w-[450px] h-500px] rounded-lg shadow-md overflow-hidden",
 }) => {
   const mapRef = useRef(null);
+  const prevLocationListRef = useRef([]);
   const [selectedMarker, setSelectedMarker] = useState(null);
 
   useEffect(() => {
@@ -41,25 +42,40 @@ const MapTH = ({
       mapRef.current.invalidateSize();
     }, 300);
 
-    
     if (selectedLocation) {
       setSelectedMarker(selectedLocation);
       setTimeout(() => {
         mapRef.current.setView([selectedLocation.lat, selectedLocation.lng], 18, { animate: true });
       }, 100);
-    } else {
-      // Ensure locationList has valid coordinates
-      const validLocations = locationList.filter(loca => loca.lat && loca.lng);
+    }
+  }, [selectedLocation]);
 
-      if (validLocations.length > 0) {
+  // ตรวจจับการเปลี่ยนแปลงของ locationList
+  useEffect(() => {
+    const prevLocationList = prevLocationListRef.current;
+
+    const isChanged =
+      prevLocationList.length !== locationList.length ||
+      prevLocationList.some(
+        (prevLoc, index) =>
+          prevLoc.lat !== locationList[index]?.lat ||
+          prevLoc.lng !== locationList[index]?.lng ||
+          prevLoc.status !== locationList[index]?.status
+      );
+
+    if (isChanged && locationList.length > 0) {
+      setActiveTab("table");
+      setSelectedMarker(null); // ยกเลิกการเลือกหมุด
+
+      const validLocations = locationList.filter(loca => loca.lat && loca.lng);
+      if (validLocations.length > 0 && mapRef.current) {
         const bounds = L.latLngBounds(validLocations.map(loca => [loca.lat, loca.lng]));
         mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 15, animate: true });
-        setSelectedMarker(null);
-      } else {
-        console.warn("No valid locations found in the list.");
       }
     }
-  }, [selectedLocation, locationList]);
+
+    prevLocationListRef.current = locationList;
+  }, [locationList]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -71,10 +87,9 @@ const MapTH = ({
   };
 
   const getMuiIcon = useMemo(() => (isSelected, status) => {
-    // ใช้สีจาก selectedStatus เมื่อคลิกที่หมุด
     const color = isSelected && selectedStatus ? getStatusColor(selectedStatus) : getStatusColor(status);
     const size = isSelected ? 50 : 30;
-    const anchor = isSelected ? [25, 50] : [15, 30]; // Adjust anchor
+    const anchor = isSelected ? [25, 50] : [15, 30];
 
     const iconHTML = ReactDOMServer.renderToString(
       <LocationOnIcon
@@ -91,7 +106,7 @@ const MapTH = ({
       iconSize: [size, size],
       iconAnchor: anchor,
     });
-  }, [selectedStatus]); // Recompute icon color when selectedStatus changes
+  }, [selectedStatus]);
 
   const statusCount = locationList.reduce(
     (acc, loca) => {
@@ -103,25 +118,25 @@ const MapTH = ({
 
   return (
     <div className="relative w-full h-full">
-      {selectedMarker ? null
-       : (
+      {!selectedMarker && (
         <div className="absolute bottom-2 right-2 bg-white/90 p-2 rounded-md shadow-md z-[1000] flex flex-col gap-1">
-        {[
-          { label: "on", color: "bg-[#12B981]", count: statusCount.on },
-          { label: "off", color: "bg-[#9DA8B9]", count: statusCount.off },
-          { label: "offline", color: "bg-[#FF3D4B]", count: statusCount.offline },
-        ].map(({ label, color, count }) => (
-          <div key={label} className="flex items-center justify-between w-24">
-            <div className="flex items-center gap-1">
-              <span className={`w-3 h-3 rounded-full ${color}`}></span>
-              <span className="text-gray-700 text-xs">{label}</span>
+          {[
+            { label: "on", color: "bg-[#12B981]", count: statusCount.on },
+            { label: "off", color: "bg-[#9DA8B9]", count: statusCount.off },
+            { label: "offline", color: "bg-[#FF3D4B]", count: statusCount.offline },
+          ].map(({ label, color, count }) => (
+            <div key={label} className="flex items-center justify-between w-24">
+              <div className="flex items-center gap-1">
+                <span className={`w-3 h-3 rounded-full ${color}`}></span>
+                <span className="text-gray-700 text-xs">{label}</span>
+              </div>
+              <span className="px-2 py-0.5 text-gray-900 bg-gray-200 rounded-md text-xs">
+                {count}
+              </span>
             </div>
-            <span className="px-2 py-0.5 text-gray-900 bg-gray-200 rounded-md text-xs">
-              {count}
-            </span>
-          </div>
-        ))}
-      </div>) }
+          ))}
+        </div>
+      )}
 
       <MapContainer
         ref={mapRef}
@@ -147,7 +162,7 @@ const MapTH = ({
             <Marker
               key={index}
               position={[loca.lat, loca.lng]}
-              icon={getMuiIcon(isSelected, loca.status)} // ใช้สีที่คำนวณแล้ว
+              icon={getMuiIcon(isSelected, loca.status)}
               eventHandlers={{
                 click: () => {
                   setSelectedLocation(loca);
@@ -156,7 +171,7 @@ const MapTH = ({
                   if (onDeviceClick) onDeviceClick(loca);
                 },
               }}
-              keepInView={false} // Prevent map from auto-moving when selected
+              keepInView={false}
             />
           );
         })}

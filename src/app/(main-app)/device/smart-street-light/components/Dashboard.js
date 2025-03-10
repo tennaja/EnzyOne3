@@ -57,10 +57,17 @@ const Dashboard = ({ deviceData , FetchDevice }) => {
     setSearchQuery(e.target.value);
   };
 
-  // ฟิลเตอร์ข้อมูลตามคำค้นหา
   const filteredData = deviceData.filter((item) =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    item.name?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.kW?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.kWh?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.percentDimming?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.runningHour?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.status?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.lastUpdated?.toString().toLowerCase().includes(searchQuery.toLowerCase()) || 
+    item.groupName?.toString().toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
 
   // ฟังก์ชั่นการ sort
   const handleSort = (column) => {

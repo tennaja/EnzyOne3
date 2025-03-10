@@ -39,35 +39,35 @@ const DeviceDetail = ({ device , setActiveTab}) => {
       <table className="w-full mt-5 text-sm">
         <tbody>
         <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-green-50"><strong>Device Name</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Device Name</strong></td>
             <td className="px-4 py-2 font-bold">{device?.name}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-green-50"><strong>Description</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Description</strong></td>
             <td className="px-4 py-2 font-bold">{device?.description}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-green-50"><strong>Site</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Site</strong></td>
             <td className="px-4 py-2 font-bold">{device?.siteName}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-green-50"><strong>Group</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Group</strong></td>
             <td className="px-4 py-2 font-bold">{device?.groupName}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-green-50"><strong>Active Power (kW)</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Active Power (kW)</strong></td>
             <td className="px-4 py-2 font-bold">{device?.kW}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-green-50"><strong>Energy Usage (kWh)</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Energy Usage (kWh)</strong></td>
             <td className="px-4 py-2 font-bold">{device?.kWh}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-green-50"><strong>Running Hrs</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Running Hrs</strong></td>
             <td className="px-4 py-2 font-bold">{device?.runningHour}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-green-50"><strong>Status</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Status</strong></td>
             <td className={`px-4 py-2 font-bold ${
                             device?.status === "on"
                               ? "text-[#12B981]"
@@ -77,7 +77,7 @@ const DeviceDetail = ({ device , setActiveTab}) => {
                           }`}>{device?.status}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-green-50"><strong>Connection Status</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Connection Status</strong></td>
             <td className={`px-4 py-2 font-bold ${
                             device?.connectionStatus === "connected"
                               ? "text-[#12B981]"
@@ -85,11 +85,11 @@ const DeviceDetail = ({ device , setActiveTab}) => {
                           }`}>{device?.connectionStatus}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-green-50"><strong>% Dimming</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>% Dimming</strong></td>
             <td className="px-4 py-2 font-bold">{device?.percentDimming}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-green-50"><strong>Last Updated</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Last Updated</strong></td>
             <td className="px-4 py-2 font-bold">{device?.lastUpdated}</td>
           </tr>
         </tbody>
