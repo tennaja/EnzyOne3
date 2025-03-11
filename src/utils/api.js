@@ -1725,3 +1725,26 @@ export async function getDevicebyId(devid) {
   let devicebyIdData = res.data;
   return devicebyIdData;
 }
+
+export async function DeviceControl(req) {
+  const id = req.id;
+  const action = req.action;
+  const dimming = req.dimming;
+  try {
+    const res = await axios.post(
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/device/control`,
+      {
+        id: id,
+        action: action,
+        dimming: dimming,
+      },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    return res;
+  } catch (error) {
+    console.log("error", error);
+    return error.response.data;
+  }
+}

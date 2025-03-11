@@ -5,7 +5,7 @@ import DvrIcon from "@mui/icons-material/Dvr";
 import TuneIcon from "@mui/icons-material/Tune";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import Dashboard from "./Dashboard";
-import DeviceControl from "./Control";
+import DeviceControlPage from "./Control";
 import ScheduleComponent from "./Schedul";
 import {
     getSiteListData,
@@ -58,6 +58,7 @@ const Header1 = () => {
     const [groupid, setGroupid] = useState(0);
     const [siteName , setSiteName] = useState('');
     const [groupName , setGroupName] = useState('');
+    
 
 
 
@@ -127,7 +128,7 @@ const Header1 = () => {
             case "dashboard":
                 return <Dashboard deviceData={devcielist} FetchDevice={GetDeviceList}/>;
             case "control":
-                return <DeviceControl />;
+                return <DeviceControlPage deviceData={devcielist}/>;
             case "schedule":
                 return <ScheduleComponent />;
             default:

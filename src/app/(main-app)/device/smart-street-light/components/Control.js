@@ -1,58 +1,149 @@
-import { useState } from "react";
+import { useState ,useEffect ,useMemo} from "react";
 import { Switch } from "@headlessui/react";
 import ArrowForwardIosOutlinedIcon from '@mui/icons-material/ArrowForwardIosOutlined';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import {
+  DeviceControl
+} from "@/utils/api";
+import ModalConfirm from "./Popupconfirm";
+import ModalDone from "./Popupcomplete";
+import ModalFail from "./PopupFali";
 
-export default function DeviceControl() {
-  const [selectedDevices, setSelectedDevices] = useState([]);
+export default function DeviceControlPage({ deviceData }) {
+  const [selecteddeviceData, setSelecteddeviceData] = useState([]);
   const [powerOn, setPowerOn] = useState(true);
-  const [dimming, setDimming] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);  // Track current page
   const [rowsPerPage, setRowsPerPage] = useState(5);  // Rows per page
-
+  const [dimming, setDimming] = useState(10);
+  const [deviceStatus, setDeviceStatus] = useState("on");
+  const [openModalconfirm,setopenModalconfirm] =useState(false)
+  const [openModalsuccess,setopenModalsuccess] =useState(false)
+  const [openModalfail,setopenModalfail] =useState(false)
+  const [modalConfirmProps, setModalConfirmProps] = useState(null);
+  const [modalErrorProps, setModalErorProps] = useState(null);
+  const [modalSuccessProps, setModalSuccessProps] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: "device", direction: "asc" });
+      const handleStatusChange = (newStatus) => {
+        setDeviceStatus(newStatus);
+        console.log(newStatus)
+        // You can call a function here to update the device status on the server or in the backend
+        // For example, updateStatus(device.id, newStatus);
+      };
   
-
-  const devices = [
-    { id: 1, name: "หลอด 1", description : "xxxxxxxxxxxxx",  group: "สาขาอาคาร ชั้น 2", status: "on",lastupdate:"2025-02-18 15:00:00" },
-    { id: 2, name: "หลอด 2", description : "xxxxxxxxxxxxx",group: "สาขาอาคาร ชั้น 2", status: "offline",lastupdate:"2025-02-18 15:00:00" },
-    { id: 3, name: "หลอด 3", description : "xxxxxxxxxxxxx",group: "สาขาอาคาร ชั้น 2", status: "off" ,lastupdate:"2025-02-18 15:00:00"},
-    { id: 4, name: "หลอด 4", description : "xxxxxxxxxxxxx",group: "สาขาอาคาร ชั้น 2", status: "on" ,lastupdate:"2025-02-18 15:00:00"},
-    { id: 5, name: "หลอด 5", description : "xxxxxxxxxxxxx",group: "สาขาอาคาร ชั้น 2", status: "off" ,lastupdate:"2025-02-18 15:00:00"},
-    { id: 6, name: "หลอด 6", description : "xxxxxxxxxxxxx",group: "สาขาอาคาร ชั้น 2", status: "on" ,lastupdate:"2025-02-18 15:00:00"},
-    { id: 7, name: "หลอด 7", description : "xxxxxxxxxxxxx",group: "สาขาอาคาร ชั้น 2", status: "on" ,lastupdate:"2025-02-18 15:00:00"},
-    { id: 8, name: "หลอด 8", description : "xxxxxxxxxxxxx",group: "สาขาอาคาร ชั้น 2", status: "offline" ,lastupdate:"2025-02-18 15:00:00"},
-    { id: 9, name: "หลอด 9", description : "xxxxxxxxxxxxx",group: "สาขาอาคาร ชั้น 2", status: "on" ,lastupdate:"2025-02-18 15:00:00"},
-    { id: 10, name: "หลอด 10", description : "xxxxxxxxxxxxx",group: "สาขาอาคาร ชั้น 2", status: "on" ,lastupdate:"2025-02-18 15:00:00"},
-  ];
-
-  const filteredDevices = devices.filter(device =>
-    device.name.includes(searchTerm) || device.group.includes(searchTerm)
+      const handleOpenModalconfirm = () => {
+        setopenModalconfirm(true);
+        setModalConfirmProps({
+          onCloseModal: handleClosePopup,
+          onClickConfirmBtn: handleSubmit,
+          title: "Confirm Execution",
+          content: `
+    <div class="mx-auto w-fit px-4 text-left bg-red">
+      <p>Device: ${selecteddeviceData?.length} devices selected</p>
+      <p>Status: ${deviceStatus ? "on" : "off"}</p>
+      <p>%Dimming: ${deviceStatus ? dimming : ""}%</p>
+    </div>
+  `
+  ,
+          buttonTypeColor: "primary",
+        });
+      };
+      
+      const handleSubmit = async () => {
+          const Param = {
+            id: selecteddeviceData,
+            action: deviceStatus ? "on" : "off",
+            dimming:Number(dimming)
+          };
+          const res = await DeviceControl(Param);
+      
+          if (res.status === 200) {
+            setopenModalconfirm(false)
+            setopenModalsuccess(true)
+            setModalSuccessProps({
+              onCloseModal: handleClosePopup,
+              title: res?.data?.title,
+              content: res?.data?.message,
+              buttonTypeColor: "primary",
+            });
+            console.log("เข้าาาาาาาาาาาาาาาาา")
+            setTimeout(() => {
+              setopenModalsuccess(false);
+            }, 3000); // 3000 milliseconds = 3 seconds
+          
+      
+          } else {
+            setopenModalconfirm(false)
+            setopenModalfail(true)
+            setModalErorProps({
+              onCloseModal: handleClosePopup,
+              title: res?.title,
+              content: res?.message,
+              buttonTypeColor: "danger",
+            });
+            console.log(res)
+          }
+        };
+        const handleClosePopup = () => {
+          setopenModalconfirm(false)
+          setopenModalsuccess(false)
+          setopenModalfail(false)
+        }
+  const filtereddeviceData = deviceData.filter(item =>
+    item.name?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.kW?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.kWh?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.percentDimming?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.runningHour?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.status?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.lastUpdated?.toString().toLowerCase().includes(searchTerm.toLowerCase()) || 
+    item.groupName?.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const toggleDevice = (id) => {
-    setSelectedDevices((prev) =>
-      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedDevices.length === filteredDevices.length && filteredDevices.length > 0) {
-      setSelectedDevices([]);
-    } else {
-      setSelectedDevices(filteredDevices.map(device => device.id));
+  const handleSort = (column) => {
+    let direction = "asc";
+    if (sortConfig.key === column && sortConfig.direction === "asc") {
+      direction = "desc";
     }
+    setSortConfig({ key: column, direction });
   };
-
-  const toggleStatus = (id) => {
-    setSelectedDevices((prev) => {
-      return prev.map((device) =>
-        device.id === id ? { ...device, status: device.status === "on" ? "off" : "on" } : device
-      );
+// การ sort ข้อมูลที่ใช้ useMemo เพื่อลดการคำนวณซ้ำ
+  const sortedData = useMemo(() => {
+    const sorted = [...filtereddeviceData];
+    sorted.sort((a, b) => {
+      if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === "asc" ? -1 : 1;
+      if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }, [filtereddeviceData, sortConfig]);
+  const toggleDevice = (id) => {
+    setSelecteddeviceData((prev) => {
+      const updateddeviceData = prev.includes(id)
+        ? prev.filter((deviceId) => deviceId !== id)
+        : [...prev, id];
+  
+      console.log("Selected deviceData after toggle:", updateddeviceData);  // Log the updated selected deviceData
+      return updateddeviceData;
     });
   };
-
-  const handlePageChange = (pageNumber) => {
+  
+  const toggleSelectAll = () => {
+    let updateddeviceData;
+    if (selecteddeviceData.length === filtereddeviceData.length && filtereddeviceData.length > 0) {
+      updateddeviceData = [];
+    } else {
+      updateddeviceData = filtereddeviceData.map(device => device.id);
+    }
+  
+    console.log("Selected deviceData after select all toggle:", updateddeviceData);  // Log after selecting/deselecting all deviceData
+    setSelecteddeviceData(updateddeviceData);
+  };
+  
+ const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
@@ -60,21 +151,22 @@ export default function DeviceControl() {
     setRowsPerPage(Number(event.target.value));
     setCurrentPage(1); // Reset to page 1 when rows per page change
   };
+  
 
-  // Calculate the devices to display for the current page
+  // Calculate the deviceData to display for the current page
   const indexOfLastDevice = currentPage * rowsPerPage;
   const indexOfFirstDevice = indexOfLastDevice - rowsPerPage;
-  const currentDevices = filteredDevices.slice(indexOfFirstDevice, indexOfLastDevice);
+  const currentdeviceData = sortedData.slice(indexOfFirstDevice, indexOfLastDevice);
 
   // Calculate the total number of pages
-  const totalPages = Math.ceil(filteredDevices.length / rowsPerPage);
+  const totalPages = Math.ceil(filtereddeviceData.length / rowsPerPage);
 
   return (
     <div className="max-w-full mx-auto min-h-screen flex flex-col lg:flex-row">
-      <div className="lg:w-1/2 w-full border-r p-4">
+      <div className="lg:w-1/2 w-full  border-r p-2">
       
       <div className="flex items-center justify-between mb-3">
-  <h2 className="text-sm font-semibold">10 Devices</h2>
+  <h2 className="text-sm font-semibold">{deviceData?.length} Devices</h2>
   <input
     type="text"
     placeholder="ค้นหา"
@@ -88,48 +180,90 @@ export default function DeviceControl() {
         <table className="w-full table-auto mt-5">
   <thead>
     <tr className="text-xs text-gray-500 border-b border-gray-300">
-      <th className="py-2 px-4 text-left">
+      <th className="py-2 px-4 text-left" onClick={() => handleSort("name")}>
         <input
           type="checkbox"
-          checked={selectedDevices.length === filteredDevices.length && filteredDevices.length > 0}
+          checked={selecteddeviceData.length === filtereddeviceData.length && filtereddeviceData.length > 0}
           onChange={toggleSelectAll}
-          className="mr-2 accent-[#12B981]"
+          className="mr-2"
         />
         Device 
+        {sortConfig.key === "name" && sortConfig.direction === "asc" ? (
+                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      ) : (
+                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      )}
       </th>
-      <th className="py-2 px-4 text-left">Description</th>
-      <th className="py-2 px-4 text-left">Group</th>
+      <th className="py-2 px-4 text-left" onClick={() => handleSort("groupName")}>Description
+      {sortConfig.key === "groupName" && sortConfig.direction === "asc" ? (
+                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      ) : (
+                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      )}
+      </th>
+      <th className="py-2 px-4 text-left" onClick={() => handleSort("groupName")}>Group
+      {sortConfig.key === "groupName" && sortConfig.direction === "asc" ? (
+                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      ) : (
+                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      )}
+      </th>
       
-      <th className="py-2 px-4 text-left">Status</th>
-      <th className="py-2 px-4 text-left">Last Updated</th>
+      <th className="py-2 px-4 text-left" onClick={() => handleSort("status")}>Status
+      {sortConfig.key === "status" && sortConfig.direction === "asc" ? (
+                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      ) : (
+                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      )}
+      </th>
+      <th className="py-2 px-4 text-left" onClick={() => handleSort("lastUpdated")}>Last Updated
+      {sortConfig.key === "lastUpdated" && sortConfig.direction === "asc" ? (
+                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      ) : (
+                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      )}
+      </th>
     </tr>
   </thead>
   <tbody>
-    {currentDevices.map((device, index) => (
-      <tr key={device.id} className={`border-b ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}>
-        <td className="py-2 px-4">
-          <input
-            type="checkbox"
-            checked={selectedDevices.includes(device.id)}
-            onChange={() => toggleDevice(device.id)}
-            className="mr-2 bg-[#33BFBF]"
-          />
-          {device.name}
-        </td>
-        <td className="py-2 px-4 text-sm text-gray-600">{device.description}</td>
-        <td className="py-2 px-4 text-sm text-gray-600">{device.group}</td>
-        <td className="py-2 px-4 text-sm text-gray-600">
-          <button
-            onClick={() => toggleStatus(device.id)}
-            className={`px-3 py-1 text-sm font-bold ${device.status === "on" ? "text-[#33BFBF]" : device.status === "off" ? "text-red-500" : "text-gray-400"}`}
-          >
-            {device.status}
-          </button>
-        </td>
-        <td className="py-2 px-4 text-sm text-gray-600">{device.lastupdate}</td>
-      </tr>
-    ))}
-  </tbody>
+  {currentdeviceData.map((device, index) => (
+    <tr
+      key={device.id}
+      className={`border-b ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} 
+        ${device.status === 'offline' ? 'pointer-events-none opacity-50' : ''}`}
+    >
+      <td className="py-2 px-4">
+        <input
+          type="checkbox"
+          checked={selecteddeviceData.includes(device.id)}
+          onChange={() => toggleDevice(device.id)}
+          className="mr-2 bg-[#33BFBF]"
+          disabled={device.status === 'offline'} // ปิดการใช้งาน checkbox
+        />
+        {device.name}
+      </td>
+      <td className="py-2 px-4 text-sm text-gray-600">{device.groupName}</td>
+      <td className="py-2 px-4 text-sm text-gray-600">{device.groupName}</td>
+      <td className="py-2 px-4 text-sm text-gray-600">
+        <button
+          onClick={() => toggleStatus(device.id)}
+          className={`px-3 py-1 text-sm font-bold ${
+            device.status === "on"
+              ? "text-[#33BFBF]"
+              : device.status === "offline"
+              ? "text-red-500"
+              : "text-gray-400"
+          }`}
+          disabled={device.status === "offline"} // ปิดการใช้งานปุ่มเปลี่ยนสถานะ
+        >
+          {device.status}
+        </button>
+      </td>
+      <td className="py-2 px-4 text-sm text-gray-600">{device.lastUpdated}</td>
+    </tr>
+  ))}
+</tbody>
+
 </table>
 
 
@@ -168,60 +302,75 @@ export default function DeviceControl() {
           </div>
         </div>
       </div>
-      <div className="lg:w-1/2 w-full p-4">
-        <h2 className="text-sm font-semibold mb-3">Device Control ({selectedDevices.length} Device Selected)</h2>
-        <div className="border p-4 rounded mt-3">
-          <div className="flex justify-between items-center">
-            <span className="text-sm">Power Status</span>
-            <Switch
-              checked={powerOn}
-              onChange={setPowerOn}
-              className={`${powerOn ? "bg-green-500" : "bg-gray-300"} relative inline-flex items-center h-5 rounded-full w-10`}
-            >
-              <span className="sr-only">Toggle Power</span>
-              <span className={`transform transition ease-in-out duration-200 ${powerOn ? "translate-x-5" : "translate-x-1"} inline-block w-3 h-3 bg-white rounded-full`} />
-            </Switch>
-          </div>
-          </div>
-          <div className="border p-4 rounded mt-3">
-          <div className="flex items-center">
-  <p className="text-sm">Dimming Level</p>
-  <div className="relative w-full">
-  {/* Slider with datalist */}
-  <input
-    type="range"
-    min="0"
-    max="100"
-    value={dimming}
-    step="1"
-    onChange={(e) => setDimming(e.target.value)}
-    list="tickmarks"
-    className="w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm"
-  />
+      <div className="lg:w-1/2 w-full p-2">
+  <h2 className="text-sm font-semibold mb-3">
+    Device Control ({selecteddeviceData.length} Device Selected)
+  </h2>
 
-  {/* Datalist for tickmarks */}
-  <datalist id="tickmarks">
-    <option value="0" style={{ color: '#33BFBF' }}/>
-    <option value="25" />
-    <option value="50" />
-    <option value="75" />
-    <option value="100" />
-  </datalist>
+  {/* Power Status */}
+  <div className="border p-4 rounded mt-3">
+    <div className="flex items-center m-2">
+      <span className="text-sm mr-14">Power Status</span>
+      <button
+        onClick={() => handleStatusChange(!deviceStatus)}
+        disabled={selecteddeviceData.length === 0} // Disable if no device is selected
+        className={`${
+          selecteddeviceData.length === 0 
+            ? "bg-gray-300 cursor-not-allowed"
+            : deviceStatus
+            ? "bg-[#5eead4]"
+            : "bg-gray-300"
+        } text-white font-semibold py-2 px-2 rounded-full flex items-center gap-2 transition-colors duration-300 ml-4`} 
+      >
+        <PowerSettingsNewIcon style={{ fontSize: 20 }} />
+      </button>
+      <span className="ml-2 font-semibold text-sm">{deviceStatus ? "on" : "off"}</span>
+    </div>
+  </div>
 
-  
-
-  {/* แสดงค่า */}
-  <div className="text-right text-xs mt-2">{dimming}%</div>
-</div>
-
-  <span className="text-sm font-semibold">{dimming}%</span>
-</div>
-
-
-          
-        </div>
-        <button className="w-20 bg-[#33BFBF] text-white py-2 rounded text-sm mt-3">Execute</button>
+  {/* Dimming Level */}
+  <div className="border p-4 rounded mt-3">
+    <div className="flex items-center m-2">
+      <p className="text-sm mr-14">Dimming Level</p>
+      <div className="flex items-center w-80">
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={dimming}
+          step="1"
+          onChange={(e) => setDimming(e.target.value)}
+          disabled={selecteddeviceData.length === 0} // Disable if no device is selected
+          className={`w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm ${
+            selecteddeviceData.length === 0 ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        />
+        <div className="text-xs">{dimming}%</div>
       </div>
     </div>
+  </div>
+
+  {/* Execute Button */}
+  <div className="flex justify-start mt-3">
+    <button
+      onClick={handleOpenModalconfirm}
+      disabled={selecteddeviceData.length === 0} // Disable if no device is selected
+      className={`w-32 py-2 rounded text-sm ${
+        selecteddeviceData.length === 0
+          ? "bg-gray-300 cursor-not-allowed text-gray-red"
+          : "bg-[#33BFBF] text-white"
+      }`}
+    >
+      Execute
+    </button>
+  </div>
+</div>
+
+
+      {openModalconfirm && <ModalConfirm {...modalConfirmProps}/>}
+            {openModalsuccess && <ModalDone {...modalSuccessProps}/>}
+            {openModalfail && <ModalFail {...modalErrorProps}/>}
+    </div>
+    
   );
 }

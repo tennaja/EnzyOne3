@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -12,9 +12,7 @@ const ZoomToMarker = ({ selectedMarker }) => {
 
   useEffect(() => {
     if (selectedMarker) {
-      setTimeout(() => {
-        map.setView([selectedMarker.lat, selectedMarker.lng], 18, { animate: true });
-      }, 100);
+      map.setView([selectedMarker.lat, selectedMarker.lng], 18, { animate: true });
     }
   }, [selectedMarker, map]);
 
@@ -38,53 +36,49 @@ const MapTH = ({
   useEffect(() => {
     if (!mapRef.current) return;
 
-    setTimeout(() => {
-      mapRef.current.invalidateSize();
-    }, 300);
+    mapRef.current.invalidateSize();
 
     if (selectedLocation) {
       setSelectedMarker(selectedLocation);
-      setTimeout(() => {
-        mapRef.current.setView([selectedLocation.lat, selectedLocation.lng], 18, { animate: true });
-      }, 100);
-    }
-  }, [selectedLocation]);
-
-  // ตรวจจับการเปลี่ยนแปลงของ locationList
-  useEffect(() => {
-    const prevLocationList = prevLocationListRef.current;
-
-    const isChanged =
-      prevLocationList.length !== locationList.length ||
-      prevLocationList.some(
-        (prevLoc, index) =>
-          prevLoc.lat !== locationList[index]?.lat ||
-          prevLoc.lng !== locationList[index]?.lng ||
-          prevLoc.status !== locationList[index]?.status
-      );
-
-    if (isChanged && locationList.length > 0) {
-      setActiveTab("table");
-      setSelectedMarker(null); // ยกเลิกการเลือกหมุด
-
+      mapRef.current.setView([selectedLocation.lat, selectedLocation.lng], 18, { animate: true });
+    } else {
       const validLocations = locationList.filter(loca => loca.lat && loca.lng);
-      if (validLocations.length > 0 && mapRef.current) {
+      if (validLocations.length > 0) {
+        const bounds = L.latLngBounds(validLocations.map(loca => [loca.lat, loca.lng]));
+        mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 15, animate: true });
+      }
+      setSelectedMarker(null);
+    }
+  }, [selectedLocation, locationList]);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const prevListString = JSON.stringify(prevLocationListRef.current);
+    const currentListString = JSON.stringify(locationList);
+
+    if (prevListString !== currentListString && locationList.length > 0) {
+      setActiveTab("table");
+      setSelectedMarker(null);
+      setSelectedLocation(null)
+      const validLocations = locationList.filter(loca => loca.lat && loca.lng);
+      if (validLocations.length > 0) {
         const bounds = L.latLngBounds(validLocations.map(loca => [loca.lat, loca.lng]));
         mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 15, animate: true });
       }
     }
 
     prevLocationListRef.current = locationList;
-  }, [locationList]);
+  }, [locationList, setActiveTab]);
 
-  const getStatusColor = (status) => {
+  const getStatusColor = useCallback((status) => {
     switch (status) {
       case "on": return "#12B981";
       case "offline": return "#FF3D4B";
       case "off": return "#9DA8B9";
       default: return "#000";
     }
-  };
+  }, []);
 
   const getMuiIcon = useMemo(() => (isSelected, status) => {
     const color = isSelected && selectedStatus ? getStatusColor(selectedStatus) : getStatusColor(status);
@@ -92,12 +86,7 @@ const MapTH = ({
     const anchor = isSelected ? [25, 50] : [15, 30];
 
     const iconHTML = ReactDOMServer.renderToString(
-      <LocationOnIcon
-        style={{
-          fontSize: size,
-          color,
-        }}
-      />
+      <LocationOnIcon style={{ fontSize: size, color }} />
     );
 
     return L.divIcon({
@@ -106,14 +95,28 @@ const MapTH = ({
       iconSize: [size, size],
       iconAnchor: anchor,
     });
-  }, [selectedStatus]);
+  }, [selectedStatus, getStatusColor]);
 
-  const statusCount = locationList.reduce(
-    (acc, loca) => {
-      acc[loca.status] = (acc[loca.status] || 0) + 1;
-      return acc;
+  const handleMarkerClick = useCallback(
+    (loca) => {
+      setSelectedLocation(loca);
+      setSelectedMarker(loca);
+      setActiveTab("detail");
+      if (onDeviceClick) onDeviceClick(loca);
     },
-    { on: 0, offline: 0, off: 0 }
+    [setSelectedLocation, setActiveTab, onDeviceClick]
+  );
+
+  const statusCount = useMemo(
+    () =>
+      locationList.reduce(
+        (acc, loca) => {
+          acc[loca.status] = (acc[loca.status] || 0) + 1;
+          return acc;
+        },
+        { on: 0, offline: 0, off: 0 }
+      ),
+    [locationList]
   );
 
   return (
@@ -163,14 +166,7 @@ const MapTH = ({
               key={index}
               position={[loca.lat, loca.lng]}
               icon={getMuiIcon(isSelected, loca.status)}
-              eventHandlers={{
-                click: () => {
-                  setSelectedLocation(loca);
-                  setTimeout(() => setSelectedMarker(loca), 100);
-                  setActiveTab("detail");
-                  if (onDeviceClick) onDeviceClick(loca);
-                },
-              }}
+              eventHandlers={{ click: () => handleMarkerClick(loca) }}
               keepInView={false}
             />
           );

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import { Modal } from "@mantine/core";
 const mockDevices = Array.from({ length: 20 }, (_, i) => ({
   id: i + 1,
   name: `Device ${i + 1}`,
@@ -96,8 +96,17 @@ export default function SchedulePopup({ isOpen, onClose }) {
   const days = updateSelectedDays();
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 pointer-events-none">
-      <div className="bg-white p-10 rounded-lg shadow-lg w-[800px] pointer-events-auto">
+    <>
+    <Modal
+        size="xl"
+        opened={true}
+        onClose={() => onClickOk && onClickOk(false)}
+        withCloseButton={false}
+        closeOnClickOutside={false}
+        centered
+      >
+    
+      <div className="p-4">
         <h2 className="text-xl font-semibold mb-4">Add Schedule</h2>
         <form>
           <div className="mb-3 flex items- justify-between gap-4">
@@ -180,7 +189,7 @@ export default function SchedulePopup({ isOpen, onClose }) {
             <div className="grid grid-cols-[0.5fr_2fr] items-center gap-x-4">
               <label className="text-sm font-medium text-left">Start - Stop Time</label>
               {repeatOption === "Once" && (
-                <div className="flex items-center gap-2">
+                <div className="flex gap-2">
                   <input
                     type="datetime-local"
                     className="w-full p-2 border rounded"
@@ -290,6 +299,8 @@ export default function SchedulePopup({ isOpen, onClose }) {
           </div>
         </form>
       </div>
-    </div>
+  
+    </Modal>
+    </>
   );
 }

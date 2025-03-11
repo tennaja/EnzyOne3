@@ -130,12 +130,13 @@ const Dashboard = ({ deviceData , FetchDevice }) => {
         // Check if the active tab is 'dashboard'
         if (activeTab === "table") {
           FetchDevice();
+          setSearchQuery("")
         }
     }, [activeTab]);  // This will run whenever `activeTab` changes.
   return (
     <>
-      <div className="flex gap-3">
-        <div className="w-[450px] ">
+      <div className="flex flex-col lg:flex-row gap-3">
+      <div className="w-full lg:w-[450px]">
           <div className="flex justify-center w-full h-[500px] justify-items-center overflow-hidden mt-10 mb-7">
             {/* <MapTH
                             zoom={mapZoomLevel}
@@ -204,7 +205,7 @@ const Dashboard = ({ deviceData , FetchDevice }) => {
             </>)}
         </div>
 
-        <div className="w-60 flex-1">
+        <div className="w-full lg:w-60 flex-1">
           {activeTab === "table" ? (
           <div className="flex-1 ml-6">
             <div className="flex justify-between items-center mb-2">
@@ -223,10 +224,10 @@ const Dashboard = ({ deviceData , FetchDevice }) => {
                 <tr className="text-xs text-gray-500 border-b border-gray-300">
                     <th
                       className="px-2 py-1 text-left text-gray-700 cursor-pointer"
-                      onClick={() => handleSort("device")}
+                      onClick={() => handleSort("name")}
                     >
                       Device
-                      {sortConfig.key === "device" && sortConfig.direction === "asc" ? (
+                      {sortConfig.key === "name" && sortConfig.direction === "asc" ? (
                         <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
                       ) : (
                         <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
@@ -256,18 +257,36 @@ const Dashboard = ({ deviceData , FetchDevice }) => {
                     </th>
                     <th
                       className="px-2 py-1 text-center text-gray-700 cursor-pointer"
-                      onClick={() => handleSort("runningHrs")}
+                      onClick={() => handleSort("runningHour")}
                     >
                       Running Hrs
-                      {sortConfig.key === "runningHrs" && sortConfig.direction === "asc" ? (
+                      {sortConfig.key === "runningHour" && sortConfig.direction === "asc" ? (
                         <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
                       ) : (
                         <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
                       )}
                     </th>
-                    <th className="px-2 py-1 text-center text-gray-700" >Status</th>
-                    <th className="px-2 py-1 text-center text-gray-700">% Dimming</th>
-                    <th className="px-2 py-1 text-center text-gray-700">Last Updated</th>
+                    <th className="px-2 py-1 text-center text-gray-700" onClick={() => handleSort("status")}>Status
+                    {sortConfig.key === "status" && sortConfig.direction === "asc" ? (
+                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      ) : (
+                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      )}
+                    </th>
+                    <th className="px-2 py-1 text-center text-gray-700" onClick={() => handleSort("percentDimming")}>% Dimming
+                    {sortConfig.key === "percentDimming" && sortConfig.direction === "asc" ? (
+                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      ) : (
+                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      )}
+                    </th>
+                    <th className="px-2 py-1 text-center text-gray-700" onClick={() => handleSort("lastUpdated")}>Last Updated
+                    {sortConfig.key === "lastUpdated" && sortConfig.direction === "asc" ? (
+                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      ) : (
+                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
+                      )}
+                    </th>
                     
                   </tr>
                 </thead>
@@ -310,7 +329,7 @@ const Dashboard = ({ deviceData , FetchDevice }) => {
                         </span>
                       </td>
                       <td className="px-2 py-1 text-center" >{record.percentDimming}</td>
-                      <td className="px-2 py-2 text-center">{record.lastUpdated}</td>
+                      <td className="px-2 py-2 text-center text-balance">{record.lastUpdated}</td>
                       
                   
                     

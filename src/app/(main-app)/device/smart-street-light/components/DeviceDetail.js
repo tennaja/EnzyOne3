@@ -2,12 +2,23 @@ import { useState ,useEffect} from "react";
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import { Switch } from "@headlessui/react";
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import {
+  DeviceControl
+} from "@/utils/api";
+import ModalConfirm from "./Popupconfirm";
+import ModalDone from "./Popupcomplete";
+import ModalFail from "./PopupFali";
 const DeviceDetail = ({ device , setActiveTab}) => {
   console.log(device)
     const [powerOn, setPowerOn] = useState(true);
     const [dimming, setDimming] = useState(device?.percentDimming || 10);
     const [deviceStatus, setDeviceStatus] = useState(device?.status);
-
+    const [openModalconfirm,setopenModalconfirm] =useState(false)
+    const [openModalsuccess,setopenModalsuccess] =useState(false)
+    const [openModalfail,setopenModalfail] =useState(false)
+    const [modalConfirmProps, setModalConfirmProps] = useState(null);
+    const [modalErrorProps, setModalErorProps] = useState(null);
+    const [modalSuccessProps, setModalSuccessProps] = useState(null);
     useEffect(() => {
       setDimming(device?.percentDimming || 10);
     }, [device]);
@@ -16,12 +27,72 @@ const DeviceDetail = ({ device , setActiveTab}) => {
       setDeviceStatus(device?.status === "on");
     }, [device]);
 
+    
     const handleStatusChange = (newStatus) => {
       setDeviceStatus(newStatus);
       console.log(newStatus)
       // You can call a function here to update the device status on the server or in the backend
       // For example, updateStatus(device.id, newStatus);
     };
+
+    const handleOpenModalconfirm = () => {
+      setopenModalconfirm(true);
+      setModalConfirmProps({
+        onCloseModal: handleClosePopup,
+        onClickConfirmBtn: handleSubmit,
+        title: "Confirm Execution",
+        content: `
+  <div class="mx-auto w-fit px-4 text-left">
+    <p>Device: ${device?.name}</p>
+    <p>Status: ${deviceStatus ? "on" : "off"}</p>
+    <p>%Dimming: ${deviceStatus ? dimming : ""}%</p>
+  </div>
+`
+,
+        buttonTypeColor: "primary",
+      });
+    };
+    
+    const handleSubmit = async () => {
+        const Param = {
+          id: device?.id,
+          action: deviceStatus ? "on" : "off",
+          dimming:Number(dimming)
+        };
+        const res = await DeviceControl(Param);
+    
+        if (res.status === 200) {
+          setopenModalconfirm(false)
+          setopenModalsuccess(true)
+          setModalSuccessProps({
+            onCloseModal: handleClosePopup,
+            title: res?.data?.title,
+            content: res?.data?.message,
+            buttonTypeColor: "primary",
+          });
+          console.log("เข้าาาาาาาาาาาาาาาาา")
+          setTimeout(() => {
+            setopenModalsuccess(false);
+          }, 3000); // 3000 milliseconds = 3 seconds
+        
+    
+        } else {
+          setopenModalconfirm(false)
+          setopenModalfail(true)
+          setModalErorProps({
+            onCloseModal: handleClosePopup,
+            title: res?.title,
+            content: res?.message,
+            buttonTypeColor: "danger",
+          });
+          console.log(res)
+        }
+      };
+      const handleClosePopup = () => {
+        setopenModalconfirm(false)
+        setopenModalsuccess(false)
+        setopenModalfail(false)
+      }
   return (
     <div>
       <div className="flex items-center justify-start gap-4 w-full">
@@ -95,52 +166,78 @@ const DeviceDetail = ({ device , setActiveTab}) => {
         </tbody>
       </table>
 
-      <div className="w-full mt-5">
-      <h2 className="text-sm font-semibold mb-3">Device Control</h2>
-              <div className="border p-4 rounded mt-3">
-              <div className="flex items-center m-2">
-  <span className="text-sm mr-32">Status</span> {/* ข้อความ Status จะห่างจากปุ่ม */}
-  <button
-    onClick={() => handleStatusChange(!deviceStatus)}
-    className={`${
-      deviceStatus ? "bg-[#5eead4]" : "bg-gray-300"
-    } text-white font-semibold py-2 px-2 rounded-full flex items-center gap-2 transition-colors duration-300 ml-4`} 
-  >
-    <PowerSettingsNewIcon style={{ fontSize: 20 }} />
-  </button>
-  <span className="ml-2 font-semibold text-sm">{deviceStatus ? "on" : "off"}</span>
+      <div className="lg:w-full w-full p-2">
+  <h2 className="text-sm font-semibold mb-3">Device Control</h2>
+  
+  {/* Power Status */}
+  <div className="border p-4 rounded mt-3">
+    <div className="flex items-center m-2">
+      <span className="text-sm mr-14">Power Status</span>
+      <button
+        onClick={() => handleStatusChange(!deviceStatus)}
+        disabled={device?.status === "offline"}
+        className={`${
+          device?.status === "offline"
+            ? "bg-gray-300 cursor-not-allowed"
+            : deviceStatus
+            ? "bg-[#5eead4]"
+            : "bg-gray-300"
+        } text-white font-semibold py-2 px-2 rounded-full flex items-center gap-2 transition-colors duration-300 ml-4`} 
+      >
+        <PowerSettingsNewIcon style={{ fontSize: 20 }} />
+      </button>
+      <span className="ml-2 font-semibold text-sm">{deviceStatus ? "on" : "off"}</span>
+    </div>
+  </div>
+  
+  {/* Dimming Level */}
+  <div className="border p-4 rounded mt-3">
+    <div className="flex items-center m-2">
+      <p className="text-sm mr-14">Dimming Level</p>
+      <div className="flex items-center w-80">
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={dimming}
+          step="1"
+          onChange={(e) => setDimming(e.target.value)}
+          list="tickmarks"
+          disabled={device?.status === "offline"}
+          className="w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+        <div className="text-xs">{dimming}%</div>
+      </div>
+    </div>
+  </div>
+  
+  {/* Execute Button */}
+  <div className="flex justify-start mt-3">
+    <button
+      onClick={handleOpenModalconfirm}
+      disabled={device?.status === "offline"}
+      className={`w-32 py-2 rounded text-sm ${
+        device?.status === "offline"
+          ? "bg-gray-300 cursor-not-allowed text-gray-500"
+          : "bg-[#33BFBF] text-white"
+      }`}
+    >
+      Execute
+    </button>
+  </div>
 </div>
 
-                </div>
-                <div className="border p-4 rounded mt-3">
-                <div className="flex items-center m-2">
-                  <span className="text-sm mr-32">Dimming Level</span>
-                  <input
-        type="range"
-        min="0"
-        max="100"
-        value={dimming}
-        step="1"
-        onChange={(e) => setDimming(e.target.value)}
-        list="tickmarks"
-        className="w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm"
-      />
-      <datalist id="tickmarks">
-        <option value="0" />
-        <option value="25" />
-        <option value="50" />
-        <option value="75" />
-        <option value="100" />
-      </datalist>
-                  <div className="text-right text-xs">{dimming}%</div>
-                </div>
-                
-              </div>
-              <button className="w-20 bg-[#33BFBF] text-white py-2 rounded text-sm mt-3">Execute</button>
-            </div>
+            {openModalconfirm && <ModalConfirm {...modalConfirmProps}/>}
+            {openModalsuccess && <ModalDone {...modalSuccessProps}/>}
+            {openModalfail && <ModalFail {...modalErrorProps}/>}
+            
     </div>
-    
+   
   );
 };
 
 export default DeviceDetail;
+
+
+
+
