@@ -91,6 +91,7 @@
     "react-spinners": "^0.13.8",
     "react-svg-pathline": "^0.6.0",
     "react-toastify": "^10.0.4",
+    "recharts": "^2.15.1",
     "redux-persist": "^6.0.0",
     "shadcn-ui": "^0.9.4",
     "swr": "^2.2.4",

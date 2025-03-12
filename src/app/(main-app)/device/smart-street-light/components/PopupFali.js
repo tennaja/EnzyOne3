@@ -63,7 +63,7 @@ const ModalFail = (props) => {
         <div className="flex justify-center gap-3 pb-2">
           <button
             onClick={onCloseModal}
-            className="w-40 rounded shadow-sm px-4 py-2 font-normal bg-[#EFEFEF] hover:bg-[#78829D] hover:text-white"
+            className="w-40 rounded shadow-sm px-4 py-2 font-normal bg-[#ff2424] text-white"
           >
             Close
           </button>

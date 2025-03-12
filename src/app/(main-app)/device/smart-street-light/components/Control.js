@@ -5,6 +5,9 @@ import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import { toast ,ToastContainer} from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';  // Import this for default styling
+
 import {
   DeviceControl
 } from "@/utils/api";
@@ -12,14 +15,14 @@ import ModalConfirm from "./Popupconfirm";
 import ModalDone from "./Popupcomplete";
 import ModalFail from "./PopupFali";
 
-export default function DeviceControlPage({ deviceData }) {
+export default function DeviceControlPage({ deviceData ,setActiveTab ,FetchDevice}) {
   const [selecteddeviceData, setSelecteddeviceData] = useState([]);
   const [powerOn, setPowerOn] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);  // Track current page
-  const [rowsPerPage, setRowsPerPage] = useState(5);  // Rows per page
+  const [rowsPerPage, setRowsPerPage] = useState(20);  // Rows per page
   const [dimming, setDimming] = useState(10);
-  const [deviceStatus, setDeviceStatus] = useState("on");
+  const [deviceStatus, setDeviceStatus] = useState("off");
   const [openModalconfirm,setopenModalconfirm] =useState(false)
   const [openModalsuccess,setopenModalsuccess] =useState(false)
   const [openModalfail,setopenModalfail] =useState(false)
@@ -53,40 +56,58 @@ export default function DeviceControlPage({ deviceData }) {
       };
       
       const handleSubmit = async () => {
-          const Param = {
-            id: selecteddeviceData,
-            action: deviceStatus ? "on" : "off",
-            dimming:Number(dimming)
-          };
-          const res = await DeviceControl(Param);
-      
-          if (res.status === 200) {
-            setopenModalconfirm(false)
-            setopenModalsuccess(true)
-            setModalSuccessProps({
-              onCloseModal: handleClosePopup,
-              title: res?.data?.title,
-              content: res?.data?.message,
-              buttonTypeColor: "primary",
-            });
-            console.log("เข้าาาาาาาาาาาาาาาาา")
+        const Param = {
+          id: selecteddeviceData,
+          action: deviceStatus ? "on" : "off",
+          dimming: Number(dimming)
+        };
+        const res = await DeviceControl(Param);
+    
+        if (res.status === 200) {
+            // Reset all relevant state variables
+            setSelecteddeviceData([]); // Clear selected devices
+            setPowerOn(true); // Reset power status
+            setDimming(10); // Reset dimming value
+            setDeviceStatus("off"); // Reset device status
+            setSearchTerm(""); // Clear search term
+            setCurrentPage(1); // Reset to the first page
+            setRowsPerPage(20); // Reset rows per page
+    
+            setopenModalconfirm(false);
+            notifySuccess(res?.data?.title,res?.data?.message);
             setTimeout(() => {
-              setopenModalsuccess(false);
-            }, 3000); // 3000 milliseconds = 3 seconds
-          
-      
-          } else {
-            setopenModalconfirm(false)
-            setopenModalfail(true)
+              FetchDevice(); // Refresh device data
+            }, 3000);
+        } else {
+            setopenModalconfirm(false);
+            setopenModalfail(true);
             setModalErorProps({
               onCloseModal: handleClosePopup,
               title: res?.title,
               content: res?.message,
               buttonTypeColor: "danger",
             });
-            console.log(res)
+            console.log(res);
+        }
+    };
+    
+    const notifySuccess = (title,message) =>
+        toast.success(
+          <div className="px-2">
+          <div className="flex flex-row font-bold">{title}</div>
+          <div className="flex flex-row text-xs">{message}</div>
+          </div>,
+          {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
           }
-        };
+        );
         const handleClosePopup = () => {
           setopenModalconfirm(false)
           setopenModalsuccess(false)
@@ -133,15 +154,24 @@ export default function DeviceControlPage({ deviceData }) {
   
   const toggleSelectAll = () => {
     let updateddeviceData;
-    if (selecteddeviceData.length === filtereddeviceData.length && filtereddeviceData.length > 0) {
+  
+    // ตรวจสอบว่าถ้ามีการเลือก device ทั้งหมดอยู่แล้ว ให้เคลียร์การเลือก
+    if (
+      selecteddeviceData.length === filtereddeviceData.filter(device => device.status !== "offline").length &&
+      filtereddeviceData.length > 0
+    ) {
       updateddeviceData = [];
     } else {
-      updateddeviceData = filtereddeviceData.map(device => device.id);
+      // เลือกเฉพาะ device ที่ status ไม่เป็น "offline"
+      updateddeviceData = filtereddeviceData
+        .filter(device => device.status !== "offline")
+        .map(device => device.id);
     }
   
-    console.log("Selected deviceData after select all toggle:", updateddeviceData);  // Log after selecting/deselecting all deviceData
+    console.log("Selected deviceData after select all toggle:", updateddeviceData);
     setSelecteddeviceData(updateddeviceData);
   };
+  
   
  const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -162,7 +192,15 @@ export default function DeviceControlPage({ deviceData }) {
   const totalPages = Math.ceil(filtereddeviceData.length / rowsPerPage);
 
   return (
-    <div className="max-w-full mx-auto min-h-screen flex flex-col lg:flex-row">
+    
+    <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
+    <div>
+        <span className="text-lg font-bold block mb-2">Device List</span>
+        <p className="text-base mb-4">All Site | All Group</p>
+
+      
+    </div>
+    <div className="max-w-full flex flex-col lg:flex-row">
       <div className="lg:w-1/2 w-full  border-r p-2">
       
       <div className="flex items-center justify-between mb-3">
@@ -178,53 +216,120 @@ export default function DeviceControlPage({ deviceData }) {
 
         
         <table className="w-full table-auto mt-5">
-  <thead>
-    <tr className="text-xs text-gray-500 border-b border-gray-300">
-      <th className="py-2 px-4 text-left" onClick={() => handleSort("name")}>
-        <input
-          type="checkbox"
-          checked={selecteddeviceData.length === filtereddeviceData.length && filtereddeviceData.length > 0}
-          onChange={toggleSelectAll}
-          className="mr-2"
+        <thead>
+  <tr className="text-xs text-gray-500 border-b border-gray-300">
+    <th className="py-2 px-4 text-left" onClick={() => handleSort("name")}>
+    <input
+  type="checkbox"
+  checked={
+    selecteddeviceData.length === filtereddeviceData.filter(device => device.status !== "offline").length &&
+    filtereddeviceData.length > 0
+  }
+  onChange={toggleSelectAll}
+  className="mr-2"
+/>
+
+      Device
+      <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+        <ArrowDropUpIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "name" && sortConfig.direction === "asc" ? 1 : 0.3,
+            marginBottom: "-2px",
+          }}
         />
-        Device 
-        {sortConfig.key === "name" && sortConfig.direction === "asc" ? (
-                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
-                      ) : (
-                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
-                      )}
-      </th>
-      <th className="py-2 px-4 text-left" onClick={() => handleSort("groupName")}>Description
-      {sortConfig.key === "groupName" && sortConfig.direction === "asc" ? (
-                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
-                      ) : (
-                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
-                      )}
-      </th>
-      <th className="py-2 px-4 text-left" onClick={() => handleSort("groupName")}>Group
-      {sortConfig.key === "groupName" && sortConfig.direction === "asc" ? (
-                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
-                      ) : (
-                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
-                      )}
-      </th>
-      
-      <th className="py-2 px-4 text-left" onClick={() => handleSort("status")}>Status
-      {sortConfig.key === "status" && sortConfig.direction === "asc" ? (
-                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
-                      ) : (
-                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
-                      )}
-      </th>
-      <th className="py-2 px-4 text-left" onClick={() => handleSort("lastUpdated")}>Last Updated
-      {sortConfig.key === "lastUpdated" && sortConfig.direction === "asc" ? (
-                        <ArrowDropUpIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
-                      ) : (
-                        <ArrowDropDownIcon style={{ fontSize: "14px", marginLeft: "4px" }} />
-                      )}
-      </th>
-    </tr>
-  </thead>
+        <ArrowDropDownIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "name" && sortConfig.direction === "desc" ? 1 : 0.3,
+            marginTop: "-2px",
+          }}
+        />
+      </div>
+    </th>
+
+    <th className="py-2 px-4 text-left" onClick={() => handleSort("groupName")}>
+      Description
+      <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+        <ArrowDropUpIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "groupName" && sortConfig.direction === "asc" ? 1 : 0.3,
+            marginBottom: "-2px",
+          }}
+        />
+        <ArrowDropDownIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "groupName" && sortConfig.direction === "desc" ? 1 : 0.3,
+            marginTop: "-2px",
+          }}
+        />
+      </div>
+    </th>
+
+    <th className="py-2 px-4 text-left" onClick={() => handleSort("groupName")}>
+      Group
+      <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+        <ArrowDropUpIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "groupName" && sortConfig.direction === "asc" ? 1 : 0.3,
+            marginBottom: "-2px",
+          }}
+        />
+        <ArrowDropDownIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "groupName" && sortConfig.direction === "desc" ? 1 : 0.3,
+            marginTop: "-2px",
+          }}
+        />
+      </div>
+    </th>
+
+    <th className="py-2 px-4 text-left" onClick={() => handleSort("status")}>
+      Status
+      <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+        <ArrowDropUpIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "status" && sortConfig.direction === "asc" ? 1 : 0.3,
+            marginBottom: "-2px",
+          }}
+        />
+        <ArrowDropDownIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "status" && sortConfig.direction === "desc" ? 1 : 0.3,
+            marginTop: "-2px",
+          }}
+        />
+      </div>
+    </th>
+
+    <th className="py-2 px-4 text-left" onClick={() => handleSort("lastUpdated")}>
+      Last Updated
+      <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+        <ArrowDropUpIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "lastUpdated" && sortConfig.direction === "asc" ? 1 : 0.3,
+            marginBottom: "-2px",
+          }}
+        />
+        <ArrowDropDownIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "lastUpdated" && sortConfig.direction === "desc" ? 1 : 0.3,
+            marginTop: "-2px",
+          }}
+        />
+      </div>
+    </th>
+  </tr>
+</thead>
+
   <tbody>
   {currentdeviceData.map((device, index) => (
     <tr
@@ -278,9 +383,10 @@ export default function DeviceControlPage({ deviceData }) {
               onChange={handleRowsPerPageChange}
               className="p-1 text-sm border rounded"
             >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={15}>15</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
             </select>
           </div>
           <div className="flex items-center space-x-2">
@@ -329,6 +435,7 @@ export default function DeviceControlPage({ deviceData }) {
   </div>
 
   {/* Dimming Level */}
+  {deviceStatus ? 
   <div className="border p-4 rounded mt-3">
     <div className="flex items-center m-2">
       <p className="text-sm mr-14">Dimming Level</p>
@@ -348,7 +455,9 @@ export default function DeviceControlPage({ deviceData }) {
         <div className="text-xs">{dimming}%</div>
       </div>
     </div>
-  </div>
+  </div>:
+  ""
+  }
 
   {/* Execute Button */}
   <div className="flex justify-start mt-3">
@@ -371,6 +480,7 @@ export default function DeviceControlPage({ deviceData }) {
             {openModalsuccess && <ModalDone {...modalSuccessProps}/>}
             {openModalfail && <ModalFail {...modalErrorProps}/>}
     </div>
-    
+    <ToastContainer />
+    </div>
   );
 }

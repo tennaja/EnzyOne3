@@ -5,11 +5,13 @@ import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import {
   DeviceControl
 } from "@/utils/api";
+import { toast ,ToastContainer} from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';  // Import this for default styling
 import ModalConfirm from "./Popupconfirm";
 import ModalDone from "./Popupcomplete";
 import ModalFail from "./PopupFali";
 const DeviceDetail = ({ device , setActiveTab}) => {
-  console.log(device)
+  console.log(device?.status)
     const [powerOn, setPowerOn] = useState(true);
     const [dimming, setDimming] = useState(device?.percentDimming || 10);
     const [deviceStatus, setDeviceStatus] = useState(device?.status);
@@ -63,17 +65,8 @@ const DeviceDetail = ({ device , setActiveTab}) => {
     
         if (res.status === 200) {
           setopenModalconfirm(false)
-          setopenModalsuccess(true)
-          setModalSuccessProps({
-            onCloseModal: handleClosePopup,
-            title: res?.data?.title,
-            content: res?.data?.message,
-            buttonTypeColor: "primary",
-          });
-          console.log("เข้าาาาาาาาาาาาาาาาา")
-          setTimeout(() => {
-            setopenModalsuccess(false);
-          }, 3000); // 3000 milliseconds = 3 seconds
+          setopenModalconfirm(false);
+            notifySuccess(res?.data?.title,res?.data?.message);
         
     
         } else {
@@ -88,6 +81,24 @@ const DeviceDetail = ({ device , setActiveTab}) => {
           console.log(res)
         }
       };
+
+      const notifySuccess = (title,message) =>
+              toast.success(
+                <div className="px-2">
+                <div className="flex flex-row font-bold">{title}</div>
+                <div className="flex flex-row text-xs">{message}</div>
+                </div>,
+                {
+                  position: "top-right",
+                  autoClose: 3000,
+                  hideProgressBar: false,
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  progress: undefined,
+                  theme: "light",
+                }
+              );
       const handleClosePopup = () => {
         setopenModalconfirm(false)
         setopenModalsuccess(false)
@@ -166,7 +177,7 @@ const DeviceDetail = ({ device , setActiveTab}) => {
         </tbody>
       </table>
 
-      <div className="lg:w-full w-full p-2">
+      <div className="lg:w-full w-full p-2 mt-3">
   <h2 className="text-sm font-semibold mb-3">Device Control</h2>
   
   {/* Power Status */}
@@ -191,25 +202,30 @@ const DeviceDetail = ({ device , setActiveTab}) => {
   </div>
   
   {/* Dimming Level */}
+  {deviceStatus ? 
   <div className="border p-4 rounded mt-3">
-    <div className="flex items-center m-2">
-      <p className="text-sm mr-14">Dimming Level</p>
-      <div className="flex items-center w-80">
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={dimming}
-          step="1"
-          onChange={(e) => setDimming(e.target.value)}
-          list="tickmarks"
-          disabled={device?.status === "offline"}
-          className="w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        />
-        <div className="text-xs">{dimming}%</div>
-      </div>
+  <div className="flex items-center m-2">
+    <p className="text-sm mr-14">Dimming Level</p>
+    <div className="flex items-center w-80">
+      <input
+        type="range"
+        min="0"
+        max="100"
+        value={dimming}
+        step="1"
+        onChange={(e) => setDimming(e.target.value)}
+        list="tickmarks"
+        disabled={device?.status === "offline"}
+        className="w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      />
+      <div className="text-xs">{dimming}%</div>
     </div>
   </div>
+</div>
+  :
+  ""
+  }
+  
   
   {/* Execute Button */}
   <div className="flex justify-start mt-3">
@@ -230,7 +246,7 @@ const DeviceDetail = ({ device , setActiveTab}) => {
             {openModalconfirm && <ModalConfirm {...modalConfirmProps}/>}
             {openModalsuccess && <ModalDone {...modalSuccessProps}/>}
             {openModalfail && <ModalFail {...modalErrorProps}/>}
-            
+            <ToastContainer />
     </div>
    
   );

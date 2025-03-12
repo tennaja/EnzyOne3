@@ -53,12 +53,12 @@ const Header1 = () => {
     const [activeTab, setActiveTab] = useState("dashboard");
     const [sitelist, setSitelist] = useState();
     const [grouplist, setGrouplist] = useState();
-    const [devcielist , setDevicelist] = useState([]);
+    const [devcielist, setDevicelist] = useState([]);
     const [siteid, setSiteid] = useState(0);
     const [groupid, setGroupid] = useState(0);
-    const [siteName , setSiteName] = useState('');
-    const [groupName , setGroupName] = useState('');
-    
+    const [siteName, setSiteName] = useState('');
+    const [groupName, setGroupName] = useState('');
+
 
 
 
@@ -84,13 +84,13 @@ const Header1 = () => {
     const getGroupList = async (siteid) => {
         console.log("Site ID:", siteid);
         setSiteid(siteid);
-        
+
         const result = await getGroupListData(siteid);
         console.log("Group List Result:", result);
-        
+
         if (Array.isArray(result) && result.length > 0) {
             setGrouplist(result);
-            const firstGroupId = result[0].id ?? "" 
+            const firstGroupId = result[0].id ?? ""
             console.log("First Group ID:", firstGroupId);
             setGroupid(firstGroupId);
             setGroupName(result[0].name)
@@ -98,15 +98,15 @@ const Header1 = () => {
             console.log("No groups found!");
         }
     };
-    
-    
+
+
 
     const Groupchange = (groupid) => {
         console.log(groupid)
         setGroupid(groupid);
-      };
+    };
 
-    
+
     //Get DeviceList use in search button 
     const GetDeviceList = async () => {
         setSiteid(siteid)
@@ -114,21 +114,21 @@ const Header1 = () => {
         const paramsNav = {
             siteId: siteid,
             groupId: groupid
-          };
-    const result = await getDeviceListData(paramsNav)
-    if(result.data.length > 0){
-        setDevicelist(result.data)
-    }
-      };
+        };
+        const result = await getDeviceListData(paramsNav)
+        if (result.data.length > 0) {
+            setDevicelist(result.data)
+        }
+    };
 
-      
+
 
     const renderContent = () => {
         switch (activeTab) {
             case "dashboard":
-                return <Dashboard deviceData={devcielist} FetchDevice={GetDeviceList}/>;
+                return <Dashboard deviceData={devcielist} FetchDevice={GetDeviceList} />;
             case "control":
-                return <DeviceControlPage deviceData={devcielist}/>;
+                return <DeviceControlPage deviceData={devcielist} FetchDevice={GetDeviceList} setActiveTab={() => { setActiveTab("control")}}/>;
             case "schedule":
                 return <ScheduleComponent />;
             default:
@@ -136,11 +136,12 @@ const Header1 = () => {
         }
     };
     useEffect(() => {
-        // Check if the active tab is 'dashboard'
-        if (activeTab === "dashboard") {
+        // Check if the active tab is either 'dashboard' or 'control'
+        if (["dashboard", "control"].includes(activeTab)) {
             GetDeviceList();
         }
-    }, [activeTab]);  // This will run whenever `activeTab` changes.
+    }, [activeTab]);
+      // This will run whenever `activeTab` changes.
 
     return (
         <>
@@ -199,7 +200,7 @@ const Header1 = () => {
                                 setGroupName(event.target.selectedOptions[0].text);
                             }}
                             value={groupid}
-                            >
+                        >
                             {grouplist?.map((item) => {
                                 return (
                                     <option key={item.id} value={item.id}>
@@ -214,14 +215,9 @@ const Header1 = () => {
                 </div>
             </div>
 
-            <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
-                <div>
-                    <span className="text-lg font-bold block mb-2">Device List</span>
-                    <p className="text-base mb-4">{siteName} | {groupName}</p>
 
-                    {renderContent()}
-                </div>
-            </div>
+            {renderContent()}
+
         </>
     );
 };

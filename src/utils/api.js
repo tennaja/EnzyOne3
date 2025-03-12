@@ -1748,3 +1748,21 @@ export async function DeviceControl(req) {
     return error.response.data;
   }
 }
+
+export async function getHistoryGraphDataa(req) {
+  const deviceId = req.deviceId;
+  const endDate = req.endDate;
+  const startDate = req.startDate;
+  
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/device/${deviceId}/history?endDate=${endDate}&startDate=${startDate}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}

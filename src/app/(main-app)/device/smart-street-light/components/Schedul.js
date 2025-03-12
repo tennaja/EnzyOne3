@@ -40,6 +40,9 @@ export default function ScheduleComponent({  }) {
   const paginatedData = data.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   return (
+    <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
+    <div>
+      <span className="text-lg font-bold block mb-2">Historical</span>
     <div className="p-2 max-w-full mx-auto mt-10">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-base font-semibold">{data.length} Schedules</h2>
@@ -141,6 +144,6 @@ export default function ScheduleComponent({  }) {
         </div>
       </div>
       <SchedulePopup isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} />
-    </div>
+    </div></div></div>
   );
 }
