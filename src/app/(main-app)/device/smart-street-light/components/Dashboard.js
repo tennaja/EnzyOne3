@@ -8,11 +8,12 @@ import DeviceDetail from "./DeviceDetail";
 import MapTH from "./MapTest";
 import CreateIcon from '@mui/icons-material/Create';
 import {
-  getDevicebyId, getHistoryGraphDataa
+  getDevicebyId, getHistoryGraphDataa, getEnergyHistoryGraphDataa, getSchedulebyid
 } from "@/utils/api";
 import ChartComponent from "./Chaart";
 import MyChart from "./Chaart";
 import BarChart from "./Barchart";
+import SchedulePopup from "./Popupchedule";
 const Dashboard = ({ deviceData, FetchDevice }) => {
   console.log(deviceData)
 
@@ -32,18 +33,29 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
   const [mapZoomLevel, setMapZoomLevel] = useState(15); // กำหนดค่า zoom เริ่มต้น
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
+  const [startDate2, setStartDate2] = useState(today);
+  const [endDate2, setEndDate2] = useState(today);
   const [timeUnit, setTimeUnit] = useState("day");
+  const [isLoading, setIsLoading] = useState(true);
+  const [scheduleData, setScheduleData] = useState();
+  const [openModalSchedule ,setopenModalSchedule] = useState(false)
   const datagraph = {
     "timestamp": [
-    "2025-02-01 00:00:00",
-    "2025-02-02 00:00:00"
-  ],
-  "kwh": [
-    18,
-    9
-  ]
+      "2025-02-01 00:00:00",
+      "2025-02-02 00:00:00"
+    ],
+    "kwh": [
+      18,
+      9
+    ]
   };
-
+  useEffect(() => {
+    if (!deviceData || Object.keys(deviceData).length === 0) {
+      setIsLoading(true); // ยังโหลดไม่เสร็จ
+    } else {
+      setIsLoading(false); // โหลดเสร็จแล้ว
+    }
+  }, [deviceData]);
 
   // ดึงค่าพิกัดจาก deviceData และสร้าง locationDataList
   // const locationDataList = useMemo(() => {
@@ -107,6 +119,7 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
   };
   const handleDeviceClick = (Data) => {
     GetHistoryGraph(Data.id);
+    GetEnergyHistoryGraph(Data.id)
     getdevicebyId(Data.id); // เมื่อคลิกหมุด, จะได้รับข้อมูลทั้งหมดของหมุด
     console.log("Selected device data:", Data); // หรือใช้ข้อมูลนี้ในการแสดงรายละเอียด
   };
@@ -157,8 +170,48 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
   };
 
 
+  const GetEnergyHistoryGraph = async (id) => {
+    const Param = {
+      deviceId: id,
+      groupBy: timeUnit,
+      endDate: endDate,
+      startDate: startDate
+    };
+    const res = await getEnergyHistoryGraphDataa(Param);
 
-  const handleStartDateChange = (e) => {
+    if (res.status === 200) {
+      setGraphDaata(res.data)
+      console.log("เข้าาาาาาาาาาาาาาาาา", res.data)
+
+
+
+    } else {
+
+      console.log('ไม่เข้าาาาาาาาาาาาาาาาา')
+    }
+  };
+  const getSchedulById = async (id) => {
+    console.log("Device Id:", id);
+
+    try {
+      const result = await getSchedulebyid(id);
+      console.log("Group List Result:", result);
+
+      if (result) {
+        
+        setScheduleData(result.data);
+        setopenModalSchedule(true)
+      } else {
+        console.log("No groups found!");
+      }
+    } catch (error) {
+      console.error("Error fetching device data:", error);
+    }
+  };
+
+  
+
+  const handleStartDateChangeHistorical = (e) => {
     const newStartDate = e.target.value;
     console.log(newStartDate)
     setStartDate(newStartDate);
@@ -172,7 +225,7 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
     }
   };
 
-  const handleEndDateChange = (e) => {
+  const handleEndDateChangeHistorical = (e) => {
     const newEndDate = e.target.value;
     const maxAllowedEndDate = new Date(startDate);
     maxAllowedEndDate.setDate(maxAllowedEndDate.getDate() + 31);
@@ -189,19 +242,71 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
       }
     }
   };
-  
 
-const handleTimeUnitChange = (e) => {
-  setTimeUnit(e.target.value);
-};
+  // ชุดที่สอง (สำหรับ startDate2 และ endDate2)
+  const handleStartDateChangeHistorical2 = (e) => {
+    const newStartDate = e.target.value;
+    console.log(newStartDate);
+
+    setStartDate2(newStartDate);
+
+    const maxEndDate = new Date(newStartDate);
+    maxEndDate.setDate(maxEndDate.getDate() + 31);
+    const formattedMaxEndDate = maxEndDate.toISOString().split("T")[0];
+
+    const currentEndDate = new Date(endDate2);
+
+    if (currentEndDate > maxEndDate) {
+      setEndDate2(formattedMaxEndDate);
+    }
+  };
+
+  const handleEndDateChangeHistorical2 = (e) => {
+    const newEndDate = e.target.value;
+    const startDateObj = new Date(startDate2);
+    const maxAllowedEndDate = new Date(startDateObj);
+    maxAllowedEndDate.setDate(startDateObj.getDate() + 31);
+
+    const todayDate = new Date(today);
+    const newEndDateObj = new Date(newEndDate);
+
+    const isWithinRange = newEndDateObj <= maxAllowedEndDate && newEndDateObj <= todayDate;
+
+    if (isWithinRange) {
+      setEndDate2(newEndDate);
+
+      if (selectedDevice?.id) {
+        GetEnergyHistoryGraph(selectedDevice.id);
+      }
+    }
+  };
+
+
+  const handleTimeUnitChange = (e) => {
+
+    setTimeUnit(e.target.value);
+
+  };
+  useEffect(() => {
+    if (selectedDevice?.id) {
+      GetEnergyHistoryGraph(selectedDevice.id);
+    }
+  }, [timeUnit]); // เรียกใหม่เมื่อ timeUnit เปลี่ยน
   // 🔥 เรียก API ทันทีที่ startDate หรือ endDate เปลี่ยน
   useEffect(() => {
     if (selectedDevice?.id) {
       GetHistoryGraph(selectedDevice.id, startDate, endDate);
+      GetEnergyHistoryGraph(selectedDevice.id, startDate, endDate);
     }
   }, [startDate, endDate, selectedDevice]);
+
+  useEffect(() => {
+    // Reset all keys in the sortConfig when deviceData changes
+    setSortConfig({}); // Clear the sortConfig object completely
+  }, [deviceData]); // This will trigger when deviceData changes
   return (
     <>
+
       <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
         <div>
           <span className="text-lg font-bold block mb-2">Device List</span>
@@ -263,7 +368,10 @@ const handleTimeUnitChange = (e) => {
 
 
                           <td className="py-2 px-4">
-                            <button className="text-gray-500 hover:text-gray-700"><CreateIcon /></button>
+                            <button className="text-gray-500 hover:text-gray-700" onClick={() => {
+                              getSchedulById(schedule.id);
+
+                            }}><CreateIcon /></button>
                           </td>
                         </tr>
                       ))}
@@ -423,7 +531,7 @@ const handleTimeUnitChange = (e) => {
                           </div>
                         </th>
 
-                        <th className="px-2 py-1 text-center text-gray-700" onClick={() => handleSort("lastUpdated")}>
+                        <th className="px-2 py-1 text-right text-gray-700" onClick={() => handleSort("lastUpdated")}>
                           Last Updated
                           <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
                             <ArrowDropUpIcon
@@ -461,6 +569,7 @@ const handleTimeUnitChange = (e) => {
                                 setSelectedLocation({ lat: record.latitude, lng: record.longitude }); // อัพเดตตำแหน่งที่เลือก
                                 setMapZoomLevel(15); // ซูมเข้าเมื่อเลือกอุปกรณ์
                                 GetHistoryGraph(record.id)
+                                GetEnergyHistoryGraph(record.id)
                               }}
                             >
                               {record.name}
@@ -484,7 +593,7 @@ const handleTimeUnitChange = (e) => {
                             </span>
                           </td>
                           <td className="px-2 py-1 text-center" >{record.percentDimming}</td>
-                          <td className="px-2 py-2 text-center text-balance">{record.lastUpdated}</td>
+                          <td className="px-2 py-2 text-right text-balance">{record.lastUpdated}</td>
 
 
 
@@ -560,7 +669,7 @@ const handleTimeUnitChange = (e) => {
                 type="date"
                 className="w-60 p-2 border rounded"
                 value={startDate}
-                onChange={handleStartDateChange}
+                onChange={handleStartDateChangeHistorical}
                 max={today}
               />
 
@@ -577,7 +686,7 @@ const handleTimeUnitChange = (e) => {
                 )
                   .toISOString()
                   .split("T")[0]} // ห้ามเลือกเกินทั้งวันที่ปัจจุบันและ 31 วันหลังจาก startDate
-                onChange={handleEndDateChange}
+                onChange={handleEndDateChangeHistorical}
               />
 
             </div>
@@ -585,47 +694,49 @@ const handleTimeUnitChange = (e) => {
               <MyChart graphdata={graphData} />
             </div>
             <div className="flex gap-4 mt-5">
-            <select
-    className="w-60 p-2 border rounded"
-    value={timeUnit}
-    onChange={handleTimeUnitChange}
-  >
-    <option value="hour">Hourly</option>
-    <option value="day">Daily</option>
-    <option value="month">Monthly</option>
-  </select>
-  <input
-    type="date"
-    className="w-60 p-2 border rounded"
-    value={startDate}
-    onChange={handleStartDateChange}
-    max={today}
-  />
+              <select
+                className="w-60 p-2 border rounded"
+                value={timeUnit}
+                onChange={handleTimeUnitChange}
+              >
+                <option value="hour">Hourly</option>
+                <option value="day">Daily</option>
+                <option value="month">Monthly</option>
+              </select>
+              <input
+                type="date"
+                className="w-60 p-2 border rounded"
+                value={startDate2}
+                onChange={handleStartDateChangeHistorical2}
+                max={today}
+              />
 
-  <input
-    type="date"
-    className="w-60 p-2 border rounded"
-    value={endDate}
-    min={startDate} // ห้ามเลือกก่อน startDate
-    max={new Date(
-      Math.min(
-        new Date().getTime(), // วันที่ปัจจุบัน
-        new Date(new Date(startDate).setDate(new Date(startDate).getDate() + 31)).getTime() // 31 วันหลังจาก startDate
-      )
-    )
-      .toISOString()
-      .split("T")[0]} // ห้ามเลือกเกินทั้งวันที่ปัจจุบันและ 31 วันหลังจาก startDate
-    onChange={handleEndDateChange}
-  />
+              <input
+                type="date"
+                className="w-60 p-2 border rounded"
+                value={endDate2}
+                min={startDate2} // ห้ามเลือกก่อน startDate
+                max={new Date(
+                  Math.min(
+                    new Date().getTime(), // วันที่ปัจจุบัน
+                    new Date(new Date(startDate2).setDate(new Date(startDate2).getDate() + 31)).getTime() // 31 วันหลังจาก startDate
+                  )
+                )
+                  .toISOString()
+                  .split("T")[0]} // ห้ามเลือกเกินทั้งวันที่ปัจจุบันและ 31 วันหลังจาก startDate
+                onChange={handleEndDateChangeHistorical2}
+              />
 
-  
-</div>
+
+            </div>
 
             <div className="mt-5">
-            <BarChart data={datagraph} />
+              <BarChart data={datagraph} />
             </div>
           </div>
+          <SchedulePopup isOpen={openModalSchedule} onClose={() => setopenModalSchedule(false)}  mockDevices={scheduleData}/>
         </div>)}
+       
     </>
   );
 };

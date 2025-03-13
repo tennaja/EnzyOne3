@@ -10,9 +10,10 @@ import ScheduleComponent from "./Schedul";
 import {
     getSiteListData,
     getGroupListData,
-    getDeviceListData
+    getDeviceListData,
+    getScheduleListData
 } from "@/utils/api";
-
+import { ClipLoader } from "react-spinners";
 
 const data = [
     { id: "1", device: "หลอด 1 ลานจอดรถชั้น 2", kW: 10, kWh: 100, runningHrs: 500, status: "On", dimming: 80, lastupdate: "2025-02-18 15:00:00", lat: 13.7563, lng: 100.5018 },
@@ -53,44 +54,49 @@ const Header1 = () => {
     const [activeTab, setActiveTab] = useState("dashboard");
     const [sitelist, setSitelist] = useState();
     const [grouplist, setGrouplist] = useState();
-    const [devcielist, setDevicelist] = useState([]);
+    const [devcielist , setDevicelist] = useState([]);
+    const [schedulelist , setSchedulelist] = useState([]);
     const [siteid, setSiteid] = useState(0);
     const [groupid, setGroupid] = useState(0);
-    const [siteName, setSiteName] = useState('');
-    const [groupName, setGroupName] = useState('');
-
+    const [siteName , setSiteName] = useState('');
+    const [groupName , setGroupName] = useState('');
+    
 
 
 
     useEffect(() => {
         getSiteList();
-        GetDeviceList();
     }, []);
 
     //Get site
     const getSiteList = async () => {
         const result = await getSiteListData();
-        console.log(result)
-        console.log(result.length)
-        if (Array.isArray(result) && result.length > 0) {
+        console.log(result);
+        console.log(result.length);
+        
+        if (result.length > 0) {
             setSitelist(result);
-            setSiteid(result[0].id)
-            console.log(result[0].id)
-            getGroupList(result[0].id);
-            setSiteName(result[0].name)
+    
+            const siteId = result[0].id ?? 0; // ถ้า id เป็น null ให้ใช้ 0
+            setSiteid(siteId);
+            console.log(siteId);
+    
+            getGroupList(siteId);
+            setSiteName(result[0].name);
         }
     };
+    
 
     const getGroupList = async (siteid) => {
         console.log("Site ID:", siteid);
         setSiteid(siteid);
-
+        
         const result = await getGroupListData(siteid);
         console.log("Group List Result:", result);
-
-        if (Array.isArray(result) && result.length > 0) {
+        
+        if (result.length > 0) {
             setGrouplist(result);
-            const firstGroupId = result[0].id ?? ""
+            const firstGroupId = result[0].id ?? 0 
             console.log("First Group ID:", firstGroupId);
             setGroupid(firstGroupId);
             setGroupName(result[0].name)
@@ -98,15 +104,15 @@ const Header1 = () => {
             console.log("No groups found!");
         }
     };
-
-
+    
+    
 
     const Groupchange = (groupid) => {
         console.log(groupid)
         setGroupid(groupid);
-    };
+      };
 
-
+    
     //Get DeviceList use in search button 
     const GetDeviceList = async () => {
         setSiteid(siteid)
@@ -114,35 +120,54 @@ const Header1 = () => {
         const paramsNav = {
             siteId: siteid,
             groupId: groupid
-        };
-        const result = await getDeviceListData(paramsNav)
-        if (result.data.length > 0) {
-            setDevicelist(result.data)
-        }
-    };
+          };
+    const result = await getDeviceListData(paramsNav)
+    if(result.data.length > 0){
+        setDevicelist(result.data)
+    }
+      };
 
+      const GetScheduleList = async () => {
+        setSiteid(siteid)
+        setGroupid(groupid);
+        const paramsNav = {
+            siteId: siteid,
+            groupId: groupid
+          };
+    const result = await getScheduleListData(paramsNav)
+    if(result.data.length > 0){
+        setSchedulelist(result.data)
+    }
+      };
 
+      
 
     const renderContent = () => {
         switch (activeTab) {
             case "dashboard":
-                return <Dashboard deviceData={devcielist} FetchDevice={GetDeviceList} />;
+                
+                
+                return <Dashboard deviceData={devcielist} FetchDevice={GetDeviceList}/>;
             case "control":
-                return <DeviceControlPage deviceData={devcielist} FetchDevice={GetDeviceList} setActiveTab={() => { setActiveTab("control")}}/>;
+                return <DeviceControlPage deviceData={devcielist} FetchDevice={GetDeviceList}/>;
             case "schedule":
-                return <ScheduleComponent />;
+                return <ScheduleComponent  scheduleData ={schedulelist}/>;
             default:
                 return null;
         }
     };
+
+    
     useEffect(() => {
-        // Check if the active tab is either 'dashboard' or 'control'
-        if (["dashboard", "control"].includes(activeTab)) {
+        if (activeTab === "dashboard") {
             GetDeviceList();
         }
-    }, [activeTab]);
-      // This will run whenever `activeTab` changes.
+        else if(activeTab === "schedule"){
+            GetScheduleList();
+        }
+    }, [activeTab]); // ให้แน่ใจว่า `activeTab` เป็น dependency ตัวเดียว
 
+    
     return (
         <>
             <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200">
@@ -200,7 +225,7 @@ const Header1 = () => {
                                 setGroupName(event.target.selectedOptions[0].text);
                             }}
                             value={groupid}
-                        >
+                            >
                             {grouplist?.map((item) => {
                                 return (
                                     <option key={item.id} value={item.id}>
@@ -211,13 +236,17 @@ const Header1 = () => {
                         </select>
                     </div>
 
-                    <button className="text-white bg-[#33BFBF] rounded-md text-lg px-10 h-9" onClick={GetDeviceList}>Search</button>
+            
+            <button type="button" className="text-white bg-[#33BFBF] rounded-md text-lg px-10 h-9" onClick={() => {
+  GetDeviceList();
+  GetScheduleList();
+}}>Search</button>
                 </div>
             </div>
 
-
-            {renderContent()}
-
+            
+                    {renderContent()}
+               
         </>
     );
 };

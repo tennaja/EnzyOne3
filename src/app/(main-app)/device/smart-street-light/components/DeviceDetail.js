@@ -21,6 +21,7 @@ const DeviceDetail = ({ device , setActiveTab}) => {
     const [modalConfirmProps, setModalConfirmProps] = useState(null);
     const [modalErrorProps, setModalErorProps] = useState(null);
     const [modalSuccessProps, setModalSuccessProps] = useState(null);
+    
     useEffect(() => {
       setDimming(device?.percentDimming || 10);
     }, [device]);
@@ -47,7 +48,7 @@ const DeviceDetail = ({ device , setActiveTab}) => {
   <div class="mx-auto w-fit px-4 text-left">
     <p>Device: ${device?.name}</p>
     <p>Status: ${deviceStatus ? "on" : "off"}</p>
-    <p>%Dimming: ${deviceStatus ? dimming : ""}%</p>
+    <p>% Dimming: ${deviceStatus ? dimming : ""}%</p>
   </div>
 `
 ,

@@ -1766,3 +1766,56 @@ export async function getHistoryGraphDataa(req) {
     return error;
   }
 }
+
+export async function getEnergyHistoryGraphDataa(req) {
+  const deviceId = req.deviceId;
+  const groupBy = req.groupBy
+  const endDate = req.endDate;
+  const startDate = req.startDate;
+  
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/device/${deviceId}/history?groupBy=${groupBy}&endDate=${endDate}&startDate=${startDate}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getSchedulebyid(id) {
+
+  
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/schedule/${id}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+
+export async function getScheduleListData(req) {
+  const siteId = req.siteId;
+  const groupId = req.groupId;
+  
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/schedules-list?groupId=${groupId}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}

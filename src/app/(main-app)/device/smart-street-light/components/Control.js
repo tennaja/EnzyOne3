@@ -15,7 +15,7 @@ import ModalConfirm from "./Popupconfirm";
 import ModalDone from "./Popupcomplete";
 import ModalFail from "./PopupFali";
 
-export default function DeviceControlPage({ deviceData ,setActiveTab ,FetchDevice}) {
+export default function DeviceControlPage({ deviceData ,FetchDevice}) {
   const [selecteddeviceData, setSelecteddeviceData] = useState([]);
   const [powerOn, setPowerOn] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -47,7 +47,7 @@ export default function DeviceControlPage({ deviceData ,setActiveTab ,FetchDevic
     <div class="mx-auto w-fit px-4 text-left bg-red">
       <p>Device: ${selecteddeviceData?.length} devices selected</p>
       <p>Status: ${deviceStatus ? "on" : "off"}</p>
-      <p>%Dimming: ${deviceStatus ? dimming : ""}%</p>
+      <p>% Dimming: ${deviceStatus ? dimming : ""}%</p>
     </div>
   `
   ,
@@ -191,6 +191,10 @@ export default function DeviceControlPage({ deviceData ,setActiveTab ,FetchDevic
   // Calculate the total number of pages
   const totalPages = Math.ceil(filtereddeviceData.length / rowsPerPage);
 
+  useEffect(() => {
+    // Reset all keys in the sortConfig when deviceData changes
+    setSortConfig({}); // Clear the sortConfig object completely
+  }, [deviceData]); // This will trigger when deviceData changes
   return (
     
     <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
@@ -248,20 +252,20 @@ export default function DeviceControlPage({ deviceData ,setActiveTab ,FetchDevic
       </div>
     </th>
 
-    <th className="py-2 px-4 text-left" onClick={() => handleSort("groupName")}>
+    <th className="py-2 px-4 text-left" onClick={() => handleSort("description")}>
       Description
       <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
         <ArrowDropUpIcon
           style={{
             fontSize: "14px",
-            opacity: sortConfig.key === "groupName" && sortConfig.direction === "asc" ? 1 : 0.3,
+            opacity: sortConfig.key === "description" && sortConfig.direction === "asc" ? 1 : 0.3,
             marginBottom: "-2px",
           }}
         />
         <ArrowDropDownIcon
           style={{
             fontSize: "14px",
-            opacity: sortConfig.key === "groupName" && sortConfig.direction === "desc" ? 1 : 0.3,
+            opacity: sortConfig.key === "description" && sortConfig.direction === "desc" ? 1 : 0.3,
             marginTop: "-2px",
           }}
         />
@@ -347,7 +351,7 @@ export default function DeviceControlPage({ deviceData ,setActiveTab ,FetchDevic
         />
         {device.name}
       </td>
-      <td className="py-2 px-4 text-sm text-gray-600">{device.groupName}</td>
+      <td className="py-2 px-4 text-sm text-gray-600">{device.description}</td>
       <td className="py-2 px-4 text-sm text-gray-600">{device.groupName}</td>
       <td className="py-2 px-4 text-sm text-gray-600">
         <button
