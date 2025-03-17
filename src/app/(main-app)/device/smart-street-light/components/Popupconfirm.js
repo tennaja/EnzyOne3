@@ -57,7 +57,7 @@ const ModalConfirm = (props) => {
               {title}
             </h6>
             <div className="mt-4">
-              <p className="text-md text-gray-600" dangerouslySetInnerHTML={{ __html: content }}/>
+              <p className="text-md text-center text-gray-600" dangerouslySetInnerHTML={{ __html: content }}/>
             </div>
           </div>
         </div>

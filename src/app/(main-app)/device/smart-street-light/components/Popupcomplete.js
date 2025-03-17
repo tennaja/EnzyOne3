@@ -5,8 +5,8 @@ const ModalDone = (props) => {
     data,
     status,
     onCloseModal,
-    title = "Confirm?",
-    content = "Are you sure you would like to confirm this action?",
+    title = "Done",
+    content = "Your request accept",
     buttonTypeColor = "primary",
   } = props;
 

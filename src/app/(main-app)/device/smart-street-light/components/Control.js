@@ -14,8 +14,9 @@ import {
 import ModalConfirm from "./Popupconfirm";
 import ModalDone from "./Popupcomplete";
 import ModalFail from "./PopupFali";
+import { useDispatch, useSelector} from "react-redux";
 
-export default function DeviceControlPage({ deviceData ,FetchDevice}) {
+export default function DeviceControlPage({ deviceData ,FetchDevice,Sitename,Groupname}) {
   const [selecteddeviceData, setSelecteddeviceData] = useState([]);
   const [powerOn, setPowerOn] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,8 +30,10 @@ export default function DeviceControlPage({ deviceData ,FetchDevice}) {
   const [modalConfirmProps, setModalConfirmProps] = useState(null);
   const [modalErrorProps, setModalErorProps] = useState(null);
   const [modalSuccessProps, setModalSuccessProps] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: "device", direction: "asc" });
-      const handleStatusChange = (newStatus) => {
+  const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
+  const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
+      console.log('SelectIdSite:', SelectIdSite);    
+  const handleStatusChange = (newStatus) => {
         setDeviceStatus(newStatus);
         console.log(newStatus)
         // You can call a function here to update the device status on the server or in the backend
@@ -45,9 +48,9 @@ export default function DeviceControlPage({ deviceData ,FetchDevice}) {
           title: "Confirm Execution",
           content: `
     <div class="mx-auto w-fit px-4 text-left bg-red">
-      <p>Device: ${selecteddeviceData?.length} devices selected</p>
+      <p>Device: ${selecteddeviceData?.length} device${selecteddeviceData?.length > 1 ? "s" : ""} selected</p>
       <p>Status: ${deviceStatus ? "on" : "off"}</p>
-      <p>% Dimming: ${deviceStatus ? dimming : ""}%</p>
+      ${deviceStatus && dimming ? `<p>% Dimming: ${dimming}%</p>` : ""}
     </div>
   `
   ,
@@ -59,7 +62,7 @@ export default function DeviceControlPage({ deviceData ,FetchDevice}) {
         const Param = {
           id: selecteddeviceData,
           action: deviceStatus ? "on" : "off",
-          dimming: Number(dimming)
+          dimming: deviceStatus ? Number(dimming) : 0
         };
         const res = await DeviceControl(Param);
     
@@ -121,7 +124,8 @@ export default function DeviceControlPage({ deviceData ,FetchDevice}) {
     item.runningHour?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.status?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.lastUpdated?.toString().toLowerCase().includes(searchTerm.toLowerCase()) || 
-    item.groupName?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    item.groupName?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.description?.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSort = (column) => {
@@ -200,7 +204,7 @@ export default function DeviceControlPage({ deviceData ,FetchDevice}) {
     <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
     <div>
         <span className="text-lg font-bold block mb-2">Device List</span>
-        <p className="text-base mb-4">All Site | All Group</p>
+        <p className="text-base mb-4">{Sitename} | {Groupname}</p>
 
       
     </div>
@@ -312,7 +316,7 @@ export default function DeviceControlPage({ deviceData ,FetchDevice}) {
       </div>
     </th>
 
-    <th className="py-2 px-4 text-left" onClick={() => handleSort("lastUpdated")}>
+    <th className="py-2 px-4 text-right" onClick={() => handleSort("lastUpdated")}>
       Last Updated
       <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
         <ArrowDropUpIcon
@@ -368,7 +372,7 @@ export default function DeviceControlPage({ deviceData ,FetchDevice}) {
           {device.status}
         </button>
       </td>
-      <td className="py-2 px-4 text-sm text-gray-600">{device.lastUpdated}</td>
+      <td className="py-2 px-4 text-sm text-gray-600 text-right">{device.lastUpdated}</td>
     </tr>
   ))}
 </tbody>

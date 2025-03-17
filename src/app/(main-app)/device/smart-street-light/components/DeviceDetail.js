@@ -45,22 +45,22 @@ const DeviceDetail = ({ device , setActiveTab}) => {
         onClickConfirmBtn: handleSubmit,
         title: "Confirm Execution",
         content: `
-  <div class="mx-auto w-fit px-4 text-left">
-    <p>Device: ${device?.name}</p>
-    <p>Status: ${deviceStatus ? "on" : "off"}</p>
-    <p>% Dimming: ${deviceStatus ? dimming : ""}%</p>
-  </div>
-`
-,
+          <div class="mx-auto w-fit px-4 text-left">
+            <p>Device: ${device?.name}</p>
+            <p>Status: ${deviceStatus ? "on" : "off"}</p>
+            ${deviceStatus && dimming ? `<p>% Dimming: ${dimming}%</p>` : ""}
+          </div>
+        `,
         buttonTypeColor: "primary",
       });
     };
+    
     
     const handleSubmit = async () => {
         const Param = {
           id: device?.id,
           action: deviceStatus ? "on" : "off",
-          dimming:Number(dimming)
+          dimming:deviceStatus ? Number(dimming) : 0
         };
         const res = await DeviceControl(Param);
     

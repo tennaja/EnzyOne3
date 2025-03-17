@@ -14,8 +14,9 @@ import ChartComponent from "./Chaart";
 import MyChart from "./Chaart";
 import BarChart from "./Barchart";
 import SchedulePopup from "./Popupchedule";
-const Dashboard = ({ deviceData, FetchDevice }) => {
-  console.log(deviceData)
+import BarChartComponent from "./Barchart";
+const Dashboard = ({ deviceData, FetchDevice ,Sitename,Groupname,GroupId}) => {
+  
 
   const today = new Date().toISOString().split("T")[0];
   const [activeTab, setActiveTab] = useState("table");
@@ -25,6 +26,7 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [graphData, setGraphDaata] = useState();
+  const [graphData2, setGraphDaata2] = useState();
   const [selectedLocation, setSelectedLocation] = useState(null);
   // const [mapZoomLevel, setMapZoomLevel] = useState(15); //default zoom level
   // const [locationDataList, setLocationDataList] = useState([]);
@@ -144,7 +146,7 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
   useEffect(() => {
     // Check if the active tab is 'dashboard'
     if (activeTab === "table") {
-      FetchDevice();
+      // FetchDevice();
       setSearchQuery("")
     }
   }, [activeTab]);  // This will run whenever `activeTab` changes.
@@ -174,13 +176,13 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
     const Param = {
       deviceId: id,
       groupBy: timeUnit,
-      endDate: endDate,
-      startDate: startDate
+      endDate: endDate2,
+      startDate: startDate2
     };
     const res = await getEnergyHistoryGraphDataa(Param);
 
     if (res.status === 200) {
-      setGraphDaata(res.data)
+      setGraphDaata2(res.data)
       console.log("เข้าาาาาาาาาาาาาาาาา", res.data)
 
 
@@ -217,7 +219,7 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
     setStartDate(newStartDate);
 
     const maxAllowedEndDate = new Date(newStartDate);
-    maxAllowedEndDate.setDate(maxAllowedEndDate.getDate() + 31);
+    maxAllowedEndDate.setUTCDate(maxAllowedEndDate.getUTCDate() + 31);
 
     // ถ้า endDate เกิน 31 วัน ให้อัปเดตเป็น maxAllowedEndDate
     if (new Date(endDate) > maxAllowedEndDate) {
@@ -225,7 +227,7 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
     }
   };
 
-  const handleEndDateChangeHistorical = (e) => {
+const handleEndDateChangeHistorical = (e) => {
     const newEndDate = e.target.value;
     const maxAllowedEndDate = new Date(startDate);
     maxAllowedEndDate.setDate(maxAllowedEndDate.getDate() + 31);
@@ -243,7 +245,7 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
     }
   };
 
-  // ชุดที่สอง (สำหรับ startDate2 และ endDate2)
+
   const handleStartDateChangeHistorical2 = (e) => {
     const newStartDate = e.target.value;
     console.log(newStartDate);
@@ -251,17 +253,13 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
     setStartDate2(newStartDate);
 
     const maxEndDate = new Date(newStartDate);
-    maxEndDate.setDate(maxEndDate.getDate() + 31);
+    maxEndDate.setUTCDate(maxEndDate.getUTCDate() + 31);
     const formattedMaxEndDate = maxEndDate.toISOString().split("T")[0];
 
-    const currentEndDate = new Date(endDate2);
+    setEndDate2((prevEndDate) => (new Date(prevEndDate) > maxEndDate ? formattedMaxEndDate : prevEndDate));
+};
 
-    if (currentEndDate > maxEndDate) {
-      setEndDate2(formattedMaxEndDate);
-    }
-  };
-
-  const handleEndDateChangeHistorical2 = (e) => {
+const handleEndDateChangeHistorical2 = (e) => {
     const newEndDate = e.target.value;
     const startDateObj = new Date(startDate2);
     const maxAllowedEndDate = new Date(startDateObj);
@@ -270,16 +268,18 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
     const todayDate = new Date(today);
     const newEndDateObj = new Date(newEndDate);
 
-    const isWithinRange = newEndDateObj <= maxAllowedEndDate && newEndDateObj <= todayDate;
-
-    if (isWithinRange) {
-      setEndDate2(newEndDate);
-
-      if (selectedDevice?.id) {
-        GetEnergyHistoryGraph(selectedDevice.id);
-      }
+    if (newEndDateObj <= maxAllowedEndDate && newEndDateObj <= todayDate) {
+        setEndDate2(newEndDate);
     }
-  };
+};
+
+// ให้แน่ใจว่า API ถูกเรียกหลังจาก endDate2 ถูกอัปเดตจริง
+useEffect(() => {
+    if (selectedDevice?.id) {
+        GetEnergyHistoryGraph(selectedDevice.id);
+    }
+}, [endDate2,startDate2]);
+
 
 
   const handleTimeUnitChange = (e) => {
@@ -287,18 +287,13 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
     setTimeUnit(e.target.value);
 
   };
+  
   useEffect(() => {
     if (selectedDevice?.id) {
-      GetEnergyHistoryGraph(selectedDevice.id);
+      GetHistoryGraph(selectedDevice.id);
+      
     }
-  }, [timeUnit]); // เรียกใหม่เมื่อ timeUnit เปลี่ยน
-  // 🔥 เรียก API ทันทีที่ startDate หรือ endDate เปลี่ยน
-  useEffect(() => {
-    if (selectedDevice?.id) {
-      GetHistoryGraph(selectedDevice.id, startDate, endDate);
-      GetEnergyHistoryGraph(selectedDevice.id, startDate, endDate);
-    }
-  }, [startDate, endDate, selectedDevice]);
+  }, [endDate,startDate]);
 
   useEffect(() => {
     // Reset all keys in the sortConfig when deviceData changes
@@ -310,7 +305,7 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
       <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
         <div>
           <span className="text-lg font-bold block mb-2">Device List</span>
-          <p className="text-base mb-4">All Site | All Group</p>
+          <p className="text-base mb-4">{Sitename} | {Groupname}</p>
 
 
         </div>
@@ -353,31 +348,32 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
               <>
 
 
-                <h1 className="text-base font-bold mb-2">Active Schedule</h1>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full bg-white rounded-lg shadow-md border-t border-gray-300 text-sm">
-                    <tbody>
-                      {selectedDevice?.schedules?.map((schedule, index) => (
-                        <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} border-b border-gray-300`}>
-                          <td className="py-2 px-4">
-                            <div className="font-bold">{schedule.name}</div>
-                            <div className="font-bold">{schedule.percentDimming}% Dimming</div>
-                            <div className="font-bold">{schedule.startTime} - {schedule.endTime}</div>
-                            <div className="text-xs">{schedule.repeat}</div>
-                          </td>
+<h1 className="text-base font-bold mb-2">Active Schedule</h1>
+<div className="max-h-72 overflow-y-auto">
+  <table className="min-w-full bg-white rounded-lg border-t border-gray-300 text-sm">
+    <tbody>
+      {selectedDevice?.schedules?.map((schedule, index) => (
+        <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} border-b border-gray-300`}>
+          <td className="py-2 px-4">
+            <div className="font-bold">{schedule.name}</div>
+            <div className="font-bold">{schedule.percentDimming}% Dimming</div>
+            <div className="font-bold">{schedule.startTime} - {schedule.endTime}</div>
+            <div className="text-xs">{schedule.repeat}</div>
+          </td>
 
+          <td className="py-2 px-4">
+            <button className="text-gray-500 hover:text-gray-700" onClick={() => {
+              getSchedulById(schedule.id);
+            }}>
+              <CreateIcon />
+            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
 
-                          <td className="py-2 px-4">
-                            <button className="text-gray-500 hover:text-gray-700" onClick={() => {
-                              getSchedulById(schedule.id);
-
-                            }}><CreateIcon /></button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
 
               </>)}
           </div>
@@ -511,7 +507,7 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
                           </div>
                         </th>
 
-                        <th className="px-2 py-1 text-center text-gray-700" onClick={() => handleSort("percentDimming")}>
+                        <th className="px-2 py-1 text-right text-gray-700" onClick={() => handleSort("percentDimming")}>
                           % Dimming
                           <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
                             <ArrowDropUpIcon
@@ -554,52 +550,55 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
                     </thead>
 
                     <tbody>
-                      {currentData.map((record, index) => (
-                        <tr
-                          key={record.id}
-                          className={`hover:bg-gray-100 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}
-                          style={{ borderBottom: '1px solid #e0e0e0' }}
-                        >
-                          <td className="px-2 py-1 text-left">
-                            <div
-                              className="text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] text-base mb-1"
-                              onClick={() => {
-                                getdevicebyId(record.id);
-                                setActiveTab("detail");
-                                setSelectedLocation({ lat: record.latitude, lng: record.longitude }); // อัพเดตตำแหน่งที่เลือก
-                                setMapZoomLevel(15); // ซูมเข้าเมื่อเลือกอุปกรณ์
-                                GetHistoryGraph(record.id)
-                                GetEnergyHistoryGraph(record.id)
-                              }}
-                            >
-                              {record.name}
-                            </div>
+  {currentData.length === 0 ? (
+    <tr>
+      <td colSpan="7" className="px-2 py-4 text-center text-gray-500">Data not found</td>
+    </tr>
+  ) : (
+    currentData.map((record, index) => (
+      <tr
+        key={record.id}
+        className={`hover:bg-gray-100 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}
+        style={{ borderBottom: '1px solid #e0e0e0' }}
+      >
+        <td className="px-2 py-1 text-left">
+          <div
+            className="text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] text-base mb-1"
+            onClick={() => {
+              getdevicebyId(record.id);
+              setActiveTab("detail");
+              setSelectedLocation({ lat: record.latitude, lng: record.longitude }); // อัพเดตตำแหน่งที่เลือก
+              setMapZoomLevel(15); // ซูมเข้าเมื่อเลือกอุปกรณ์
+              GetHistoryGraph(record.id);
+              GetEnergyHistoryGraph(record.id);
+            }}
+          >
+            {record.name}
+          </div>
+          <div>{record.groupName}</div>
+        </td>
+        <td className="px-2 py-1 text-center">{record.kW}</td>
+        <td className="px-2 py-1 text-center">{record.kWh}</td>
+        <td className="px-2 py-1 text-center">{record.runningHour}</td>
+        <td className="px-2 py-1 text-center">
+          <span
+            className={`inline-block px-2 py-1 text-sm font-bold  ${record.status === "on"
+              ? "text-[#12B981]"
+              : record.status === "off"
+                ? "text-[#9DA8B9]"
+                : "text-[#FF3D4B]"
+              }`}
+          >
+            {record.status}
+          </span>
+        </td>
+        <td className="px-2 py-1 text-right">{record.percentDimming}</td>
+        <td className="px-2 py-2 text-right text-balance">{record.lastUpdated}</td>
+      </tr>
+    ))
+  )}
+</tbody>
 
-                            <div>{record.groupName}</div>
-                          </td>
-                          <td className="px-2 py-1 text-center">{record.kW}</td>
-                          <td className="px-2 py-1 text-center">{record.kWh}</td>
-                          <td className="px-2 py-1 text-center">{record.runningHour}</td>
-                          <td className="px-2 py-1 text-center">
-                            <span
-                              className={`inline-block px-2 py-1 text-sm font-bold  ${record.status === "on"
-                                ? "text-[#12B981]"
-                                : record.status === "off"
-                                  ? "text-[#9DA8B9]"
-                                  : "text-[#FF3D4B]"
-                                }`}
-                            >
-                              {record.status}
-                            </span>
-                          </td>
-                          <td className="px-2 py-1 text-center" >{record.percentDimming}</td>
-                          <td className="px-2 py-2 text-right text-balance">{record.lastUpdated}</td>
-
-
-
-                        </tr>
-                      ))}
-                    </tbody>
                   </table>
                 </div>
 
@@ -673,21 +672,26 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
                 max={today}
               />
 
-              <input
-                type="date"
-                className="w-60 p-2 border rounded"
-                value={endDate}
-                min={startDate} // ห้ามเลือกก่อน startDate
-                max={new Date(
-                  Math.min(
-                    new Date().getTime(), // วันที่ปัจจุบัน
-                    new Date(new Date(startDate).setDate(new Date(startDate).getDate() + 31)).getTime() // 31 วันหลังจาก startDate
-                  )
-                )
-                  .toISOString()
-                  .split("T")[0]} // ห้ามเลือกเกินทั้งวันที่ปัจจุบันและ 31 วันหลังจาก startDate
-                onChange={handleEndDateChangeHistorical}
-              />
+<input
+  type="date"
+  className="w-60 p-2 border rounded"
+  value={endDate}
+  min={startDate || ""} // ถ้า startDate เป็น null/"" จะไม่กำหนดค่า min
+  max={
+    startDate
+      ? new Date(
+          Math.min(
+            new Date().getTime(), // วันที่ปัจจุบัน
+            new Date(new Date(startDate).setDate(new Date(startDate).getDate() + 31)).getTime() // 31 วันหลัง startDate
+          )
+        )
+          .toISOString()
+          .split("T")[0] // แปลงเป็น YYYY-MM-DD
+      : new Date().toISOString().split("T")[0] // ถ้า startDate ไม่มีค่า ใช้วันนี้เป็น max
+  }
+  onChange={handleEndDateChangeHistorical}
+/>
+
 
             </div>
             <div className="mt-5">
@@ -711,30 +715,41 @@ const Dashboard = ({ deviceData, FetchDevice }) => {
                 max={today}
               />
 
-              <input
-                type="date"
-                className="w-60 p-2 border rounded"
-                value={endDate2}
-                min={startDate2} // ห้ามเลือกก่อน startDate
-                max={new Date(
-                  Math.min(
-                    new Date().getTime(), // วันที่ปัจจุบัน
-                    new Date(new Date(startDate2).setDate(new Date(startDate2).getDate() + 31)).getTime() // 31 วันหลังจาก startDate
-                  )
-                )
-                  .toISOString()
-                  .split("T")[0]} // ห้ามเลือกเกินทั้งวันที่ปัจจุบันและ 31 วันหลังจาก startDate
-                onChange={handleEndDateChangeHistorical2}
-              />
+<input
+  type="date"
+  className="w-60 p-2 border rounded"
+  value={endDate2}
+  min={startDate2 || ""} // ถ้า startDate2 เป็น null/"" จะไม่กำหนดค่า min
+  max={
+    startDate2
+      ? new Date(
+          Math.min(
+            new Date().getTime(), // วันที่ปัจจุบัน
+            new Date(new Date(startDate2).setDate(new Date(startDate2).getDate() + 31)).getTime() // 31 วันหลัง startDate2
+          )
+        )
+          .toISOString()
+          .split("T")[0] // แปลงเป็น YYYY-MM-DD
+      : new Date().toISOString().split("T")[0] // ถ้า startDate2 ไม่มีค่า ใช้วันนี้เป็น max
+  }
+  onChange={handleEndDateChangeHistorical2}
+/>
+
 
 
             </div>
 
             <div className="mt-5">
-              <BarChart data={datagraph} />
+              <BarChartComponent data={graphData2} type={timeUnit}/>
             </div>
           </div>
-          <SchedulePopup isOpen={openModalSchedule} onClose={() => setopenModalSchedule(false)}  mockDevices={scheduleData}/>
+          <SchedulePopup 
+          isOpen={openModalSchedule} 
+          onClose={() => {setopenModalSchedule(false); 
+          setScheduleData(null);}}  
+          scheduleData={scheduleData} 
+          deviceList={deviceData} 
+          groupId={GroupId} />
         </div>)}
        
     </>

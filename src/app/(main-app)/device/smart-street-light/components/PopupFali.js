@@ -5,8 +5,8 @@ const ModalFail = (props) => {
     data,
     status,
     onCloseModal,
-    title = "Confirm?",
-    content = "Are you sure you would like to confirm this action?",
+    title = "Error",
+    content = "Something went wrong!!",
     buttonTypeColor = "primary",
   } = props;
 

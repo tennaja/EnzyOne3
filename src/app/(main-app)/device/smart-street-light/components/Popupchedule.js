@@ -1,64 +1,35 @@
 import React, { useState, useEffect } from "react";
 import { Modal } from "@mantine/core";
-
-// const mockDevices = [
-//   {
-//     id: 1,
-//     name: "เปิดไฟ 18.00 - 22:00 ทุกวัน",
-//     startTime: "18:00",
-//     endTime: "22:00",
-//     status: "active",
-//     repeat: "everyday",
-//     executionDateTime: null,
-//     percentDimming: 45,
-//     lastUpdateTimestamp: "2025-03-13 13:22:26",
-//     siteId: 1,
-//     groupId: 1,
-//     dayOfWeek: [1, 2, 3, 4, 5, 6, 7],
-//     scheduledDevices: [
-//       {
-//         id: 1,
-//         name: "หลอดไฟ 1",
-//         description: "หลอดไฟถนนหน้าโรงอาหาร 1",
-//       },
-//       {
-//         id: 2,
-//         name: "หลอดไฟ 2",
-//         description: "หลอดไฟถนนหน้าโรงอาหาร 1",
-//       },{
-//         id: 2,
-//         name: "หลอดไฟ 2",
-//         description: "หลอดไฟถนนหน้าโรงอาหาร 1",
-//       },{
-//         id: 2,
-//         name: "หลอดไฟ 2",
-//         description: "หลอดไฟถนนหน้าโรงอาหาร 1",
-//       },{
-//         id: 2,
-//         name: "หลอดไฟ 2",
-//         description: "หลอดไฟถนนหน้าโรงอาหาร 1",
-//       },{
-//         id: 2,
-//         name: "หลอดไฟ 2",
-//         description: "หลอดไฟถนนหน้าโรงอาหาร 1",
-//       },{
-//         id: 2,
-//         name: "หลอดไฟ 2",
-//         description: "หลอดไฟถนนหน้าโรงอาหาร 1",
-//       },
-//     ],
-//   },
-//   // เพิ่มอุปกรณ์ตัวอื่น ๆ ได้ที่นี่
-// ];
-
-export default function SchedulePopup({ isOpen, onClose ,mockDevices}) {
-  console.log(mockDevices)
+import {
+  postCreateSchedule, putUpdateSchedule
+} from "@/utils/api";
+import { useDispatch, useSelector } from "react-redux";
+import ModalConfirm from "./Popupconfirm";
+import ModalDone from "./Popupcomplete";
+import ModalFail from "./PopupFali";
+export default function SchedulePopup({
+  isOpen,
+  onClose,
+  deviceList,
+  scheduleData,
+  Action,
+  groupId,
+  onHandleConfirm,
+  FetchData
+}) {
   const [selectedDevices, setSelectedDevices] = useState([]);
-  const [dimmingLevel, setDimmingLevel] = useState(mockDevices?.percentDimming || 10);
-  const [repeatOption, setRepeatOption] = useState(mockDevices?.repeat || "once");
-  const [startDatetime, setStartDatetime] = useState(mockDevices?.startTime || "");
-  const [endDatetime, setEndDatetime] = useState(mockDevices?.endTime || "");
-  console.log(mockDevices?.repeat)
+  const [dimmingLevel, setDimmingLevel] = useState(scheduleData?.percentDimming || 10);
+  const [repeatOption, setRepeatOption] = useState(scheduleData?.repeat || "once");
+  const [startDatetime, setStartDatetime] = useState(scheduleData?.startTime || "");
+  const [endDatetime, setEndDatetime] = useState(scheduleData?.endTime || "");
+  const [scheduleName, setScheduleName] = useState(scheduleData?.name || "");
+  const [openModalconfirm, setopenModalconfirm] = useState(false)
+  const [openModalsuccess, setopenModalsuccess] = useState(false)
+  const [openModalfail, setopenModalfail] = useState(false)
+  const [modalConfirmProps, setModalConfirmProps] = useState(null);
+  const [modalErrorProps, setModalErorProps] = useState(null);
+  const [modalSuccessProps, setModalSuccessProps] = useState(null);
+  const [dateTime,setDatetime] = useState(scheduleData?.executionDateTime)
   const [selectedDays, setSelectedDays] = useState({
     monday: false,
     tuesday: false,
@@ -68,17 +39,19 @@ export default function SchedulePopup({ isOpen, onClose ,mockDevices}) {
     saturday: false,
     sunday: false,
   });
+  
+  // Use the first schedule from scheduleData
+  const schedule = scheduleData;
 
-  // Use the first schedule from mockDevices
-  const schedule = mockDevices;
-
-   useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
+      setScheduleName(schedule?.name || "")
+      setDatetime(schedule?.executionDateTime || "")
       setStartDatetime(schedule?.startTime || "");
       setEndDatetime(schedule?.endTime || "");
       setRepeatOption(schedule?.repeat || "once");
       setDimmingLevel(schedule?.percentDimming || 10);
-      setSelectedDevices();
+      setSelectedDevices(schedule?.scheduledDevices?.map(device => device.id) || []);
     }
   }, [isOpen]);
 
@@ -90,14 +63,14 @@ export default function SchedulePopup({ isOpen, onClose ,mockDevices}) {
   };
 
   const toggleSelectAll = () => {
-    if (selectedDevices?.length === schedule?.scheduledDevices.length) {
+    if (selectedDevices?.length === deviceList?.length) {
       setSelectedDevices([]); // ยกเลิกการเลือกทั้งหมด
     } else {
-      setSelectedDevices(schedule?.scheduledDevices.map((device) => device.id));
-      console.log()
+      setSelectedDevices(deviceList?.map((device) => device.id)); // เลือกทั้งหมด
     }
   };
-  
+
+
 
   const toggleSelectOne = (id) => {
     setSelectedDevices((prev) =>
@@ -153,35 +126,137 @@ export default function SchedulePopup({ isOpen, onClose ,mockDevices}) {
   };
 
   useEffect(() => {
-  const newSelectedDays = updateSelectedDays();
-  setSelectedDays(newSelectedDays);
-}, [repeatOption]);
-const handleSave = () => {
-  const param = {
-    id: selectedDevices,
-    dimming: dimmingLevel,
-    repeat: repeatOption,
-    startdate: startDatetime,
-    enddate: endDatetime,
-    dayOfWeek: Object.keys(selectedDays)
-      .filter(day => selectedDays[day]) // คัดเลือกวันที่ถูกเลือก
-      .map(day => {
-        // แปลงชื่อวันเป็นตัวเลข (1-7)
-        const daysMap = {
-          monday: 1,
-          tuesday: 2,
-          wednesday: 3,
-          thursday: 4,
-          friday: 5,
-          saturday: 6,
-          sunday: 7,
-        };
-        return daysMap[day]; // แปลงชื่อวันเป็นตัวเลข
-      }),
+    const newSelectedDays = updateSelectedDays();
+    setSelectedDays(newSelectedDays);
+  }, [repeatOption]);
+
+  const handleOpenModalconfirm = () => {
+    setopenModalconfirm(true);
+    setModalConfirmProps({
+      onCloseModal: handleClosePopup,
+      onClickConfirmBtn: Action === "create" ? handleSaveCreate : handleSaveUpdate,
+      title: "Edit/Save Schedule",
+      content: "Are you sureyou want to save this schedule ?"
+      ,
+      buttonTypeColor: "primary",
+    });
+  };
+  const handleClosePopup = () => {
+    setopenModalconfirm(false)
+    setopenModalsuccess(false)
+    setopenModalfail(false)
+  }
+  const CreateSchedul = async (req) => {
+    try {
+      console.log("Request Parameters:", req);
+
+      const result = await postCreateSchedule(req);
+      console.log("Group List Result:", result);
+
+      if (result.status === 201) {
+        console.log("Success");
+        setopenModalconfirm(false)
+        
+        onClose()
+        FetchData()
+      } else {
+        console.log("No groups found!");
+        setopenModalfail(true)
+      }
+    } catch (error) {
+      console.log("Error creating schedule:", error);
+    }
+  };
+  const UpdateSchedul = async (id, req) => {
+    try {
+      console.log("Request Parameters:", req);
+
+      const result = await putUpdateSchedule(id, req);
+      console.log("Group List Result:", result);
+
+      if (result.status === 200) {
+        console.log("Success");
+        setopenModalconfirm(false)
+
+        onClose()
+        FetchData()
+      } else {
+        console.log("No groups found!");
+        setopenModalfail(true)
+      }
+    } catch (error) {
+      console.log("Error creating schedule:", error);
+    }
   };
 
-  console.log(param); // หรือส่ง param ไปที่ API หรือทำอย่างอื่นตามต้องการ
-};
+  const handleSaveCreate = () => {
+    const param = {
+      name: scheduleName,
+      groupId: Number(groupId),
+      startTime: startDatetime,
+      endTime: endDatetime,
+      repeat: repeatOption,
+      executionDateTime: "null",
+      percentDimming: Number(dimmingLevel),
+      dayOfWeek: repeatOption === "once"
+        ? [] // หากเลือก "once" ให้เป็น []
+        : Object.keys(selectedDays)
+          .filter(day => selectedDays[day])
+          .map(day => {
+            const daysMap = {
+              monday: 1,
+              tuesday: 2,
+              wednesday: 3,
+              thursday: 4,
+              friday: 5,
+              saturday: 6,
+              sunday: 7,
+            };
+            return daysMap[day];
+          }),
+      scheduledDevices: selectedDevices,
+    };
+
+    console.log("Generated Parameters:", param);
+
+    // ส่ง param ไปยัง CreateSchedul
+    CreateSchedul(param);
+  };
+
+  const handleSaveUpdate = () => {
+    const param = {
+      name: scheduleName,
+      groupId: Number(groupId),
+      startTime: startDatetime,
+      endTime: endDatetime,
+      repeat: repeatOption,
+      executionDateTime: "null",
+      percentDimming: Number(dimmingLevel),
+      dayOfWeek: repeatOption === "once"
+        ? [] // หากเลือก "once" ให้เป็น []
+        : Object.keys(selectedDays)
+          .filter(day => selectedDays[day])
+          .map(day => {
+            const daysMap = {
+              monday: 1,
+              tuesday: 2,
+              wednesday: 3,
+              thursday: 4,
+              friday: 5,
+              saturday: 6,
+              sunday: 7,
+            };
+            return daysMap[day];
+          }),
+      scheduledDevices: selectedDevices,
+    };
+
+    console.log("Generated Parameters:", param);
+
+    // ส่ง param ไปยัง CreateSchedul
+    UpdateSchedul(scheduleData.id, param);
+  };
+
 
 
   const days = updateSelectedDays();
@@ -195,7 +270,7 @@ const handleSave = () => {
         withCloseButton={false}
         closeOnClickOutside={false}
         centered
-       
+
       >
         <div className="p-4">
           <h2 className="text-xl font-semibold mb-4">Add Schedule</h2>
@@ -206,7 +281,8 @@ const handleSave = () => {
                 type="text"
                 className="w-96 p-2 border rounded"
                 placeholder="Enter schedule name"
-                defaultValue={schedule?.name} // Dynamically set schedule name
+                value={scheduleName} // ใช้ค่า state ในการแสดงผล
+                onChange={(e) => setScheduleName(e.target.value)} // อัพเดต state เมื่อมีการเปลี่ยนแปลง
               />
             </div>
 
@@ -215,14 +291,14 @@ const handleSave = () => {
               <label className="block text-sm font-medium">Device</label>
               <div className="h-52 overflow-hidden flex flex-col">
                 <table className="w-full text-sm border-collapse">
-                  <thead className="border-b sticky top-0 z-10 ">
+                  <thead className="border-b sticky top-0 z-10">
                     <tr>
                       <th className="p-2 w-10">
-                      <input
-  type="checkbox"
-  onChange={toggleSelectAll}
-  checked={selectedDevices?.length > 0 && selectedDevices?.length === mockDevices?.scheduledDevices.length}
-/>
+                        <input
+                          type="checkbox"
+                          onChange={toggleSelectAll}
+                          checked={(selectedDevices || []).length > 0 && (selectedDevices || []).length === (deviceList || []).length}
+                        />
 
                       </th>
                       <th className="p-2 text-left">Device</th>
@@ -233,17 +309,12 @@ const handleSave = () => {
                 <div className="overflow-auto h-full">
                   <table className="w-full text-sm">
                     <tbody>
-                      {schedule?.scheduledDevices?.map((device, index) => (
-                        <tr
-                          key={device.id}
-                          className={`${
-                            index % 2 === 0 ? 'bg-gray-100' : 'bg-white'
-                          } border-b`}
-                        >
+                      {deviceList?.map((device, index) => (
+                        <tr key={device.id} className={`${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} border-b`}>
                           <td className="p-2 text-center w-10">
                             <input
                               type="checkbox"
-                              checked={selectedDevices?.includes(device.id)}
+                              checked={selectedDevices.includes(device.id)}
                               onChange={() => toggleSelectOne(device.id)}
                             />
                           </td>
@@ -257,31 +328,35 @@ const handleSave = () => {
               </div>
             </div>
 
+
             {/* Repeat Dropdown */}
             <div className="grid grid-cols-[0.5fr_2fr] items-center gap-x-4 mt-3">
               <label className="text-sm font-medium text-left">Repeat</label>
-              
+              <select
+                className="w-full p-2 border rounded"
+                value={repeatOption} // กำหนดค่าเริ่มต้นจาก scheduleData
+                onChange={(e) => {
+                  const newRepeat = e.target.value;
+                  setRepeatOption(newRepeat);
 
-<select
-  className="w-full p-2 border rounded"
-  value={repeatOption} // กำหนดค่าเริ่มต้นจาก mockDevices
-  onChange={(e) => {
-    const newRepeat = e.target.value;
-    setRepeatOption(newRepeat);
-    
-    // อัปเดตค่า repeat ใน mockDevices[0]
-    mockDevices[0] = {
-      ...mockDevices[0],
-      repeat: newRepeat
-    };
-  }}
->
-  <option value="once">Once</option>
-  <option value="everyday">Everyday</option>
-  <option value="weekday">Weekday</option>
-  <option value="weekend">Weekend</option>
-  <option value="custom">Custom</option>
-</select>
+                  // ตรวจสอบว่า schedule มีค่าและเป็นอาเรย์ก่อน
+                  if (schedule && schedule.length > 0) {
+                    schedule[0] = {
+                      ...schedule[0],
+                      repeat: newRepeat
+                    };
+                  } else {
+                    console.error('schedule is undefined or empty');
+                  }
+                }}
+              >
+                <option value="once">Once</option>
+                <option value="everyday">Everyday</option>
+                <option value="weekday">Weekday</option>
+                <option value="weekend">Weekend</option>
+                <option value="custom">Custom</option>
+              </select>
+
 
 
             </div>
@@ -294,7 +369,7 @@ const handleSave = () => {
                   <input
                     type="datetime-local"
                     className="w-full p-2 border rounded"
-                    value={startDatetime}
+                    value={dateTime}
                     onChange={(e) => setStartDatetime(e.target.value)}
                   />
                   <span>-</span>
@@ -325,11 +400,15 @@ const handleSave = () => {
                     <input
                       type="time"
                       className="w-full p-2 border rounded"
+                      value={startDatetime}
+                      onChange={(e) => setStartDatetime(e.target.value)}
                     />
                     <span>-</span>
                     <input
                       type="time"
                       className="w-full p-2 border rounded"
+                      value={endDatetime}
+                      onChange={(e) => setEndDatetime(e.target.value)}
                     />
                   </div>
                 </div>
@@ -342,9 +421,10 @@ const handleSave = () => {
                         <input
                           type="checkbox"
                           name={day}
-                          checked={selectedDays[day]}
+
                           onChange={() => handleDayChange(day)}
                         />
+
                         <span className="ml-2">{day.charAt(0).toUpperCase() + day.slice(1, 3)}</span>
                       </label>
                     ))}
@@ -353,11 +433,15 @@ const handleSave = () => {
                     <input
                       type="time"
                       className="w-full p-2 border rounded"
+                      value={startDatetime}
+                      onChange={(e) => setStartDatetime(e.target.value)}
                     />
                     <span>-</span>
                     <input
                       type="time"
                       className="w-full p-2 border rounded"
+                      value={endDatetime}
+                      onChange={(e) => setEndDatetime(e.target.value)}
                     />
                   </div>
                 </div>
@@ -381,23 +465,26 @@ const handleSave = () => {
               </div>
             </div>
             <div className="flex justify-center gap-2 mt-4">
-            <button
-              type="button"
-              className="px-4 py-2 bg-gray-200 rounded"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-            <button
-            type="button"
-              className="px-4 py-2 bg-blue-500 text-white rounded"
-              onClick={handleSave}
-            >
-              Save
-            </button>
-          </div>
+              <button
+                type="button"
+                className="px-4 py-2 bg-gray-200 rounded"
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+                onClick={handleOpenModalconfirm}
+              >
+                Save
+              </button>
+            </div>
           </form>
         </div>
+        {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
+        {openModalsuccess && <ModalDone />}
+        {openModalfail && <ModalFail onCloseModal={handleClosePopup} />}
       </Modal>
     </>
   );

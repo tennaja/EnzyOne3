@@ -1819,3 +1819,72 @@ export async function getScheduleListData(req) {
     return error;
   }
 }
+
+export async function postCreateSchedule(req) {
+  try {
+    const res = await axios.post(
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/schedule`,
+      req, 
+      {
+        headers: {
+          ...authorizationHeader,
+        },
+      }
+    );
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function putUpdateSchedule(id,req) {
+  try {
+    const res = await axios.put(
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/schedule/${id}`,
+      req, 
+      {
+        headers: {
+          ...authorizationHeader,
+        },
+      }
+    );
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function deleteSchedule(id) {
+  try {
+    const res = await axios.delete(
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/schedule/${id}`,
+      {
+        headers: {
+          ...authorizationHeader,
+        },
+      }
+    );
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function changeStatuschedule(id,req) {
+  try {
+    const res = await axios.put(
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/schedule/${id}/status`,
+      req,
+      {
+        headers: {
+          ...authorizationHeader,
+        },
+      }
+    );
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+
