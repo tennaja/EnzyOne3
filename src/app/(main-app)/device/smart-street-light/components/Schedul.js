@@ -15,7 +15,6 @@ import 'react-toastify/dist/ReactToastify.css';
 
 export default function ScheduleComponent({ scheduleData ,
   deviceData, 
-  GroupId, 
   FetchSchedule,
   Sitename,
   Groupname
@@ -499,14 +498,15 @@ const getCurrentStatus = (id) => {
       onSaveSchedule={CreateSchedul} 
       onUpdateSchedule={UpdateSchedul} 
       onHandleConfirm={handleOpenModalconfirm}
+      Isconfirm={openModalconfirm}
       Action={action} 
-      groupId={GroupId}
+      groupId={ScheduleData?.groupId}
       FetchData={FetchSchedule}
       />
         {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
         {openModalsuccess && <ModalDone />}
         {openModalfail && <ModalFail onCloseModal={handleClosePopup} />}
-        <ToastContainer />
+        
     </div>
   );
 }

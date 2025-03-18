@@ -150,6 +150,14 @@ const MapTH = ({
         scrollWheelZoom={isCanZoom}
         doubleClickZoom={isCanZoom}
         whenCreated={(map) => (mapRef.current = map)}
+        style={{
+          zIndex: 1, // Ensure the modal is always on top
+          // Fixed position so it stays on top of the page
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

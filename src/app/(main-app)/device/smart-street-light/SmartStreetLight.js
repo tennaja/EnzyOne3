@@ -1,11 +1,9 @@
 "use client";
 import React from "react";
-// import SummaryCard from "./components/SummaryCard";
+
 
 import dynamic from "next/dynamic";
-// import DeviceControl from "./components/Control";
 
-// import Header1 from "./components/Header";
 
 
 

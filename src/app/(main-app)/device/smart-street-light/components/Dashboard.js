@@ -3,21 +3,18 @@ import ArrowForwardIosOutlinedIcon from '@mui/icons-material/ArrowForwardIosOutl
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import Map from "./Thaimap";
 import DeviceDetail from "./DeviceDetail";
-import MapTH from "./MapTest";
+import MapTH from "./MapLeaflet";
 import CreateIcon from '@mui/icons-material/Create';
 import {
   getDevicebyId, getHistoryGraphDataa, getEnergyHistoryGraphDataa, getSchedulebyid
 } from "@/utils/api";
-import ChartComponent from "./Chaart";
-import MyChart from "./Chaart";
-import BarChart from "./Barchart";
+import ChartComponent from "./Chart1";
+import MyChart from "./Chart1";
 import SchedulePopup from "./Popupchedule";
 import BarChartComponent from "./Barchart";
-const Dashboard = ({ deviceData, FetchDevice ,Sitename,Groupname,GroupId}) => {
+const Dashboard = ({ deviceData, FetchDevice ,Sitename,Groupname}) => {
   
-
   const today = new Date().toISOString().split("T")[0];
   const [activeTab, setActiveTab] = useState("table");
   const [selectedDevice, setSelectedDevice] = useState();
@@ -749,7 +746,7 @@ useEffect(() => {
           setScheduleData(null);}}  
           scheduleData={scheduleData} 
           deviceList={deviceData} 
-          groupId={GroupId} />
+          groupId={scheduleData?.groupId} />
         </div>)}
        
     </>

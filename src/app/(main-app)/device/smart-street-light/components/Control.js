@@ -1,12 +1,12 @@
-import { useState ,useEffect ,useMemo} from "react";
+import { useState ,useEffect ,useMemo,useRef} from "react";
 import { Switch } from "@headlessui/react";
 import ArrowForwardIosOutlinedIcon from '@mui/icons-material/ArrowForwardIosOutlined';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
-import { toast ,ToastContainer} from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';  // Import this for default styling
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import {
   DeviceControl
@@ -30,7 +30,11 @@ export default function DeviceControlPage({ deviceData ,FetchDevice,Sitename,Gro
   const [modalConfirmProps, setModalConfirmProps] = useState(null);
   const [modalErrorProps, setModalErorProps] = useState(null);
   const [modalSuccessProps, setModalSuccessProps] = useState(null);
+  
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
+  const [isSelectingAll, setIsSelectingAll] = useState(false);
+const isSortingDisabled = useRef(false);
+  
   const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
       console.log('SelectIdSite:', SelectIdSite);    
   const handleStatusChange = (newStatus) => {
@@ -136,15 +140,39 @@ export default function DeviceControlPage({ deviceData ,FetchDevice,Sitename,Gro
     setSortConfig({ key: column, direction });
   };
 // การ sort ข้อมูลที่ใช้ useMemo เพื่อลดการคำนวณซ้ำ
-  const sortedData = useMemo(() => {
-    const sorted = [...filtereddeviceData];
-    sorted.sort((a, b) => {
-      if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === "asc" ? -1 : 1;
-      if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === "asc" ? 1 : -1;
-      return 0;
-    });
-    return sorted;
-  }, [filtereddeviceData, sortConfig]);
+const toggleSelectAll = () => {
+  isSortingDisabled.current = true; // ปิดการเรียงลำดับ
+
+  let updatedDeviceData;
+
+  if (
+    selecteddeviceData.length === filtereddeviceData.filter(device => device.status !== "offline").length &&
+    filtereddeviceData.length > 0
+  ) {
+    updatedDeviceData = [];
+  } else {
+    updatedDeviceData = filtereddeviceData
+      .filter(device => device.status !== "offline")
+      .map(device => device.id);
+  }
+
+  console.log("Selected deviceData after select all toggle:", updatedDeviceData);
+  setSelecteddeviceData(updatedDeviceData);
+
+  setTimeout(() => {
+    isSortingDisabled.current = false; // เปิดให้ sort กลับมาทำงาน
+  }, 500);
+};
+
+const sortedData = useMemo(() => {
+  if (isSortingDisabled.current) return filtereddeviceData; // ถ้า isSortingDisabled เป็น true ให้ข้ามการ sort
+
+  return [...filtereddeviceData].sort((a, b) => {
+    if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === "asc" ? -1 : 1;
+    if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === "asc" ? 1 : -1;
+    return 0;
+  });
+}, [filtereddeviceData, sortConfig]);
   const toggleDevice = (id) => {
     setSelecteddeviceData((prev) => {
       const updateddeviceData = prev.includes(id)
@@ -156,25 +184,25 @@ export default function DeviceControlPage({ deviceData ,FetchDevice,Sitename,Gro
     });
   };
   
-  const toggleSelectAll = () => {
-    let updateddeviceData;
+  // const toggleSelectAll = () => {
+  //   let updateddeviceData;
   
-    // ตรวจสอบว่าถ้ามีการเลือก device ทั้งหมดอยู่แล้ว ให้เคลียร์การเลือก
-    if (
-      selecteddeviceData.length === filtereddeviceData.filter(device => device.status !== "offline").length &&
-      filtereddeviceData.length > 0
-    ) {
-      updateddeviceData = [];
-    } else {
-      // เลือกเฉพาะ device ที่ status ไม่เป็น "offline"
-      updateddeviceData = filtereddeviceData
-        .filter(device => device.status !== "offline")
-        .map(device => device.id);
-    }
+  //   // ตรวจสอบว่าถ้ามีการเลือก device ทั้งหมดอยู่แล้ว ให้เคลียร์การเลือก
+  //   if (
+  //     selecteddeviceData.length === filtereddeviceData.filter(device => device.status !== "offline").length &&
+  //     filtereddeviceData.length > 0
+  //   ) {
+  //     updateddeviceData = [];
+  //   } else {
+  //     // เลือกเฉพาะ device ที่ status ไม่เป็น "offline"
+  //     updateddeviceData = filtereddeviceData
+  //       .filter(device => device.status !== "offline")
+  //       .map(device => device.id);
+  //   }
   
-    console.log("Selected deviceData after select all toggle:", updateddeviceData);
-    setSelecteddeviceData(updateddeviceData);
-  };
+  //   console.log("Selected deviceData after select all toggle:", updateddeviceData);
+  //   setSelecteddeviceData(updateddeviceData);
+  // };
   
   
  const handlePageChange = (pageNumber) => {
@@ -448,19 +476,36 @@ export default function DeviceControlPage({ deviceData ,FetchDevice,Sitename,Gro
     <div className="flex items-center m-2">
       <p className="text-sm mr-14">Dimming Level</p>
       <div className="flex items-center w-80">
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={dimming}
-          step="1"
-          onChange={(e) => setDimming(e.target.value)}
-          disabled={selecteddeviceData.length === 0} // Disable if no device is selected
-          className={`w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm ${
-            selecteddeviceData.length === 0 ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-        />
-        <div className="text-xs">{dimming}%</div>
+      <div className="w-80 flex items-center justify-between">
+  <div className="w-full">
+    <input
+      type="range"
+      min="0"
+      max="100"
+      value={dimming}
+      step="1"
+      list="tickmarks"
+      onChange={(e) => setDimming(e.target.value)}
+      disabled={selecteddeviceData.length === 0}
+      className={`w-full h-1 accent-[#33BFBF] bg-gray-300 ${
+        selecteddeviceData.length === 0 ? "opacity-50 cursor-not-allowed" : ""
+      }`}
+    />
+    {/* Tick Marks */}
+    <datalist id="tickmarks" className="w-full flex justify-between text-xs text-gray-600">
+      <option value="0" label="0"></option>
+      <option value="25" label="25"></option>
+      <option value="50" label="50"></option>
+      <option value="75" label="75"></option>
+      <option value="100" label="100"></option>
+    </datalist>
+  </div>
+
+  {/* แสดงค่า dimming ปัจจุบัน */}
+  <div className="text-xs text-center ml-2">{dimming}%</div>
+</div>
+
+
       </div>
     </div>
   </div>:
@@ -485,10 +530,10 @@ export default function DeviceControlPage({ deviceData ,FetchDevice,Sitename,Gro
 
 
       {openModalconfirm && <ModalConfirm {...modalConfirmProps}/>}
-            {openModalsuccess && <ModalDone {...modalSuccessProps}/>}
-            {openModalfail && <ModalFail {...modalErrorProps}/>}
+      {openModalsuccess && <ModalDone {...modalSuccessProps}/>}
+      {openModalfail && <ModalFail {...modalErrorProps}/>}
     </div>
-    <ToastContainer />
+   
     </div>
   );
 }

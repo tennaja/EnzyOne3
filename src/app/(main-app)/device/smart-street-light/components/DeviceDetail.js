@@ -208,18 +208,28 @@ const DeviceDetail = ({ device , setActiveTab}) => {
   <div className="flex items-center m-2">
     <p className="text-sm mr-14">Dimming Level</p>
     <div className="flex items-center w-80">
-      <input
-        type="range"
-        min="0"
-        max="100"
-        value={dimming}
-        step="1"
-        onChange={(e) => setDimming(e.target.value)}
-        list="tickmarks"
-        disabled={device?.status === "offline"}
-        className="w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      />
-      <div className="text-xs">{dimming}%</div>
+    <div className="w-full">
+    <input
+      type="range"
+      min="0"
+      max="100"
+      value={dimming}
+      step="1"
+      list="tickmarks"
+      onChange={(e) => setDimming(e.target.value)}
+      disabled={device?.status === "offline"}
+      className={`w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
+    />
+    {/* Tick Marks */}
+    <datalist id="tickmarks" className="w-full flex justify-between text-xs text-gray-600">
+      <option value="0" label="0"></option>
+      <option value="25" label="25"></option>
+      <option value="50" label="50"></option>
+      <option value="75" label="75"></option>
+      <option value="100" label="100"></option>
+    </datalist>
+  </div>
+  <div className="text-xs text-center ml-2">{dimming}%</div>
     </div>
   </div>
 </div>
