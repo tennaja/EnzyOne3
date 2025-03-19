@@ -1,20 +1,20 @@
-import { useState, useEffect ,useMemo,useRef} from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Switch } from "@headlessui/react";
 import CreateIcon from "@mui/icons-material/Create";
 import SchedulePopup from "./Popupchedule";
 import ArrowForwardIosOutlinedIcon from '@mui/icons-material/ArrowForwardIosOutlined';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import { getSchedulebyid,postCreateSchedule,putUpdateSchedule ,deleteSchedule,changeStatuschedule} from "@/utils/api";
+import { getSchedulebyid, postCreateSchedule, putUpdateSchedule, deleteSchedule, changeStatuschedule } from "@/utils/api";
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ModalConfirm from "./Popupconfirm";
 import ModalDone from "./Popupcomplete";
 import ModalFail from "./PopupFali";
-import { toast ,ToastContainer} from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-export default function ScheduleComponent({ scheduleData ,
-  deviceData, 
+export default function ScheduleComponent({ scheduleData,
+  deviceData,
   FetchSchedule,
   Sitename,
   Groupname,
@@ -27,7 +27,7 @@ export default function ScheduleComponent({ scheduleData ,
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [ScheduleData, setScheduleData] = useState();
   const [openModalSchedule, setopenModalSchedule] = useState(false);
-  const [action ,setAction] = useState("")
+  const [action, setAction] = useState("")
   const [openModalconfirm, setopenModalconfirm] = useState(false)
   const [openModalsuccess, setopenModalsuccess] = useState(false)
   const [openModalfail, setopenModalfail] = useState(false)
@@ -35,43 +35,43 @@ export default function ScheduleComponent({ scheduleData ,
   const [modalErrorProps, setModalErorProps] = useState(null);
   const [modalSuccessProps, setModalSuccessProps] = useState(null);
   const [sortConfig, setSortConfig] = useState({});
-  const [toggleId , setToggleId] = useState(null)
+  const [toggleId, setToggleId] = useState(null)
   const schedulePopupRef = useRef();
-  
-  
+
+
   useEffect(() => {
     setData(scheduleData);
     console.log(scheduleData)
     console.log(data)
   }, [scheduleData]);
 
-  
-          const handleClosePopup = () => {
-            setopenModalconfirm(false)
-            setopenModalsuccess(false)
-            setopenModalfail(false)
-          }
-          const handleSort = (column) => {
-            let direction = "asc";
-            if (sortConfig.key === column && sortConfig.direction === "asc") {
-              direction = "desc";
-            }
-            setSortConfig({ key: column, direction });
-          };
-        
-          // การ sort ข้อมูลที่ใช้ useMemo เพื่อลดการคำนวณซ้ำ
-          const sortedData = useMemo(() => {
-            const sorted = [...data];
-            sorted.sort((a, b) => {
-              if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === "asc" ? -1 : 1;
-              if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === "asc" ? 1 : -1;
-              return 0;
-            });
-            return sorted;
-          }, [data, sortConfig]);
-  
-  
-          const toggleSwitch = (id) => {
+
+  const handleClosePopup = () => {
+    setopenModalconfirm(false)
+    setopenModalsuccess(false)
+    setopenModalfail(false)
+  }
+  const handleSort = (column) => {
+    let direction = "asc";
+    if (sortConfig.key === column && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key: column, direction });
+  };
+
+  // การ sort ข้อมูลที่ใช้ useMemo เพื่อลดการคำนวณซ้ำ
+  const sortedData = useMemo(() => {
+    const sorted = [...data];
+    sorted.sort((a, b) => {
+      if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === "asc" ? -1 : 1;
+      if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }, [data, sortConfig]);
+
+
+  const toggleSwitch = (id) => {
     setData((prev) =>
       prev.map((item) =>
         item.id === id
@@ -96,12 +96,12 @@ export default function ScheduleComponent({ scheduleData ,
     );
   };
 
-  
+
   const handleRemove = async () => {
     if (selected.length > 0) {
       // Make sure selected is populated
       console.log("Selected Items:", selected);
-  
+
       const id = selected[0]; // Assuming selected now has IDs directly (no objects)
       if (id) {
         console.log("ID to be deleted:", id);
@@ -112,9 +112,9 @@ export default function ScheduleComponent({ scheduleData ,
       console.log("No items selected.");
     }
   };
-  
-  
-  
+
+
+
 
   const getSchedulById = async (id) => {
     try {
@@ -127,7 +127,7 @@ export default function ScheduleComponent({ scheduleData ,
       console.error("Error fetching schedule data:", error);
     }
   };
-  
+
 
   const handleExternalSave = () => {
     if (schedulePopupRef.current) {
@@ -147,8 +147,8 @@ export default function ScheduleComponent({ scheduleData ,
       console.log("❌ schedulePopupRef.current เป็น null");
     }
   };
-  
-const CreateSchedul = async (req) => {
+
+  const CreateSchedul = async (req) => {
     try {
       console.log("Request Parameters:", req);
 
@@ -161,6 +161,8 @@ const CreateSchedul = async (req) => {
         setIsPopupOpen(false)
         setopenModalSchedule(false)
         notifySuccess(result?.data?.title, result?.data?.message);
+        FetchSchedule();
+        setScheduleData(null);
       } else {
         console.log("No groups found!");
         setopenModalfail(true)
@@ -180,7 +182,9 @@ const CreateSchedul = async (req) => {
         setopenModalconfirm(false)
         setIsPopupOpen(false)
         setopenModalSchedule(false)
-        notifySuccess(result?.data?.title,result?.data?.message);
+        notifySuccess(result?.data?.title, result?.data?.message);
+        FetchSchedule()
+        setScheduleData(null);
       } else {
         console.log("No groups found!");
         setopenModalfail(true)
@@ -193,10 +197,10 @@ const CreateSchedul = async (req) => {
   const DeleteSchedul = async (id) => {
     try {
       console.log("Request Parameters:", id);
-  
+
       const result = await deleteSchedule(id);  // Assuming deleteSchedule is the function to call your API
       console.log("Group List Result:", result);
-  
+
       if (result.status === 200) {
         console.log("Success");
         setopenModalconfirm(false);
@@ -211,72 +215,72 @@ const CreateSchedul = async (req) => {
       console.log("Error creating schedule:", error);
     }
   };
-const handleOpenModalconfirm = () => {
-  setopenModalconfirm(true);
-  setModalConfirmProps({
-    onCloseModal: handleClosePopup,
-    onClickConfirmBtn: action === "create" ? handleExternalSave : handleExternalUpdate,
-    title: "Edit/Save Schedule",
-    content: "Are you sureyou want to save this schedule ?"
-    ,
-    buttonTypeColor: "primary",
-  });
-};
-const handleOpenModalDeleteconfirm = () => {
-  setopenModalconfirm(true);
-  setModalConfirmProps({
-    onCloseModal: handleClosePopup,
-    onClickConfirmBtn: handleRemove,
-    title: "Remove Schedule",
-    content: "Are you sureyou want to remove he selected items?"
-    ,
-    buttonTypeColor: "primary",
-  });
-};
+  const handleOpenModalconfirm = () => {
+    setopenModalconfirm(true);
+    setModalConfirmProps({
+      onCloseModal: handleClosePopup,
+      onClickConfirmBtn: action == "create" ? handleExternalSave : handleExternalUpdate,
+      title: "Edit/Save Schedule",
+      content: "Are you sureyou want to save this schedule ?"
+      ,
+      buttonTypeColor: "primary",
+    });
+  };
+  const handleOpenModalDeleteconfirm = () => {
+    setopenModalconfirm(true);
+    setModalConfirmProps({
+      onCloseModal: handleClosePopup,
+      onClickConfirmBtn: handleRemove,
+      title: "Remove Schedule",
+      content: "Are you sureyou want to remove he selected items?"
+      ,
+      buttonTypeColor: "primary",
+    });
+  };
 
-const handleOpenModalsetToggleconfirm = (id) => {
-  setToggleId(id); // Set the selected schedule id to use later
-  setopenModalconfirm(true); // Open the confirmation modal
-  setModalConfirmProps({
-    onCloseModal: handleClosePopup, // Close the modal
-    onClickConfirmBtn: () => handleToggleStatus(id), // Pass the id to the handleToggleStatus function
-    title: "Change Schedule Status", // Modal title
-    content: "Are you sure you want to change the status of the selected item?", // Modal content
-    buttonTypeColor: "primary", // Button color type
-  });
-};
+  const handleOpenModalsetToggleconfirm = (id) => {
+    setToggleId(id); // Set the selected schedule id to use later
+    setopenModalconfirm(true); // Open the confirmation modal
+    setModalConfirmProps({
+      onCloseModal: handleClosePopup, // Close the modal
+      onClickConfirmBtn: () => handleToggleStatus(id), // Pass the id to the handleToggleStatus function
+      title: "Change Schedule Status", // Modal title
+      content: "Are you sure you want to change the status of the selected item?", // Modal content
+      buttonTypeColor: "primary", // Button color type
+    });
+  };
 
-const handleToggleStatus = async (id) => {
-  // Prepare the status toggle request
-  const status = getCurrentStatus(id); // A function to determine the current status (active/inactive)
-  const req = { status: status === "active" ? "inactive" : "active" }; // Toggle status
+  const handleToggleStatus = async (id) => {
+    // Prepare the status toggle request
+    const status = getCurrentStatus(id); // A function to determine the current status (active/inactive)
+    const req = { status: status === "active" ? "inactive" : "active" }; // Toggle status
 
-  try {
-    console.log("Request Parameters:", req);
+    try {
+      console.log("Request Parameters:", req);
 
-    const result = await changeStatuschedule(id, req); // Send the PUT request
-    console.log("Result:", result);
+      const result = await changeStatuschedule(id, req); // Send the PUT request
+      console.log("Result:", result);
 
-    if (result.status === 200) {
-      console.log("Success");
-      notifySuccess(result?.data?.title, result?.data?.message); // Show success message
-      FetchSchedule()
-      setopenModalconfirm(false); // Close the confirmation modal
-      onClose(); // Close any other relevant modal or action
-    } else {
-      console.log("No groups found!");
-      setopenModalfail(true); // Open fail modal
+      if (result.status === 200) {
+        console.log("Success");
+        notifySuccess(result?.data?.title, result?.data?.message); // Show success message
+        FetchSchedule()
+        setopenModalconfirm(false); // Close the confirmation modal
+        onClose(); // Close any other relevant modal or action
+      } else {
+        console.log("No groups found!");
+        setopenModalfail(true); // Open fail modal
+      }
+    } catch (error) {
+      console.log("Error creating schedule:", error); // Handle any errors
     }
-  } catch (error) {
-    console.log("Error creating schedule:", error); // Handle any errors
-  }
-};
-// Helper function to determine current status (active/inactive)
-const getCurrentStatus = (id) => {
-  // Replace this with your logic to find the current status of the schedule based on `id`
-  const schedule = data.find(item => item.id === id); // Assuming `data` contains the schedules
-  return schedule ? schedule.status : "inactive"; // Return the current status
-};
+  };
+  // Helper function to determine current status (active/inactive)
+  const getCurrentStatus = (id) => {
+    // Replace this with your logic to find the current status of the schedule based on `id`
+    const schedule = data.find(item => item.id === id); // Assuming `data` contains the schedules
+    return schedule ? schedule.status : "inactive"; // Return the current status
+  };
   const handleCancel = () => setSelected([]);
   const handleChangePage = (page) => {
     setCurrentPage(page);
@@ -293,11 +297,11 @@ const getCurrentStatus = (id) => {
   const totalPages = Math.ceil(data.length / rowsPerPage);
   const paginatedData = data.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
-  const notifySuccess = (title,message) =>
+  const notifySuccess = (title, message) =>
     toast.success(
       <div className="px-2">
-      <div className="flex flex-row font-bold">{title}</div>
-      <div className="flex flex-row text-xs">{message}</div>
+        <div className="flex flex-row font-bold">{title}</div>
+        <div className="flex flex-row text-xs">{message}</div>
       </div>,
       {
         position: "top-right",
@@ -313,18 +317,18 @@ const getCurrentStatus = (id) => {
   return (
     <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
       <div>
-      <div>
-        <span className="text-lg font-bold block mb-2">Schedule List</span>
-        <p className="text-base mb-4">{Sitename} | {Groupname}</p>
+        <div>
+          <span className="text-lg font-bold block mb-2">Schedule List</span>
+          <p className="text-base mb-4">{Sitename} | {Groupname}</p>
 
-      
-    </div>
+
+        </div>
         <div className="p-2 max-w-full mx-auto mt-10">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-base font-semibold">{data.length} Schedules</h2>
             <button
               className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
-              onClick={() => {setIsPopupOpen(true); setAction("create");}}
+              onClick={() => { setopenModalSchedule(true); setAction("create"); }}
             >
               Add Schedule
             </button>
@@ -362,75 +366,75 @@ const getCurrentStatus = (id) => {
                     />
                   </th>
                   <th className="p-3" onClick={() => handleSort("name")}>Schedule Name
-                  <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
-        <ArrowDropUpIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "name" && sortConfig.direction === "asc" ? 1 : 0.3,
-            marginBottom: "-2px",
-          }}
-        />
-        <ArrowDropDownIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "name" && sortConfig.direction === "desc" ? 1 : 0.3,
-            marginTop: "-2px",
-          }}
-        />
-      </div>
-                  </th>
-                  <th className="p-3" onClick={() => handleSort("repeat")}>Repeat 
                     <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
-        <ArrowDropUpIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "repeat" && sortConfig.direction === "asc" ? 1 : 0.3,
-            marginBottom: "-2px",
-          }}
-        />
-        <ArrowDropDownIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "repeat" && sortConfig.direction === "desc" ? 1 : 0.3,
-            marginTop: "-2px",
-          }}
-        />
-      </div></th>
-                  <th className="p-3" onClick={() => handleSort("startTime")}>Start-Stop Time 
-                  <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
-        <ArrowDropUpIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "startTime" && sortConfig.direction === "asc" ? 1 : 0.3,
-            marginBottom: "-2px",
-          }}
-        />
-        <ArrowDropDownIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "startTime" && sortConfig.direction === "desc" ? 1 : 0.3,
-            marginTop: "-2px",
-          }}
-        />
-      </div>
+                      <ArrowDropUpIcon
+                        style={{
+                          fontSize: "14px",
+                          opacity: sortConfig.key === "name" && sortConfig.direction === "asc" ? 1 : 0.3,
+                          marginBottom: "-2px",
+                        }}
+                      />
+                      <ArrowDropDownIcon
+                        style={{
+                          fontSize: "14px",
+                          opacity: sortConfig.key === "name" && sortConfig.direction === "desc" ? 1 : 0.3,
+                          marginTop: "-2px",
+                        }}
+                      />
+                    </div>
+                  </th>
+                  <th className="p-3" onClick={() => handleSort("repeat")}>Repeat
+                    <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+                      <ArrowDropUpIcon
+                        style={{
+                          fontSize: "14px",
+                          opacity: sortConfig.key === "repeat" && sortConfig.direction === "asc" ? 1 : 0.3,
+                          marginBottom: "-2px",
+                        }}
+                      />
+                      <ArrowDropDownIcon
+                        style={{
+                          fontSize: "14px",
+                          opacity: sortConfig.key === "repeat" && sortConfig.direction === "desc" ? 1 : 0.3,
+                          marginTop: "-2px",
+                        }}
+                      />
+                    </div></th>
+                  <th className="p-3" onClick={() => handleSort("startTime")}>Start-Stop Time
+                    <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+                      <ArrowDropUpIcon
+                        style={{
+                          fontSize: "14px",
+                          opacity: sortConfig.key === "startTime" && sortConfig.direction === "asc" ? 1 : 0.3,
+                          marginBottom: "-2px",
+                        }}
+                      />
+                      <ArrowDropDownIcon
+                        style={{
+                          fontSize: "14px",
+                          opacity: sortConfig.key === "startTime" && sortConfig.direction === "desc" ? 1 : 0.3,
+                          marginTop: "-2px",
+                        }}
+                      />
+                    </div>
                   </th>
                   <th className="p-3" onClick={() => handleSort("percentDimming")}>% Dimming
-                  <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
-        <ArrowDropUpIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "percentDimming" && sortConfig.direction === "asc" ? 1 : 0.3,
-            marginBottom: "-2px",
-          }}
-        />
-        <ArrowDropDownIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "percentDimming" && sortConfig.direction === "desc" ? 1 : 0.3,
-            marginTop: "-2px",
-          }}
-        />
-      </div>
+                    <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+                      <ArrowDropUpIcon
+                        style={{
+                          fontSize: "14px",
+                          opacity: sortConfig.key === "percentDimming" && sortConfig.direction === "asc" ? 1 : 0.3,
+                          marginBottom: "-2px",
+                        }}
+                      />
+                      <ArrowDropDownIcon
+                        style={{
+                          fontSize: "14px",
+                          opacity: sortConfig.key === "percentDimming" && sortConfig.direction === "desc" ? 1 : 0.3,
+                          marginTop: "-2px",
+                        }}
+                      />
+                    </div>
                   </th>
                   <th className="p-3"></th>
                   <th className="p-3"></th>
@@ -466,7 +470,7 @@ const getCurrentStatus = (id) => {
                         </Switch>
                       </td>
                       <td className="p-3">
-                        <button onClick={() => {getSchedulById(schedule.id); setAction("update");}} className="text-gray-500 hover:text-gray-700">
+                        <button onClick={() => { getSchedulById(schedule.id); setAction("update"); }} className="text-gray-500 hover:text-gray-700">
                           <CreateIcon size={16} />
                         </button>
                       </td>
@@ -477,64 +481,61 @@ const getCurrentStatus = (id) => {
             </table>
           </div>
           <div className="flex justify-between items-center mt-4">
-                  <div>
-                    <span className="text-sm mr-1">Rows per page:</span>
-                    <select
-                      value={rowsPerPage}
-                      onChange={handleRowsPerPageChange}
-                      className="border border-gray-300 text-sm rounded-lg"
-                    >
-                      <option value={10}>10</option>
-                      <option value={20}>20</option>
-                      <option value={50}>50</option>
-                      <option value={100}>100</option>
-                    </select>
-                  </div>
+            <div>
+              <span className="text-sm mr-1">Rows per page:</span>
+              <select
+                value={rowsPerPage}
+                onChange={handleRowsPerPageChange}
+                className="border border-gray-300 text-sm rounded-lg"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
 
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleChangePage(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
-                    >
-                      <ArrowBackIosNewIcon style={{ fontSize: '12px' }} />
-                    </button>
-                    <span className="text-sm">
-                      {currentPage} / {totalPages}
-                    </span>
-                    <button
-                      onClick={() => handleChangePage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
-                    >
-                      <ArrowForwardIosOutlinedIcon style={{ fontSize: '12px' }} />
-                    </button>
-                  </div>
-                </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handleChangePage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+              >
+                <ArrowBackIosNewIcon style={{ fontSize: '12px' }} />
+              </button>
+              <span className="text-sm">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => handleChangePage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+              >
+                <ArrowForwardIosOutlinedIcon style={{ fontSize: '12px' }} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-      <SchedulePopup 
-      ref={schedulePopupRef}
-      isOpen={isPopupOpen || openModalSchedule} 
-      onClose={() => { 
-      setIsPopupOpen(false); 
-      setopenModalSchedule(false); 
-      setScheduleData(null); }} 
-      scheduleData={ScheduleData} 
-      deviceList={deviceData} 
-      onSaveSchedule={CreateSchedul}
-      onUpdateSchedule={UpdateSchedul} 
-      onHandleConfirm={handleOpenModalconfirm}
-      Isconfirm={openModalconfirm}
-      Action={action} 
-      groupId={ScheduleData?.groupId ? ScheduleData?.groupId : GroupId}
-      FetchData={FetchSchedule}
+      <SchedulePopup
+        ref={schedulePopupRef}
+        isOpen={openModalSchedule}
+        onClose={() => {
+          setopenModalSchedule(false);
+          setScheduleData(null);
+        }}
+        scheduleData={ScheduleData}
+        deviceList={deviceData}
+        onSaveSchedule={CreateSchedul}
+        onUpdateSchedule={UpdateSchedul}
+        onHandleConfirm={handleOpenModalconfirm}
+        groupId={ScheduleData?.groupId ? ScheduleData?.groupId : GroupId}
+
       />
-        {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
-        {openModalsuccess && <ModalDone />}
-        {openModalfail && <ModalFail onCloseModal={handleClosePopup} />}
-        <ToastContainer />
+      {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
+      {openModalfail && <ModalFail onCloseModal={handleClosePopup} />}
+      <ToastContainer />
     </div>
-    
+
   );
 }

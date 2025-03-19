@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import ArrowForwardIosOutlinedIcon from '@mui/icons-material/ArrowForwardIosOutlined';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
@@ -7,14 +7,19 @@ import DeviceDetail from "./DeviceDetail";
 import MapTH from "./MapLeaflet";
 import CreateIcon from '@mui/icons-material/Create';
 import {
-  getDevicebyId, getHistoryGraphDataa, getEnergyHistoryGraphDataa, getSchedulebyid
+  getDevicebyId, getHistoryGraphDataa, getEnergyHistoryGraphDataa, getSchedulebyid, putUpdateSchedule
 } from "@/utils/api";
 import ChartComponent from "./Chart1";
 import MyChart from "./Chart1";
 import SchedulePopup from "./Popupchedule";
 import BarChartComponent from "./Barchart";
-const Dashboard = ({ deviceData, FetchDevice ,Sitename,Groupname}) => {
-  
+import ModalConfirm from "./Popupconfirm";
+import ModalDone from "./Popupcomplete";
+import ModalFail from "./PopupFali";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
+
   const today = new Date().toISOString().split("T")[0];
   const [activeTab, setActiveTab] = useState("table");
   const [selectedDevice, setSelectedDevice] = useState();
@@ -37,7 +42,14 @@ const Dashboard = ({ deviceData, FetchDevice ,Sitename,Groupname}) => {
   const [timeUnit, setTimeUnit] = useState("day");
   const [isLoading, setIsLoading] = useState(true);
   const [scheduleData, setScheduleData] = useState();
-  const [openModalSchedule ,setopenModalSchedule] = useState(false)
+  const [openModalSchedule, setopenModalSchedule] = useState(false)
+  const [openModalconfirm, setopenModalconfirm] = useState(false)
+  const [openModalsuccess, setopenModalsuccess] = useState(false)
+  const [openModalfail, setopenModalfail] = useState(false)
+  const [modalConfirmProps, setModalConfirmProps] = useState(null);
+  const [modalErrorProps, setModalErorProps] = useState(null);
+  const [modalSuccessProps, setModalSuccessProps] = useState(null);
+  const schedulePopupRef = useRef();
   const datagraph = {
     "timestamp": [
       "2025-02-01 00:00:00",
@@ -197,7 +209,7 @@ const Dashboard = ({ deviceData, FetchDevice ,Sitename,Groupname}) => {
       console.log("Group List Result:", result);
 
       if (result) {
-        
+
         setScheduleData(result.data);
         setopenModalSchedule(true)
       } else {
@@ -208,8 +220,52 @@ const Dashboard = ({ deviceData, FetchDevice ,Sitename,Groupname}) => {
     }
   };
 
-  
+  const handleOpenModalconfirm = () => {
+    setopenModalconfirm(true);
+    setModalConfirmProps({
+      onCloseModal: handleClosePopup,
+      onClickConfirmBtn: handleExternalUpdate,
+      title: "Edit/Save Schedule",
+      content: "Are you sureyou want to save this schedule ?"
+      ,
+      buttonTypeColor: "primary",
+    });
+  };
+  const handleExternalUpdate = () => {
 
+    if (schedulePopupRef.current) {
+      console.log("🚀 กำลังเรียก triggerSave() จากภายนอก");
+      schedulePopupRef.current.triggerUpdate(); // ✅ เรียก triggerSave() ใน SchedulePopup.js
+    } else {
+      console.log("❌ schedulePopupRef.current เป็น null");
+    }
+  };
+  const UpdateSchedul = async (id, req) => {
+    try {
+      console.log("Request Parameters:", req);
+
+      const result = await putUpdateSchedule(id, req);
+      console.log("Group List Result:", result);
+
+      if (result.status === 200) {
+        setopenModalconfirm(false)
+        setopenModalSchedule(false)
+        notifySuccess(result?.data?.title, result?.data?.message);
+        FetchSchedule()
+        setScheduleData(null);
+      } else {
+        console.log("No groups found!");
+        setopenModalfail(true)
+      }
+    } catch (error) {
+      console.log("Error creating schedule:", error);
+    }
+  };
+  const handleClosePopup = () => {
+    setopenModalconfirm(false)
+    setopenModalsuccess(false)
+    setopenModalfail(false)
+  }
   const handleStartDateChangeHistorical = (e) => {
     const newStartDate = e.target.value;
     console.log(newStartDate)
@@ -224,7 +280,7 @@ const Dashboard = ({ deviceData, FetchDevice ,Sitename,Groupname}) => {
     }
   };
 
-const handleEndDateChangeHistorical = (e) => {
+  const handleEndDateChangeHistorical = (e) => {
     const newEndDate = e.target.value;
     const maxAllowedEndDate = new Date(startDate);
     maxAllowedEndDate.setDate(maxAllowedEndDate.getDate() + 31);
@@ -254,9 +310,9 @@ const handleEndDateChangeHistorical = (e) => {
     const formattedMaxEndDate = maxEndDate.toISOString().split("T")[0];
 
     setEndDate2((prevEndDate) => (new Date(prevEndDate) > maxEndDate ? formattedMaxEndDate : prevEndDate));
-};
+  };
 
-const handleEndDateChangeHistorical2 = (e) => {
+  const handleEndDateChangeHistorical2 = (e) => {
     const newEndDate = e.target.value;
     const startDateObj = new Date(startDate2);
     const maxAllowedEndDate = new Date(startDateObj);
@@ -266,16 +322,33 @@ const handleEndDateChangeHistorical2 = (e) => {
     const newEndDateObj = new Date(newEndDate);
 
     if (newEndDateObj <= maxAllowedEndDate && newEndDateObj <= todayDate) {
-        setEndDate2(newEndDate);
+      setEndDate2(newEndDate);
     }
-};
+  };
 
-// ให้แน่ใจว่า API ถูกเรียกหลังจาก endDate2 ถูกอัปเดตจริง
-useEffect(() => {
+  const notifySuccess = (title, message) =>
+    toast.success(
+      <div className="px-2">
+        <div className="flex flex-row font-bold">{title}</div>
+        <div className="flex flex-row text-xs">{message}</div>
+      </div>,
+      {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      }
+    );
+  // ให้แน่ใจว่า API ถูกเรียกหลังจาก endDate2 ถูกอัปเดตจริง
+  useEffect(() => {
     if (selectedDevice?.id) {
-        GetEnergyHistoryGraph(selectedDevice.id);
+      GetEnergyHistoryGraph(selectedDevice.id);
     }
-}, [endDate2,startDate2]);
+  }, [endDate2, startDate2]);
 
 
 
@@ -284,13 +357,13 @@ useEffect(() => {
     setTimeUnit(e.target.value);
 
   };
-  
+
   useEffect(() => {
     if (selectedDevice?.id) {
       GetHistoryGraph(selectedDevice.id);
-      
+
     }
-  }, [endDate,startDate]);
+  }, [endDate, startDate]);
 
   useEffect(() => {
     // Reset all keys in the sortConfig when deviceData changes
@@ -345,31 +418,31 @@ useEffect(() => {
               <>
 
 
-<h1 className="text-base font-bold mb-2">Active Schedule</h1>
-<div className="max-h-72 overflow-y-auto">
-  <table className="min-w-full bg-white rounded-lg border-t border-gray-300 text-sm">
-    <tbody>
-      {selectedDevice?.schedules?.map((schedule, index) => (
-        <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} border-b border-gray-300`}>
-          <td className="py-2 px-4">
-            <div className="font-bold">{schedule.name}</div>
-            <div className="font-bold">{schedule.percentDimming}% Dimming</div>
-            <div className="font-bold">{schedule.startTime} - {schedule.endTime}</div>
-            <div className="text-xs">{schedule.repeat}</div>
-          </td>
+                <h1 className="text-base font-bold mb-2">Active Schedule</h1>
+                <div className="max-h-72 overflow-y-auto">
+                  <table className="min-w-full bg-white rounded-lg border-t border-gray-300 text-sm">
+                    <tbody>
+                      {selectedDevice?.schedules?.map((schedule, index) => (
+                        <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} border-b border-gray-300`}>
+                          <td className="py-2 px-4">
+                            <div className="font-bold">{schedule.name}</div>
+                            <div className="font-bold">{schedule.percentDimming}% Dimming</div>
+                            <div className="font-bold">{schedule.startTime} - {schedule.endTime}</div>
+                            <div className="text-xs">{schedule.repeat}</div>
+                          </td>
 
-          <td className="py-2 px-4">
-            <button className="text-gray-500 hover:text-gray-700" onClick={() => {
-              getSchedulById(schedule.id);
-            }}>
-              <CreateIcon />
-            </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
+                          <td className="py-2 px-4">
+                            <button className="text-gray-500 hover:text-gray-700" onClick={() => {
+                              getSchedulById(schedule.id);
+                            }}>
+                              <CreateIcon />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
 
               </>)}
@@ -547,54 +620,54 @@ useEffect(() => {
                     </thead>
 
                     <tbody>
-  {currentData.length === 0 ? (
-    <tr>
-      <td colSpan="7" className="px-2 py-4 text-center text-gray-500">Data not found</td>
-    </tr>
-  ) : (
-    currentData.map((record, index) => (
-      <tr
-        key={record.id}
-        className={`hover:bg-gray-100 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}
-        style={{ borderBottom: '1px solid #e0e0e0' }}
-      >
-        <td className="px-2 py-1 text-left">
-          <div
-            className="text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] text-base mb-1"
-            onClick={() => {
-              getdevicebyId(record.id);
-              setActiveTab("detail");
-              setSelectedLocation({ lat: record.latitude, lng: record.longitude }); // อัพเดตตำแหน่งที่เลือก
-              setMapZoomLevel(15); // ซูมเข้าเมื่อเลือกอุปกรณ์
-              GetHistoryGraph(record.id);
-              GetEnergyHistoryGraph(record.id);
-            }}
-          >
-            {record.name}
-          </div>
-          <div>{record.groupName}</div>
-        </td>
-        <td className="px-2 py-1 text-center">{record.kW}</td>
-        <td className="px-2 py-1 text-center">{record.kWh}</td>
-        <td className="px-2 py-1 text-center">{record.runningHour}</td>
-        <td className="px-2 py-1 text-center">
-          <span
-            className={`inline-block px-2 py-1 text-sm font-bold  ${record.status === "on"
-              ? "text-[#12B981]"
-              : record.status === "off"
-                ? "text-[#9DA8B9]"
-                : "text-[#FF3D4B]"
-              }`}
-          >
-            {record.status}
-          </span>
-        </td>
-        <td className="px-2 py-1 text-right">{record.percentDimming}</td>
-        <td className="px-2 py-2 text-right text-balance">{record.lastUpdated}</td>
-      </tr>
-    ))
-  )}
-</tbody>
+                      {currentData.length === 0 ? (
+                        <tr>
+                          <td colSpan="7" className="px-2 py-4 text-center text-gray-500">Data not found</td>
+                        </tr>
+                      ) : (
+                        currentData.map((record, index) => (
+                          <tr
+                            key={record.id}
+                            className={`hover:bg-gray-100 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}
+                            style={{ borderBottom: '1px solid #e0e0e0' }}
+                          >
+                            <td className="px-2 py-1 text-left">
+                              <div
+                                className="text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] text-base mb-1"
+                                onClick={() => {
+                                  getdevicebyId(record.id);
+                                  setActiveTab("detail");
+                                  setSelectedLocation({ lat: record.latitude, lng: record.longitude }); // อัพเดตตำแหน่งที่เลือก
+                                  setMapZoomLevel(15); // ซูมเข้าเมื่อเลือกอุปกรณ์
+                                  GetHistoryGraph(record.id);
+                                  GetEnergyHistoryGraph(record.id);
+                                }}
+                              >
+                                {record.name}
+                              </div>
+                              <div>{record.groupName}</div>
+                            </td>
+                            <td className="px-2 py-1 text-center">{record.kW}</td>
+                            <td className="px-2 py-1 text-center">{record.kWh}</td>
+                            <td className="px-2 py-1 text-center">{record.runningHour}</td>
+                            <td className="px-2 py-1 text-center">
+                              <span
+                                className={`inline-block px-2 py-1 text-sm font-bold  ${record.status === "on"
+                                  ? "text-[#12B981]"
+                                  : record.status === "off"
+                                    ? "text-[#9DA8B9]"
+                                    : "text-[#FF3D4B]"
+                                  }`}
+                              >
+                                {record.status}
+                              </span>
+                            </td>
+                            <td className="px-2 py-1 text-right">{record.percentDimming}</td>
+                            <td className="px-2 py-2 text-right text-balance">{record.lastUpdated}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
 
                   </table>
                 </div>
@@ -669,25 +742,25 @@ useEffect(() => {
                 max={today}
               />
 
-<input
-  type="date"
-  className="w-60 p-2 border rounded"
-  value={endDate}
-  min={startDate || ""} // ถ้า startDate เป็น null/"" จะไม่กำหนดค่า min
-  max={
-    startDate
-      ? new Date(
-          Math.min(
-            new Date().getTime(), // วันที่ปัจจุบัน
-            new Date(new Date(startDate).setDate(new Date(startDate).getDate() + 31)).getTime() // 31 วันหลัง startDate
-          )
-        )
-          .toISOString()
-          .split("T")[0] // แปลงเป็น YYYY-MM-DD
-      : new Date().toISOString().split("T")[0] // ถ้า startDate ไม่มีค่า ใช้วันนี้เป็น max
-  }
-  onChange={handleEndDateChangeHistorical}
-/>
+              <input
+                type="date"
+                className="w-60 p-2 border rounded"
+                value={endDate}
+                min={startDate || ""} // ถ้า startDate เป็น null/"" จะไม่กำหนดค่า min
+                max={
+                  startDate
+                    ? new Date(
+                      Math.min(
+                        new Date().getTime(), // วันที่ปัจจุบัน
+                        new Date(new Date(startDate).setDate(new Date(startDate).getDate() + 31)).getTime() // 31 วันหลัง startDate
+                      )
+                    )
+                      .toISOString()
+                      .split("T")[0] // แปลงเป็น YYYY-MM-DD
+                    : new Date().toISOString().split("T")[0] // ถ้า startDate ไม่มีค่า ใช้วันนี้เป็น max
+                }
+                onChange={handleEndDateChangeHistorical}
+              />
 
 
             </div>
@@ -712,43 +785,50 @@ useEffect(() => {
                 max={today}
               />
 
-<input
-  type="date"
-  className="w-60 p-2 border rounded"
-  value={endDate2}
-  min={startDate2 || ""} // ถ้า startDate2 เป็น null/"" จะไม่กำหนดค่า min
-  max={
-    startDate2
-      ? new Date(
-          Math.min(
-            new Date().getTime(), // วันที่ปัจจุบัน
-            new Date(new Date(startDate2).setDate(new Date(startDate2).getDate() + 31)).getTime() // 31 วันหลัง startDate2
-          )
-        )
-          .toISOString()
-          .split("T")[0] // แปลงเป็น YYYY-MM-DD
-      : new Date().toISOString().split("T")[0] // ถ้า startDate2 ไม่มีค่า ใช้วันนี้เป็น max
-  }
-  onChange={handleEndDateChangeHistorical2}
-/>
+              <input
+                type="date"
+                className="w-60 p-2 border rounded"
+                value={endDate2}
+                min={startDate2 || ""} // ถ้า startDate2 เป็น null/"" จะไม่กำหนดค่า min
+                max={
+                  startDate2
+                    ? new Date(
+                      Math.min(
+                        new Date().getTime(), // วันที่ปัจจุบัน
+                        new Date(new Date(startDate2).setDate(new Date(startDate2).getDate() + 31)).getTime() // 31 วันหลัง startDate2
+                      )
+                    )
+                      .toISOString()
+                      .split("T")[0] // แปลงเป็น YYYY-MM-DD
+                    : new Date().toISOString().split("T")[0] // ถ้า startDate2 ไม่มีค่า ใช้วันนี้เป็น max
+                }
+                onChange={handleEndDateChangeHistorical2}
+              />
 
 
 
             </div>
 
             <div className="mt-5">
-              <BarChartComponent data={graphData2} type={timeUnit}/>
+              <BarChartComponent data={graphData2} type={timeUnit} />
             </div>
           </div>
-          <SchedulePopup 
-          isOpen={openModalSchedule} 
-          onClose={() => {setopenModalSchedule(false); 
-          setScheduleData(null);}}  
-          scheduleData={scheduleData} 
-          deviceList={deviceData} 
-          groupId={scheduleData?.groupId} />
+          <SchedulePopup
+            ref={schedulePopupRef}
+            isOpen={openModalSchedule}
+            onClose={() => {
+              setopenModalSchedule(false);
+              setScheduleData(null);
+            }}
+            scheduleData={scheduleData}
+            deviceList={deviceData}
+            onUpdateSchedule={UpdateSchedul}
+            onHandleConfirm={handleOpenModalconfirm}
+            groupId={scheduleData?.groupId} />
         </div>)}
-       
+      {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
+      {openModalfail && <ModalFail onCloseModal={handleClosePopup} />}
+
     </>
   );
 };
