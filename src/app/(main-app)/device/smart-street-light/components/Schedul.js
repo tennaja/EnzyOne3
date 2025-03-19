@@ -1,4 +1,4 @@
-import { useState, useEffect ,useMemo} from "react";
+import { useState, useEffect ,useMemo,useRef} from "react";
 import { Switch } from "@headlessui/react";
 import CreateIcon from "@mui/icons-material/Create";
 import SchedulePopup from "./Popupchedule";
@@ -17,7 +17,8 @@ export default function ScheduleComponent({ scheduleData ,
   deviceData, 
   FetchSchedule,
   Sitename,
-  Groupname
+  Groupname,
+  GroupId
 }) {
   const [data, setData] = useState(scheduleData);
   const [selected, setSelected] = useState([]);
@@ -35,6 +36,8 @@ export default function ScheduleComponent({ scheduleData ,
   const [modalSuccessProps, setModalSuccessProps] = useState(null);
   const [sortConfig, setSortConfig] = useState({});
   const [toggleId , setToggleId] = useState(null)
+  const schedulePopupRef = useRef();
+  
   
   useEffect(() => {
     setData(scheduleData);
@@ -42,23 +45,7 @@ export default function ScheduleComponent({ scheduleData ,
     console.log(data)
   }, [scheduleData]);
 
-  const notifySuccess = (title,message) =>
-          toast.success(
-            <div className="px-2">
-            <div className="flex flex-row font-bold">{title}</div>
-            <div className="flex flex-row text-xs">{message}</div>
-            </div>,
-            {
-              position: "top-right",
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-              theme: "light",
-            }
-          );
+  
           const handleClosePopup = () => {
             setopenModalconfirm(false)
             setopenModalsuccess(false)
@@ -82,7 +69,9 @@ export default function ScheduleComponent({ scheduleData ,
             });
             return sorted;
           }, [data, sortConfig]);
-  const toggleSwitch = (id) => {
+  
+  
+          const toggleSwitch = (id) => {
     setData((prev) =>
       prev.map((item) =>
         item.id === id
@@ -138,7 +127,27 @@ export default function ScheduleComponent({ scheduleData ,
       console.error("Error fetching schedule data:", error);
     }
   };
+  
 
+  const handleExternalSave = () => {
+    if (schedulePopupRef.current) {
+      console.log("🚀 กำลังเรียก triggerSave() จากภายนอก");
+      schedulePopupRef.current.triggerSave(); // ✅ เรียก triggerSave() ใน SchedulePopup.js
+    } else {
+      console.log("❌ schedulePopupRef.current เป็น null");
+    }
+  };
+
+  const handleExternalUpdate = () => {
+
+    if (schedulePopupRef.current) {
+      console.log("🚀 กำลังเรียก triggerSave() จากภายนอก");
+      schedulePopupRef.current.triggerUpdate(); // ✅ เรียก triggerSave() ใน SchedulePopup.js
+    } else {
+      console.log("❌ schedulePopupRef.current เป็น null");
+    }
+  };
+  
 const CreateSchedul = async (req) => {
     try {
       console.log("Request Parameters:", req);
@@ -147,10 +156,11 @@ const CreateSchedul = async (req) => {
       console.log("Group List Result:", result);
 
       if (result.status === 201) {
-        console.log("Success");
-        notifySuccess(res?.data?.title,res?.data?.message);
+        console.log(result);
         setopenModalconfirm(false)
-        onClose()
+        setIsPopupOpen(false)
+        setopenModalSchedule(false)
+        notifySuccess(result?.data?.title, result?.data?.message);
       } else {
         console.log("No groups found!");
         setopenModalfail(true)
@@ -167,11 +177,10 @@ const CreateSchedul = async (req) => {
       console.log("Group List Result:", result);
 
       if (result.status === 200) {
-        console.log("Success");
-        notifySuccess(res?.data?.title,res?.data?.message);
         setopenModalconfirm(false)
-
-        onClose()
+        setIsPopupOpen(false)
+        setopenModalSchedule(false)
+        notifySuccess(result?.data?.title,result?.data?.message);
       } else {
         console.log("No groups found!");
         setopenModalfail(true)
@@ -206,7 +215,7 @@ const handleOpenModalconfirm = () => {
   setopenModalconfirm(true);
   setModalConfirmProps({
     onCloseModal: handleClosePopup,
-    onClickConfirmBtn: handleCancel,
+    onClickConfirmBtn: action === "create" ? handleExternalSave : handleExternalUpdate,
     title: "Edit/Save Schedule",
     content: "Are you sureyou want to save this schedule ?"
     ,
@@ -284,6 +293,23 @@ const getCurrentStatus = (id) => {
   const totalPages = Math.ceil(data.length / rowsPerPage);
   const paginatedData = data.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
+  const notifySuccess = (title,message) =>
+    toast.success(
+      <div className="px-2">
+      <div className="flex flex-row font-bold">{title}</div>
+      <div className="flex flex-row text-xs">{message}</div>
+      </div>,
+      {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      }
+    );
   return (
     <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
       <div>
@@ -488,6 +514,7 @@ const getCurrentStatus = (id) => {
         </div>
       </div>
       <SchedulePopup 
+      ref={schedulePopupRef}
       isOpen={isPopupOpen || openModalSchedule} 
       onClose={() => { 
       setIsPopupOpen(false); 
@@ -495,18 +522,19 @@ const getCurrentStatus = (id) => {
       setScheduleData(null); }} 
       scheduleData={ScheduleData} 
       deviceList={deviceData} 
-      onSaveSchedule={CreateSchedul} 
+      onSaveSchedule={CreateSchedul}
       onUpdateSchedule={UpdateSchedul} 
       onHandleConfirm={handleOpenModalconfirm}
       Isconfirm={openModalconfirm}
       Action={action} 
-      groupId={ScheduleData?.groupId}
+      groupId={ScheduleData?.groupId ? ScheduleData?.groupId : GroupId}
       FetchData={FetchSchedule}
       />
         {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
         {openModalsuccess && <ModalDone />}
         {openModalfail && <ModalFail onCloseModal={handleClosePopup} />}
-        
+        <ToastContainer />
     </div>
+    
   );
 }

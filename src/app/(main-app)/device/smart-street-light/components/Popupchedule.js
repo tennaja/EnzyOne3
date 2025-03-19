@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect ,useImperativeHandle, forwardRef} from "react";
 import { Modal } from "@mantine/core";
 import {
   postCreateSchedule, putUpdateSchedule
@@ -9,29 +9,28 @@ import ModalDone from "./Popupcomplete";
 import ModalFail from "./PopupFali";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-export default function SchedulePopup({
-  isOpen,
-  onClose,
-  deviceList,
-  scheduleData,
-  Action,
-  groupId,
-  onSaveSchedule,
-  onUpdateSchedule,
-  FetchData
-}) {
+const SchedulePopup = forwardRef(
+  (
+    {
+      isOpen,
+      onClose,
+      deviceList,
+      scheduleData,
+      Action,
+      groupId,
+      onSaveSchedule,
+      onUpdateSchedule,
+      onHandleConfirm,
+      FetchData
+    },
+    ref
+  ) => {
   const [selectedDevices, setSelectedDevices] = useState([]);
   const [dimmingLevel, setDimmingLevel] = useState(scheduleData?.percentDimming || 10);
   const [repeatOption, setRepeatOption] = useState(scheduleData?.repeat || "once");
   const [startDatetime, setStartDatetime] = useState(scheduleData?.startTime || "");
   const [endDatetime, setEndDatetime] = useState(scheduleData?.endTime || "");
   const [scheduleName, setScheduleName] = useState(scheduleData?.name || "");
-  const [openModalconfirm, setopenModalconfirm] = useState(false)
-  const [openModalsuccess, setopenModalsuccess] = useState(false)
-  const [openModalfail, setopenModalfail] = useState(false)
-  const [modalConfirmProps, setModalConfirmProps] = useState(null);
-  const [modalErrorProps, setModalErorProps] = useState(null);
-  const [modalSuccessProps, setModalSuccessProps] = useState(null);
   const [executionDateTime, setexecutionDateTime] = useState(scheduleData?.executionDateTime)
   const [executionEndDateTime, setexecutionEndDateTime] = useState(scheduleData?.executionEndDateTime)
   const [selectedDays, setSelectedDays] = useState({
@@ -45,12 +44,12 @@ export default function SchedulePopup({
   });
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Filtered device list based on search query
+
   const filteredDevices = deviceList.filter(device =>
     device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     device.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  // Use the first schedule from scheduleData
+ 
   const schedule = scheduleData;
 
   useEffect(() => {
@@ -65,25 +64,6 @@ export default function SchedulePopup({
       setSelectedDevices(schedule?.scheduledDevices?.map(device => device.id) || []);
     }
   }, [isOpen]);
-
-
-  const notifySuccess = (title, message) =>
-    toast.success(
-      <div className="px-2">
-        <div className="flex flex-row font-bold">{title}</div>
-        <div className="flex flex-row text-xs">{message}</div>
-      </div>,
-      {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-      }
-    );
 
   const handleDayChange = (day) => {
     setSelectedDays((prevState) => ({
@@ -185,148 +165,96 @@ export default function SchedulePopup({
     setSelectedDays(updateSelectedDays());
   }, [repeatOption, scheduleData]);
 
-  // useEffect(() => {
-  //   const newSelectedDays = updateSelectedDays();
-  //   setSelectedDays(newSelectedDays);
-  // }, [repeatOption]);
-
-  const handleOpenModalconfirm = () => {
-    setopenModalconfirm(true);
-    setModalConfirmProps({
-      onCloseModal: handleClosePopup,
-      onClickConfirmBtn: Action === "create" ? handleSaveCreate : handleSaveUpdate,
-      title: "Edit/Save Schedule",
-      content: "Are you sureyou want to save this schedule ?"
-      ,
-      buttonTypeColor: "primary",
-    });
-  };
-  const handleClosePopup = () => {
-    setopenModalconfirm(false)
-    setopenModalsuccess(false)
-    setopenModalfail(false)
-  }
-  const CreateSchedul = async (req) => {
-    try {
-      console.log("Request Parameters:", req);
-
-      const result = await postCreateSchedule(req);
-      console.log("Group List Result:", result);
-
-      if (result.status === 201) {
-        console.log("Success");
-        setopenModalconfirm(false)
-        onClose()
-        notifySuccess(res?.data?.title, res?.data?.message);
-        FetchData()
-      } else {
-        console.log("No groups found!");
-        setopenModalfail(true)
-      }
-    } catch (error) {
-      console.log("Error creating schedule:", error);
-    }
-  };
-  const UpdateSchedul = async (id, req) => {
-    try {
-      console.log("Request Parameters:", req);
-
-      const result = await putUpdateSchedule(id, req);
-      console.log("Group List Result:", result);
-
-      if (result.status === 200) {
-        console.log("Success");
-        setopenModalconfirm(false)
-        onClose()
-        notifySuccess(res?.data?.title, res?.data?.message);
-        FetchData()
-      } else {
-        console.log("No groups found!");
-        setopenModalfail(true)
-      }
-    } catch (error) {
-      console.log("Error creating schedule:", error);
-    }
-  };
-
   const executionDate = executionDateTime?.split("T")[0]; // ได้ YYYY-MM-DD
   const executionTime = executionDateTime?.split("T")[1]; // ได้ HH:mm
 
   const executionEndDate = executionEndDateTime?.split("T")[0]; // ได้ YYYY-MM-DD
   const executionEndTime = executionEndDateTime?.split("T")[1]; // ได้ HH:mm
 
-  const handleSaveCreate = () => {
-    const param = {
-      name: scheduleName,
-      groupId: Number(groupId),
-      startTime: repeatOption === "once" ? executionTime : startDatetime,
-      endTime: repeatOption === "once" ? executionEndTime : endDatetime,
-      repeat: repeatOption,
-      executionDateTime: executionDate,
-      executionEndDateTime: executionEndDate,
-      percentDimming: Number(dimmingLevel),
-      dayOfWeek: repeatOption === "once"
-        ? [] // หากเลือก "once" ให้เป็น []
-        : Object.keys(selectedDays)
-          .filter(day => selectedDays[day])
-          .map(day => {
-            const daysMap = {
-              monday: 1,
-              tuesday: 2,
-              wednesday: 3,
-              thursday: 4,
-              friday: 5,
-              saturday: 6,
-              sunday: 7,
-            };
-            return daysMap[day];
-          }),
-      scheduledDevices: selectedDevices,
-    };
+  useImperativeHandle(ref, () => ({
+    triggerSave: async () => {
+      const param = {
+        name: scheduleName,
+        groupId: Number(groupId),
+        startTime: repeatOption === "once" ? executionTime : startDatetime,
+        endTime: repeatOption === "once" ? executionEndTime : endDatetime,
+        repeat: repeatOption,
+        executionDateTime: executionDate,
+        executionEndDateTime: executionEndDate,
+        percentDimming: Number(dimmingLevel),
+        dayOfWeek: repeatOption === "once"
+          ? []
+          : Object.keys(selectedDays)
+            .filter(day => selectedDays[day])
+            .map(day => {
+              const daysMap = {
+                monday: 1,
+                tuesday: 2,
+                wednesday: 3,
+                thursday: 4,
+                friday: 5,
+                saturday: 6,
+                sunday: 7,
+              };
+              return daysMap[day];
+            }),
+        scheduledDevices: selectedDevices,
+      };
 
-    console.log("Generated Parameters:", param);
+      console.log("✅ กำลังเรียก onSaveSchedule ด้วย:", param);
 
-    // ส่ง param ไปยัง CreateSchedul
-    CreateSchedul(param);
-  };
-
-  const handleSaveUpdate = () => {
-    const param = {
-      name: scheduleName,
-      groupId: Number(groupId),
-      startTime: repeatOption === "once" ? executionTime : startDatetime,
-      endTime: repeatOption === "once" ? executionEndTime : endDatetime,
-      repeat: repeatOption,
-      executionDateTime: executionDate,
-      executionEndDateTime: executionEndDate,
-      percentDimming: Number(dimmingLevel),
-      dayOfWeek: repeatOption === "once"
-        ? [] // หากเลือก "once" ให้เป็น []
-        : Object.keys(selectedDays)
-          .filter(day => selectedDays[day])
-          .map(day => {
-            const daysMap = {
-              monday: 1,
-              tuesday: 2,
-              wednesday: 3,
-              thursday: 4,
-              friday: 5,
-              saturday: 6,
-              sunday: 7,
-            };
-            return daysMap[day];
-          }),
-      scheduledDevices: selectedDevices,
-    };
-
-    console.log("Generated Parameters:", param);
-
-    // ส่ง param ไปยัง CreateSchedul
-    UpdateSchedul(scheduleData.id, param);
-  };
-
-
-
+      try {
+        await onSaveSchedule(param); // เรียก CreateSchedul() จากภายนอก
+        console.log("✅ Schedule ถูกบันทึกสำเร็จ!");
+      } catch (error) {
+        console.error("❌ เกิดข้อผิดพลาดในการบันทึก Schedule:", error);
+      }
+    },
+    triggerUpdate: async () => {
+      if (!scheduleData?.id) {
+        console.error("❌ ไม่มี ID ของ Schedule ที่ต้องอัปเดต!");
+        return;
+      }
+  
+      const param = {
+        name: scheduleName,
+        groupId: Number(groupId),
+        startTime: repeatOption === "once" ? executionTime : startDatetime,
+        endTime: repeatOption === "once" ? executionEndTime : endDatetime,
+        repeat: repeatOption,
+        executionDateTime: executionDate,
+        executionEndDateTime: executionEndDate,
+        percentDimming: Number(dimmingLevel),
+        dayOfWeek: repeatOption === "once"
+          ? []
+          : Object.keys(selectedDays)
+            .filter(day => selectedDays[day])
+            .map(day => {
+              const daysMap = {
+                monday: 1,
+                tuesday: 2,
+                wednesday: 3,
+                thursday: 4,
+                friday: 5,
+                saturday: 6,
+                sunday: 7,
+              };
+              return daysMap[day];
+            }),
+        scheduledDevices: selectedDevices,
+      };
+  
+      console.log("🔄 กำลังเรียก onUpdateSchedule ด้วย:", param);
+  
+      try {
+        await onUpdateSchedule(scheduleData?.id,param);
+        console.log("✅ Schedule ถูกอัปเดตสำเร็จ!");
+      } catch (error) {
+        console.error("❌ เกิดข้อผิดพลาดในการอัปเดต Schedule:", error);
+      }
+    }
+  }));
+ 
   const days = updateSelectedDays();
 
   return (
@@ -546,7 +474,7 @@ export default function SchedulePopup({
             {/* Dimming Level */}
             <div className="grid grid-cols-[0.5fr_2fr] items-center gap-x-4 mt-2">
             <label className="text-sm font-medium">Dimming Level</label>
-            <div className="flex items-center w-2/3">
+            <div className="flex items-center w-full">
     <div className="w-full ">
       
       <input
@@ -556,7 +484,7 @@ export default function SchedulePopup({
         list="tickmarks"
         value={dimmingLevel}
         onChange={(e) => setDimmingLevel(e.target.value)}
-        className="w-full accent-[#33BFBF]"
+        className="w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm cursor-pointer"
       />
       <datalist id="tickmarks" className="w-full flex justify-between text-xs text-gray-600">
         <option value="0" label="0"></option>
@@ -581,19 +509,16 @@ export default function SchedulePopup({
               <button
                 type="button"
                 className="px-4 py-2 bg-blue-500 text-white rounded"
-                onClick={handleOpenModalconfirm}
+                onClick={onHandleConfirm}
               >
                 Save
               </button>
             </div>
           </form>
         </div>
-        {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
-        {openModalsuccess && <ModalDone />}
-        {openModalfail && <ModalFail onCloseModal={handleClosePopup} />}
-
       </Modal>
 
     </div>
-  );
-}
+)}
+);
+export default SchedulePopup;

@@ -1,7 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import ArrowForwardIosOutlinedIcon from '@mui/icons-material/ArrowForwardIosOutlined';
 import DvrIcon from "@mui/icons-material/Dvr";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -132,7 +130,8 @@ const [selectedGroupName, setSelectedGroupName] = useState('');
         console.log(selectedSiteName)
         console.log(selectedGroupName)
         // กดปุ่มค้นหาจะทำการเรียกทั้ง GetDeviceList และ GetScheduleList
-        
+        setSiteName(selectedSiteName);
+        setGroupName(selectedGroupName);
         GetDeviceList();
         GetScheduleList();
     };
@@ -145,7 +144,7 @@ const [selectedGroupName, setSelectedGroupName] = useState('');
                 deviceData={devcielist} 
                 // FetchDevice={GetDeviceList}
                 Sitename={siteName}
-                Groupname={groupName} 
+                Groupname={groupName}
                 />;
             case "control":
                 return <DeviceControlPage 
@@ -159,6 +158,7 @@ const [selectedGroupName, setSelectedGroupName] = useState('');
                 deviceData={devcielist} 
                 scheduleData ={schedulelist} 
                 FetchSchedule={GetScheduleList} 
+                GroupId={groupid}
                 Sitename={siteName}
                 Groupname={groupName}
                 />
@@ -222,7 +222,7 @@ const [selectedGroupName, setSelectedGroupName] = useState('');
                             className="w-44 border border-slate-300 mx-2 rounded-md h-9"
                             onChange={(event) => {
                                 getGroupList(event.target.value);
-                                setSiteName(event.target.selectedOptions[0].text);
+                                setSelectedSiteName(event.target.selectedOptions[0].text);
                             }}
                             value={siteid}
                         >
@@ -240,7 +240,7 @@ const [selectedGroupName, setSelectedGroupName] = useState('');
                         <select className="w-44 border border-slate-300 mx-2 rounded-md h-9"
                             onChange={(event) => {
                                 Groupchange(event.target.value)
-                                setGroupName(event.target.selectedOptions[0].text);
+                                setSelectedGroupName(event.target.selectedOptions[0].text);
                             }}
                             value={groupid}
                             >
@@ -261,7 +261,7 @@ const [selectedGroupName, setSelectedGroupName] = useState('');
 
             
                     {renderContent()}
-               <ToastContainer />
+               
         </>
     );
 };
