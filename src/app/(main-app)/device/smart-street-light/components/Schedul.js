@@ -530,6 +530,7 @@ export default function ScheduleComponent({ scheduleData,
         onUpdateSchedule={UpdateSchedul}
         onHandleConfirm={handleOpenModalconfirm}
         groupId={ScheduleData?.groupId ? ScheduleData?.groupId : GroupId}
+        action={action}
 
       />
       {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}

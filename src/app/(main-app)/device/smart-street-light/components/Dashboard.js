@@ -824,7 +824,10 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
             deviceList={deviceData}
             onUpdateSchedule={UpdateSchedul}
             onHandleConfirm={handleOpenModalconfirm}
-            groupId={scheduleData?.groupId} />
+            groupId={scheduleData?.groupId}
+            action={"update"}
+            />
+            
         </div>)}
       {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
       {openModalfail && <ModalFail onCloseModal={handleClosePopup} />}

@@ -16,12 +16,12 @@ const SchedulePopup = forwardRef(
       onClose,
       deviceList,
       scheduleData,
-      Action,
+      action,
       groupId,
       onSaveSchedule,
       onUpdateSchedule,
       onHandleConfirm,
-      FetchData
+     
     },
     ref
   ) => {
@@ -279,7 +279,7 @@ const SchedulePopup = forwardRef(
         }}
       >
         <div className="p-4">
-          <h2 className="text-xl font-semibold mb-4">Add Schedule</h2>
+          <h2 className="text-xl font-semibold mb-4">{action == "create" ? "Add" : "Edit"} Schedule</h2>
           <form>
             <div className="mb-3 flex items-center justify-between gap-4">
               <label className="text-sm font-medium">Schedule Name</label>
