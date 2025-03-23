@@ -1,4 +1,4 @@
-import { useState ,useEffect} from "react";
+import { useState ,useEffect,useImperativeHandle, forwardRef} from "react";
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import { Switch } from "@headlessui/react";
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
@@ -10,7 +10,16 @@ import 'react-toastify/dist/ReactToastify.css';  // Import this for default styl
 import ModalConfirm from "./Popupconfirm";
 import ModalDone from "./Popupcomplete";
 import ModalFail from "./PopupFali";
-const DeviceDetail = ({ device , setActiveTab}) => {
+const DeviceDetail = forwardRef (
+  (
+    {
+       device , 
+       setActiveTab,
+       onhandleOpenPopupconfirm,
+       OnsubmitControl
+      }
+      ,ref
+    ) => {
   console.log(device?.status)
     const [powerOn, setPowerOn] = useState(true);
     const [dimming, setDimming] = useState(device?.percentDimming || 10);
@@ -55,7 +64,23 @@ const DeviceDetail = ({ device , setActiveTab}) => {
       });
     };
     
-    
+    useImperativeHandle(ref, () => ({
+        triggerExecute: async () => {
+          const param = {
+            id: device?.id,
+            action: deviceStatus ? "on" : "off",
+            dimming:deviceStatus ? Number(dimming) : 0
+          };
+          try {
+            await OnsubmitControl(param);
+            console.log("✅ Schedule ถูกอัปเดตสำเร็จ!");
+          } catch (error) {
+            console.error("❌ เกิดข้อผิดพลาดในการอัปเดต Schedule:", error);
+          }
+        }
+      }));
+
+
     const handleSubmit = async () => {
         const Param = {
           id: device?.id,
@@ -241,7 +266,7 @@ const DeviceDetail = ({ device , setActiveTab}) => {
   {/* Execute Button */}
   <div className="flex justify-start mt-3">
     <button
-      onClick={handleOpenModalconfirm}
+      onClick={() => onhandleOpenPopupconfirm(device?.name,deviceStatus,dimming)}
       disabled={device?.status === "offline"}
       className={`w-32 py-2 rounded text-sm ${
         device?.status === "offline"
@@ -254,14 +279,10 @@ const DeviceDetail = ({ device , setActiveTab}) => {
   </div>
 </div>
 
-            {openModalconfirm && <ModalConfirm {...modalConfirmProps}/>}
-            {openModalsuccess && <ModalDone {...modalSuccessProps}/>}
-            {openModalfail && <ModalFail {...modalErrorProps}/>}
-            <ToastContainer />
     </div>
    
   );
-};
+})
 
 export default DeviceDetail;
 

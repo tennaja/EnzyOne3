@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef } from "react";
 import ArrowForwardIosOutlinedIcon from '@mui/icons-material/ArrowForwardIosOutlined';
 import DvrIcon from "@mui/icons-material/Dvr";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -17,7 +17,7 @@ import {
 import { ClipLoader } from "react-spinners";
 
 import {
-    setSiteId
+    setSiteId,setGroupId
 } from "@/redux/slicer/smartstreetlightSlice"
 
 const Header1 = () => {
@@ -32,11 +32,18 @@ const Header1 = () => {
     const [siteName , setSiteName] = useState('');
     const [groupName , setGroupName] = useState('');
     const [loading, setLoading] = useState(false);
+    const [selectedSiteId, setSelectedSiteId] = useState('');
+    const [selectedGroupId, setSelectedGroupId] = useState('');
     const [selectedSiteName, setSelectedSiteName] = useState('');
-const [selectedGroupName, setSelectedGroupName] = useState('');
+    const [selectedGroupName, setSelectedGroupName] = useState('');
+
+    const [isfirst,setIsfirst] = useState(true)
+    const hasFetchedSchedule = useRef(false); // ใช้เพื่อป้องกันการเรียกซ้ำ
     const dispatch = useDispatch();
     const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
+    const SelectIdGroup = useSelector((state) => state.smartstreetlightData.groupId);
     console.log('SelectIdSite:', SelectIdSite);
+    console.log('SelectIdGroup:', SelectIdGroup);
 
 
     useEffect(() => {
@@ -52,11 +59,17 @@ const [selectedGroupName, setSelectedGroupName] = useState('');
         
         if (result.length > 0) {
             setSitelist(result);
-    
             const siteId = result[0].id ?? 0; // ถ้า id เป็น null ให้ใช้ 0
-            setSiteid(siteId);
-            setSiteName(result[0].name);
-            dispatch(setSiteId(siteId)); // dispatch action setId กับค่า siteId
+            
+            if (isfirst) { // ใช้ isfirst จาก useState
+                setSiteName(result[0].name);
+                setSiteid(siteId);
+                setIsfirst(false); // เซ็ตให้เป็น false หลังจากใช้งานครั้งแรก
+            }else{
+                setSelectedSiteId(siteId)
+                setSelectedSiteName(result[0].name)
+            }
+            
             getGroupList(siteId);
 
         }
@@ -65,19 +78,30 @@ const [selectedGroupName, setSelectedGroupName] = useState('');
 
     const getGroupList = async (siteid) => {
         console.log("Site ID:", siteid);
-        setSiteid(siteid);
+        setSiteid(siteid ?? 0);
         const result = await getGroupListData(siteid);
         console.log("Group List Result:", result);
+    
         if (result.length > 0) {
             setGrouplist(result);
-            const firstGroupId = result[0].id ?? 0 
+            const firstGroupId = result[0].id ?? 0;
             console.log("First Group ID:", firstGroupId);
-            setGroupid(firstGroupId);
-            setGroupName(result[0].name)
+            if (isfirst ) { // ใช้ isfirst จาก useState
+                setGroupName(result[0].name);
+                setGroupid(firstGroupId);
+                setIsfirst(false); // เซ็ตให้เป็น false หลังจากใช้งานครั้งแรก
+            }else{
+                setGroupid(firstGroupId);
+                setSelectedGroupId(firstGroupId)
+                setSelectedGroupName(result[0].name);
+                console.log(result[0].name);
+            }
+            
         } else {
             console.log("No groups found!");
         }
     };
+    
     
     
 
@@ -126,12 +150,18 @@ const [selectedGroupName, setSelectedGroupName] = useState('');
         setSchedulelist([])
     }
       };
+
+
       const handleSearch = () => {
         console.log(selectedSiteName)
         console.log(selectedGroupName)
         // กดปุ่มค้นหาจะทำการเรียกทั้ง GetDeviceList และ GetScheduleList
         setSiteName(selectedSiteName);
         setGroupName(selectedGroupName);
+        setSiteid(selectedSiteId)
+        setGroupid(selectedGroupId)
+        dispatch(setSiteId(selectedSiteId));
+        dispatch(setGroupId(selectedGroupId));
         GetDeviceList();
         GetScheduleList();
     };
@@ -142,7 +172,7 @@ const [selectedGroupName, setSelectedGroupName] = useState('');
             case "dashboard":
                 return <Dashboard 
                 deviceData={devcielist} 
-                // FetchDevice={GetDeviceList}
+                FetchDevice={GetDeviceList}
                 Sitename={siteName}
                 Groupname={groupName}
                 />;
@@ -169,23 +199,100 @@ const [selectedGroupName, setSelectedGroupName] = useState('');
 
     
     useEffect(() => {
-        if (activeTab === "dashboard" ) {
+        if (activeTab === "dashboard" || activeTab === "control") {
             GetDeviceList();
-        }
-        else if(activeTab === "schedule"){
-            GetScheduleList();
         }
     }, [activeTab]); // ให้แน่ใจว่า `activeTab` เป็น dependency ตัวเดียว
 
-    // useEffect(() => {
-    //     // ตั้งค่าการรีเฟรชทุก 1 นาที (60000 มิลลิวินาที)
-    //     const interval = setInterval(() => {
-    //         GetDeviceList();
-    //     }, 60000);
+    useEffect(() => {
+        if (activeTab === "schedule" && sitelist?.length > 0) {
+          // กรองรายการ sitelist
+          let filteredSiteList = sitelist.filter((item) => item.name !== "All sites");
+          console.log("Filtered Site List:", filteredSiteList);
     
-    //     // เคลียร์ interval เมื่อ component ถูก unmount
-    //     return () => clearInterval(interval);
-    // }, []);
+          // ถ้ามีรายการที่กรองแล้วและ siteid ยังไม่ได้ถูกเซ็ต
+          if (filteredSiteList.length > 0 && (!siteid || siteid === "0")) {
+            const newSiteId = filteredSiteList[0]?.id;
+            console.log("Setting site ID:", newSiteId);
+    
+            // เซ็ต siteid ใหม่
+            setSiteId(newSiteId);
+            setSelectedSiteId(newSiteId);
+            setSiteName(filteredSiteList[0]?.name || "");
+            setSelectedSiteName(filteredSiteList[0]?.name || "");
+            getGroupList(newSiteId); // เรียก getGroupList ใหม่หลังจากเซ็ต siteid
+            hasFetchedSchedule.current = false; // รีเซ็ต fetch flag
+          }
+        }
+      }, [activeTab, sitelist]); // ตรวจสอบการเปลี่ยนแปลงของ activeTab หรือ sitelist
+    
+      // useEffect สำหรับการเซ็ตค่า groupid
+      useEffect(() => {
+        if (activeTab === "schedule" && grouplist?.length > 0) {
+          let filteredGroupList = grouplist.filter((item) => item.name !== "All groups");
+          console.log("Filtered Group List:", filteredGroupList);
+    
+          // ถ้ามีรายการที่กรองแล้วและ groupid ยังไม่ได้ถูกเซ็ต
+          if (filteredGroupList.length > 0 && (!groupid || groupid === "0")) {
+            const newGroupId = filteredGroupList[0]?.id;
+            console.log("Setting Group ID:", newGroupId);
+    
+            // เซ็ต groupid ใหม่
+            setSelectedGroupId(newGroupId);
+            Groupchange(newGroupId); // เรียก Groupchange เพื่ออัพเดตกลุ่ม
+            setGroupName(filteredGroupList[0]?.name || "");
+            setSelectedGroupName(filteredGroupList[0]?.name || "");
+            hasFetchedSchedule.current = false; // รีเซ็ต fetch flag
+          }
+        }
+      }, [activeTab, grouplist]); // ตรวจสอบการเปลี่ยนแปลงของ activeTab หรือ grouplist
+    
+      // useEffect สำหรับดึงข้อมูล schedule list
+      useEffect(() => {
+        if (activeTab === "schedule" && siteid && groupid) {
+          if (!hasFetchedSchedule.current) {
+            console.log("Fetching schedule list for the first time...");
+            GetScheduleList(); // เรียก API เพื่อดึงข้อมูล
+            hasFetchedSchedule.current = true; // ตั้งค่าให้เป็น true หลังจากเรียก API ครั้งแรก
+          }
+        }
+      }, [activeTab, siteid, groupid]); // ตรวจสอบการเปลี่ยนแปลงของ activeTab, siteid, groupid
+    
+      // รีเซ็ต `hasFetchedSchedule` ถ้า sitelist หรือ grouplist เปลี่ยน (เช่น ถูกตัดรายการ)
+      useEffect(() => {
+        if (activeTab === "schedule") {
+          console.log("Resetting fetch flag due to site or group list change...");
+          hasFetchedSchedule.current = false; // ทำให้สามารถเรียกใหม่ได้
+        }
+      }, [sitelist, grouplist, activeTab]); // เมื่อ sitelist หรือ grouplist เปลี่ยน
+    
+      // useEffect ที่จะเซ็ตค่า `siteid` และ `groupid` เป็นค่าแรกเมื่อกลับมาที่หน้า "schedule"
+      useEffect(() => {
+        if (activeTab === "schedule") {
+          // กรองรายการ sitelist
+          let filteredSiteList = sitelist.filter((item) => item.name !== "All sites");
+          // ถ้ามีรายการที่กรองแล้ว และ siteid เป็น 0 หรือ null ให้เลือกค่าตำแหน่งแรก
+          if (filteredSiteList.length > 0 && (!siteid || siteid === "0")) {
+            const newSiteId = filteredSiteList[0]?.id;
+            setSiteId(newSiteId);
+            setSelectedSiteId(newSiteId);
+            setSiteName(filteredSiteList[0]?.name || "");
+            setSelectedSiteName(filteredSiteList[0]?.name || "");
+            getGroupList(newSiteId);
+          }
+    
+          // กรองรายการ grouplist
+          let filteredGroupList = grouplist.filter((item) => item.name !== "All groups");
+          // ถ้ามีรายการที่กรองแล้ว และ groupid เป็น 0 หรือ null ให้เลือกค่าตำแหน่งแรก
+          if (filteredGroupList.length > 0 && (!groupid || groupid === "0")) {
+            const newGroupId = filteredGroupList[0]?.id;
+            setSelectedGroupId(newGroupId);
+            Groupchange(newGroupId);
+            setGroupName(filteredGroupList[0]?.name || "");
+          }
+        }
+      }, [activeTab, sitelist, grouplist]);
+
     return (
         <>
             <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200">
@@ -219,39 +326,48 @@ const [selectedGroupName, setSelectedGroupName] = useState('');
                     <div>
                         <span className="text-sm">Site: </span>
                         <select
-                            className="w-44 border border-slate-300 mx-2 rounded-md h-9"
-                            onChange={(event) => {
-                                getGroupList(event.target.value);
-                                setSelectedSiteName(event.target.selectedOptions[0].text);
-                            }}
-                            value={siteid}
-                        >
-                            {sitelist?.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                    {item.name}
-                                </option>
-                            ))
-                            }
-                        </select>
+  className="w-44 border border-slate-300 mx-2 rounded-md h-9"
+  onChange={(event) => {
+    const selectedValue = event.target.value || "0"; // ถ้าเป็น null หรือ undefined ให้ใช้ "0"
+    setSelectedSiteId(selectedValue); // เก็บค่า siteId ใน Redux
+    getGroupList(selectedValue);
+    setSelectedSiteName(event.target.selectedOptions[0]?.text || ""); // ป้องกัน undefined
+  }}
+  value={siteid ?? "0"} // ถ้า siteid เป็น null ให้ใช้ "0"
+>
+  {sitelist
+    ?.filter((item) => !(activeTab === "schedule" && item.name === "All sites"))
+    .map((item) => (
+      <option key={item.id} value={item.id ?? "0"}>
+        {item.name}
+      </option>
+    ))}
+</select>
+
+
 
                     </div>
                     <div>
                         <span className="text-sm">Groups: </span>
-                        <select className="w-44 border border-slate-300 mx-2 rounded-md h-9"
-                            onChange={(event) => {
-                                Groupchange(event.target.value)
-                                setSelectedGroupName(event.target.selectedOptions[0].text);
-                            }}
-                            value={groupid}
-                            >
-                            {grouplist?.map((item) => {
-                                return (
-                                    <option key={item.id} value={item.id}>
-                                        {item.name}
-                                    </option>
-                                );
-                            })}
-                        </select>
+                        <select
+  className="w-44 border border-slate-300 mx-2 rounded-md h-9"
+  onChange={(event) => {
+    const selectedValue = event.target.value || "0"; // ถ้าเป็น null หรือ undefined ให้ใช้ "0"
+    setSelectedGroupId(selectedValue); // เก็บค่า groupId ใน Redux
+    Groupchange(selectedValue);
+    setSelectedGroupName(event.target.selectedOptions[0]?.text || ""); // ป้องกัน undefined
+  }}
+  value={groupid ?? "0"} // ถ้า groupid เป็น null ให้ใช้ "0"
+>
+  {grouplist
+    ?.filter((item) => !(activeTab === "schedule" && item.name === "All groups"))
+    .map((item) => (
+      <option key={item.id} value={item.id ?? "0"}>
+        {item.name}
+      </option>
+    ))}
+</select>
+
                     </div>
 
             

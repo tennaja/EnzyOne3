@@ -33,11 +33,22 @@ export default function DeviceControlPage({ deviceData ,FetchDevice,Sitename,Gro
   
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
   const [isSelectingAll, setIsSelectingAll] = useState(false);
-const isSortingDisabled = useRef(false);
-  
+  const isSortingDisabled = useRef(false);
   const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
       console.log('SelectIdSite:', SelectIdSite);    
-  const handleStatusChange = (newStatus) => {
+  
+      useEffect(() => {
+          const intervalId = setInterval(() => {
+              // ทำงานถ้ามีป๊อบอัพอันใดอันหนึ่งเปิดอยู่
+              if (!openModalconfirm) {
+                  FetchDevice();
+              }
+          }, 6000);
+      
+          return () => clearInterval(intervalId);
+      }, [openModalconfirm]);
+
+      const handleStatusChange = (newStatus) => {
         setDeviceStatus(newStatus);
         console.log(newStatus)
         // You can call a function here to update the device status on the server or in the backend
@@ -79,12 +90,10 @@ const isSortingDisabled = useRef(false);
             setSearchTerm(""); // Clear search term
             setCurrentPage(1); // Reset to the first page
             setRowsPerPage(20); // Reset rows per page
-    
             setopenModalconfirm(false);
             notifySuccess(res?.data?.title,res?.data?.message);
-            setTimeout(() => {
-              FetchDevice(); // Refresh device data
-            }, 3000);
+            FetchDevice(); // Refresh device data
+            
         } else {
             setopenModalconfirm(false);
             setopenModalfail(true);
@@ -141,7 +150,6 @@ const isSortingDisabled = useRef(false);
   };
 // การ sort ข้อมูลที่ใช้ useMemo เพื่อลดการคำนวณซ้ำ
 const toggleSelectAll = () => {
-  isSortingDisabled.current = true; // ปิดการเรียงลำดับ
 
   let updatedDeviceData;
 
@@ -158,10 +166,6 @@ const toggleSelectAll = () => {
 
   console.log("Selected deviceData after select all toggle:", updatedDeviceData);
   setSelecteddeviceData(updatedDeviceData);
-
-  setTimeout(() => {
-    isSortingDisabled.current = false; // เปิดให้ sort กลับมาทำงาน
-  }, 500);
 };
 
 const sortedData = useMemo(() => {
@@ -251,161 +255,153 @@ const sortedData = useMemo(() => {
 </div>
 
         
-        <table className="w-full table-auto mt-5">
-        <thead>
-  <tr className="text-xs text-gray-500 border-b border-gray-300">
-    <th className="py-2 px-4 text-left" onClick={() => handleSort("name")}>
-    <input
-  type="checkbox"
-  checked={
-    selecteddeviceData.length === filtereddeviceData.filter(device => device.status !== "offline").length &&
-    filtereddeviceData.length > 0
-  }
-  onChange={toggleSelectAll}
-  className="mr-2"
-/>
-
-      Device
-      <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
-        <ArrowDropUpIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "name" && sortConfig.direction === "asc" ? 1 : 0.3,
-            marginBottom: "-2px",
-          }}
-        />
-        <ArrowDropDownIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "name" && sortConfig.direction === "desc" ? 1 : 0.3,
-            marginTop: "-2px",
-          }}
-        />
-      </div>
-    </th>
-
-    <th className="py-2 px-4 text-left" onClick={() => handleSort("description")}>
-      Description
-      <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
-        <ArrowDropUpIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "description" && sortConfig.direction === "asc" ? 1 : 0.3,
-            marginBottom: "-2px",
-          }}
-        />
-        <ArrowDropDownIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "description" && sortConfig.direction === "desc" ? 1 : 0.3,
-            marginTop: "-2px",
-          }}
-        />
-      </div>
-    </th>
-
-    <th className="py-2 px-4 text-left" onClick={() => handleSort("groupName")}>
-      Group
-      <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
-        <ArrowDropUpIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "groupName" && sortConfig.direction === "asc" ? 1 : 0.3,
-            marginBottom: "-2px",
-          }}
-        />
-        <ArrowDropDownIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "groupName" && sortConfig.direction === "desc" ? 1 : 0.3,
-            marginTop: "-2px",
-          }}
-        />
-      </div>
-    </th>
-
-    <th className="py-2 px-4 text-left" onClick={() => handleSort("status")}>
-      Status
-      <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
-        <ArrowDropUpIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "status" && sortConfig.direction === "asc" ? 1 : 0.3,
-            marginBottom: "-2px",
-          }}
-        />
-        <ArrowDropDownIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "status" && sortConfig.direction === "desc" ? 1 : 0.3,
-            marginTop: "-2px",
-          }}
-        />
-      </div>
-    </th>
-
-    <th className="py-2 px-4 text-right" onClick={() => handleSort("lastUpdated")}>
-      Last Updated
-      <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
-        <ArrowDropUpIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "lastUpdated" && sortConfig.direction === "asc" ? 1 : 0.3,
-            marginBottom: "-2px",
-          }}
-        />
-        <ArrowDropDownIcon
-          style={{
-            fontSize: "14px",
-            opacity: sortConfig.key === "lastUpdated" && sortConfig.direction === "desc" ? 1 : 0.3,
-            marginTop: "-2px",
-          }}
-        />
-      </div>
-    </th>
-  </tr>
-</thead>
-
-  <tbody>
-  {currentdeviceData.map((device, index) => (
-    <tr
-      key={device.id}
-      className={`border-b ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} 
-        ${device.status === 'offline' ? 'pointer-events-none opacity-50' : ''}`}
-    >
-      <td className="py-2 px-4">
+<table className="w-full table-auto mt-5">
+  <thead>
+    <tr className="text-xs text-gray-500 border-b border-gray-300">
+    <th className="p-2 w-10">
         <input
           type="checkbox"
-          checked={selecteddeviceData.includes(device.id)}
-          onChange={() => toggleDevice(device.id)}
-          className="mr-2 bg-[#33BFBF]"
-          disabled={device.status === 'offline'} // ปิดการใช้งาน checkbox
+          checked={
+            selecteddeviceData.length === filtereddeviceData.filter(device => device.status !== "offline").length &&
+            filtereddeviceData.length > 0
+          }
+          onChange={toggleSelectAll}
+          
         />
-        {device.name}
-      </td>
-      <td className="py-2 px-4 text-sm text-gray-600">{device.description}</td>
-      <td className="py-2 px-4 text-sm text-gray-600">{device.groupName}</td>
-      <td className="py-2 px-4 text-sm text-gray-600">
-        <button
-          onClick={() => toggleStatus(device.id)}
-          className={`px-3 py-1 text-sm font-bold ${
-            device.status === "on"
-              ? "text-[#33BFBF]"
-              : device.status === "offline"
-              ? "text-red-500"
-              : "text-gray-400"
-          }`}
-          disabled={device.status === "offline"} // ปิดการใช้งานปุ่มเปลี่ยนสถานะ
-        >
-          {device.status}
-        </button>
-      </td>
-      <td className="py-2 px-4 text-sm text-gray-600 text-right">{device.lastUpdated}</td>
+      </th>
+      <th className="py-2 px-4 text-left" onClick={() => handleSort("name")}>Device
+        <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+          <ArrowDropUpIcon
+            style={{
+              fontSize: "14px",
+              opacity: sortConfig.key === "name" && sortConfig.direction === "asc" ? 1 : 0.3,
+              marginBottom: "-2px",
+            }}
+          />
+          <ArrowDropDownIcon
+            style={{
+              fontSize: "14px",
+              opacity: sortConfig.key === "name" && sortConfig.direction === "desc" ? 1 : 0.3,
+              marginTop: "-2px",
+            }}
+          />
+        </div>
+      </th>
+      <th className="py-2 px-4 text-left" onClick={() => handleSort("description")}>Description
+        <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+          <ArrowDropUpIcon
+            style={{
+              fontSize: "14px",
+              opacity: sortConfig.key === "description" && sortConfig.direction === "asc" ? 1 : 0.3,
+              marginBottom: "-2px",
+            }}
+          />
+          <ArrowDropDownIcon
+            style={{
+              fontSize: "14px",
+              opacity: sortConfig.key === "description" && sortConfig.direction === "desc" ? 1 : 0.3,
+              marginTop: "-2px",
+            }}
+          />
+        </div>
+      </th>
+      <th className="py-2 px-4 text-left" onClick={() => handleSort("groupName")}>Group
+        <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+          <ArrowDropUpIcon
+            style={{
+              fontSize: "14px",
+              opacity: sortConfig.key === "groupName" && sortConfig.direction === "asc" ? 1 : 0.3,
+              marginBottom: "-2px",
+            }}
+          />
+          <ArrowDropDownIcon
+            style={{
+              fontSize: "14px",
+              opacity: sortConfig.key === "groupName" && sortConfig.direction === "desc" ? 1 : 0.3,
+              marginTop: "-2px",
+            }}
+          />
+        </div>
+      </th>
+      <th className="py-2 px-4 text-left" onClick={() => handleSort("status")}>Status
+        <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+          <ArrowDropUpIcon
+            style={{
+              fontSize: "14px",
+              opacity: sortConfig.key === "status" && sortConfig.direction === "asc" ? 1 : 0.3,
+              marginBottom: "-2px",
+            }}
+          />
+          <ArrowDropDownIcon
+            style={{
+              fontSize: "14px",
+              opacity: sortConfig.key === "status" && sortConfig.direction === "desc" ? 1 : 0.3,
+              marginTop: "-2px",
+            }}
+          />
+        </div>
+      </th>
+      <th className="py-2 px-4 text-right" onClick={() => handleSort("lastUpdated")}>Last Updated
+        <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+          <ArrowDropUpIcon
+            style={{
+              fontSize: "14px",
+              opacity: sortConfig.key === "lastUpdated" && sortConfig.direction === "asc" ? 1 : 0.3,
+              marginBottom: "-2px",
+            }}
+          />
+          <ArrowDropDownIcon
+            style={{
+              fontSize: "14px",
+              opacity: sortConfig.key === "lastUpdated" && sortConfig.direction === "desc" ? 1 : 0.3,
+              marginTop: "-2px",
+            }}
+          />
+        </div>
+      </th>
     </tr>
-  ))}
-</tbody>
+  </thead>
 
+  <tbody>
+    {currentdeviceData.map((device, index) => (
+      <tr
+        key={device.id}
+        className={`border-b ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} ${device.status === 'offline' ? 'pointer-events-none opacity-50' : ''}`}
+      >
+        <td className="p-2 text-center w-10">
+          <input
+            type="checkbox"
+            checked={selecteddeviceData.includes(device.id)}
+            onChange={() => toggleDevice(device.id)}
+            
+            disabled={device.status === 'offline'}
+          />
+        </td>
+        <td className="py-2 px-4">{device.name}</td>
+        <td className="py-2 px-4 text-sm text-gray-600">{device.description}</td>
+        <td className="py-2 px-4 text-sm text-gray-600">{device.groupName}</td>
+        <td className="py-2 px-4 text-sm text-gray-600">
+          <button
+            onClick={() => toggleStatus(device.id)}
+            className={`px-3 py-1 text-sm font-bold ${
+              device.status === "on"
+                ? "text-[#33BFBF]"
+                : device.status === "offline"
+                ? "text-red-500"
+                : "text-gray-400"
+            }`}
+            disabled={device.status === "offline"}
+          >
+            {device.status}
+          </button>
+        </td>
+        <td className="py-2 px-4 text-sm text-gray-600 text-right">{device.lastUpdated}</td>
+      </tr>
+    ))}
+  </tbody>
 </table>
+
+
 
 
         
@@ -533,7 +529,7 @@ const sortedData = useMemo(() => {
       {openModalsuccess && <ModalDone {...modalSuccessProps}/>}
       {openModalfail && <ModalFail {...modalErrorProps}/>}
     </div>
-   
+    <ToastContainer />
     </div>
   );
 }

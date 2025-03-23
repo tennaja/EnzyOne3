@@ -27,10 +27,13 @@ const MapTH = ({
   onDeviceClick,
   setActiveTab,
   selectedStatus,
+  SiteId,
+  GroupId,
   className = "w-[450px] h-500px] rounded-lg shadow-md overflow-hidden",
 }) => {
   const mapRef = useRef(null);
-  const prevLocationListRef = useRef([]);
+  const prevSiteIdRef = useRef(SiteId);
+  const prevGroupIdRef = useRef(GroupId);
   const [selectedMarker, setSelectedMarker] = useState(null);
 
   useEffect(() => {
@@ -53,23 +56,23 @@ const MapTH = ({
 
   useEffect(() => {
     if (!mapRef.current) return;
-
-    const prevListString = JSON.stringify(prevLocationListRef.current);
-    const currentListString = JSON.stringify(locationList);
-
-    if (prevListString !== currentListString && locationList.length > 0) {
+  
+    // ตรวจสอบโดยใช้ String() เพื่อแก้ไขปัญหาชนิดข้อมูลไม่ตรงกัน
+    if (String(prevSiteIdRef.current) !== String(SiteId) || String(prevGroupIdRef.current) !== String(GroupId)) {
       setActiveTab("table");
       setSelectedMarker(null);
-      setSelectedLocation(null)
-      const validLocations = locationList.filter(loca => loca.lat && loca.lng);
+      setSelectedLocation(null);
+  
+      const validLocations = locationList.filter((loca) => loca.lat && loca.lng);
       if (validLocations.length > 0) {
-        const bounds = L.latLngBounds(validLocations.map(loca => [loca.lat, loca.lng]));
+        const bounds = L.latLngBounds(validLocations.map((loca) => [loca.lat, loca.lng]));
         mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 15, animate: true });
       }
     }
-
-    prevLocationListRef.current = locationList;
-  }, [locationList, setActiveTab]);
+  
+    prevSiteIdRef.current = SiteId;
+    prevGroupIdRef.current = GroupId;
+  }, [SiteId, GroupId, locationList, setActiveTab]);
 
   const getStatusColor = useCallback((status) => {
     switch (status) {

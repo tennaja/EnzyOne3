@@ -7,9 +7,10 @@ import DeviceDetail from "./DeviceDetail";
 import MapTH from "./MapLeaflet";
 import CreateIcon from '@mui/icons-material/Create';
 import {
-  getDevicebyId, getHistoryGraphDataa, getEnergyHistoryGraphDataa, getSchedulebyid, putUpdateSchedule
+  getDevicebyId, getHistoryGraphDataa, getEnergyHistoryGraphDataa, getSchedulebyid, putUpdateSchedule,DeviceControl
 } from "@/utils/api";
-import ChartComponent from "./Chart1";
+
+import { useDispatch, useSelector} from "react-redux";
 import MyChart from "./Chart1";
 import SchedulePopup from "./Popupchedule";
 import BarChartComponent from "./Barchart";
@@ -39,7 +40,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   const [endDate, setEndDate] = useState(today);
   const [startDate2, setStartDate2] = useState(today);
   const [endDate2, setEndDate2] = useState(today);
-  const [timeUnit, setTimeUnit] = useState("day");
+  const [timeUnit, setTimeUnit] = useState("hour");
   const [isLoading, setIsLoading] = useState(true);
   const [scheduleData, setScheduleData] = useState();
   const [openModalSchedule, setopenModalSchedule] = useState(false)
@@ -49,17 +50,10 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   const [modalConfirmProps, setModalConfirmProps] = useState(null);
   const [modalErrorProps, setModalErorProps] = useState(null);
   const [modalSuccessProps, setModalSuccessProps] = useState(null);
+  const devicedetailPopupRef = useRef();
   const schedulePopupRef = useRef();
-  const datagraph = {
-    "timestamp": [
-      "2025-02-01 00:00:00",
-      "2025-02-02 00:00:00"
-    ],
-    "kwh": [
-      18,
-      9
-    ]
-  };
+  const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
+  const SelectIdGroup = useSelector((state) => state.smartstreetlightData.groupId);
   useEffect(() => {
     if (!deviceData || Object.keys(deviceData).length === 0) {
       setIsLoading(true); // ยังโหลดไม่เสร็จ
@@ -160,6 +154,18 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
     }
   }, [activeTab]);  // This will run whenever `activeTab` changes.
 
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+        // ทำงานถ้ามีป๊อบอัพอันใดอันหนึ่งเปิดอยู่
+        if (!openModalSchedule &&  !openModalconfirm) {
+            FetchDevice();
+        }
+    }, 15000);
+
+    return () => clearInterval(intervalId);
+}, [openModalSchedule, openModalconfirm]);
+
   const GetHistoryGraph = async (id) => {
     const Param = {
       deviceId: id,
@@ -179,7 +185,6 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
       console.log('ไม่เข้าาาาาาาาาาาาาาาาา')
     }
   };
-
 
   const GetEnergyHistoryGraph = async (id) => {
     const Param = {
@@ -316,7 +321,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
     const newEndDate = e.target.value;
     const startDateObj = new Date(startDate2);
     const maxAllowedEndDate = new Date(startDateObj);
-    maxAllowedEndDate.setDate(startDateObj.getDate() + 31);
+    maxAllowedEndDate.setFullYear(startDateObj.getFullYear() + 1);
 
     const todayDate = new Date(today);
     const newEndDateObj = new Date(newEndDate);
@@ -343,14 +348,66 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
         theme: "light",
       }
     );
+
+    const handleExecute = () => {
+
+      if (devicedetailPopupRef.current) {
+        console.log("🚀 กำลังเรียก triggerSave() จากภายนอก");
+        devicedetailPopupRef.current.triggerExecute(); // ✅ เรียก triggerSave() ใน SchedulePopup.js
+      } else {
+        console.log("❌ schedulePopupRef.current เป็น null");
+      }
+    };
+
+    const handlesubmitcontrol = async (req) => {
+            // const Param = {
+            //   id: device?.id,
+            //   action: deviceStatus ? "on" : "off",
+            //   dimming:deviceStatus ? Number(dimming) : 0
+            // };
+            const res = await DeviceControl(req);
+        
+            if (res.status === 200) {
+              setopenModalconfirm(false)
+              setopenModalconfirm(false);
+              notifySuccess(res?.data?.title,res?.data?.message);
+              FetchDevice();
+            } else {
+              setopenModalconfirm(false)
+              setopenModalfail(true)
+              setModalErorProps({
+                onCloseModal: handleClosePopup,
+                title: res?.title,
+                content: res?.message,
+                buttonTypeColor: "danger",
+              });
+              console.log(res)
+            }
+          };
+    const handleOpenModalconfirmControl = (name,status,dimming) => {
+      setopenModalconfirm(true);
+      setModalConfirmProps({
+        onCloseModal: handleClosePopup,
+        onClickConfirmBtn: handleExecute,
+        title: "Confirm Execution",
+        content: `
+          <div class="mx-auto w-fit px-4 text-left">
+            <p>Device: ${name}</p>
+            <p>Status: ${status ? "on" : "off"}</p>
+            ${status && dimming ? `<p>% Dimming: ${dimming}%</p>` : ""}
+          </div>
+        `,
+        buttonTypeColor: "primary",
+      });
+    };
+
+    
   // ให้แน่ใจว่า API ถูกเรียกหลังจาก endDate2 ถูกอัปเดตจริง
   useEffect(() => {
     if (selectedDevice?.id) {
       GetEnergyHistoryGraph(selectedDevice.id);
     }
   }, [endDate2, startDate2]);
-
-
 
   const handleTimeUnitChange = (e) => {
 
@@ -376,13 +433,8 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
         <div>
           <span className="text-lg font-bold block mb-2">Device List</span>
           <p className="text-base mb-4">{Sitename} | {Groupname}</p>
-
-
         </div>
-
         <div className="flex flex-col lg:flex-row gap-3">
-
-
           <div className="w-full lg:w-[450px]">
             <div className="flex justify-center w-full h-[500px] justify-items-center overflow-hidden mt-10 mb-7">
               <MapTH
@@ -406,6 +458,8 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
                 setActiveTab={setActiveTab}
                 mapCenter={mapCenter} // ถ้าไม่เปลี่ยนแปลง mapCenter จะใช้ค่าเดิม
                 selectedStatus={selectedStatus} // ส่ง selectedStatus เข้าไปที่ MapTH
+                SiteId={SelectIdSite}
+                GroupId={SelectIdGroup}
               />
 
 
@@ -620,54 +674,70 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
                     </thead>
 
                     <tbody>
-                      {currentData.length === 0 ? (
-                        <tr>
-                          <td colSpan="7" className="px-2 py-4 text-center text-gray-500">Data not found</td>
-                        </tr>
-                      ) : (
-                        currentData.map((record, index) => (
-                          <tr
-                            key={record.id}
-                            className={`hover:bg-gray-100 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}
-                            style={{ borderBottom: '1px solid #e0e0e0' }}
-                          >
-                            <td className="px-2 py-1 text-left">
-                              <div
-                                className="text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] text-base mb-1"
-                                onClick={() => {
-                                  getdevicebyId(record.id);
-                                  setActiveTab("detail");
-                                  setSelectedLocation({ lat: record.latitude, lng: record.longitude }); // อัพเดตตำแหน่งที่เลือก
-                                  setMapZoomLevel(15); // ซูมเข้าเมื่อเลือกอุปกรณ์
-                                  GetHistoryGraph(record.id);
-                                  GetEnergyHistoryGraph(record.id);
-                                }}
-                              >
-                                {record.name}
-                              </div>
-                              <div>{record.groupName}</div>
-                            </td>
-                            <td className="px-2 py-1 text-center">{record.kW}</td>
-                            <td className="px-2 py-1 text-center">{record.kWh}</td>
-                            <td className="px-2 py-1 text-center">{record.runningHour}</td>
-                            <td className="px-2 py-1 text-center">
-                              <span
-                                className={`inline-block px-2 py-1 text-sm font-bold  ${record.status === "on"
-                                  ? "text-[#12B981]"
-                                  : record.status === "off"
-                                    ? "text-[#9DA8B9]"
-                                    : "text-[#FF3D4B]"
-                                  }`}
-                              >
-                                {record.status}
-                              </span>
-                            </td>
-                            <td className="px-2 py-1 text-right">{record.percentDimming}</td>
-                            <td className="px-2 py-2 text-right text-balance">{record.lastUpdated}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
+  {currentData.length === 0 ? (
+    <tr>
+      <td colSpan="7" className="px-2 py-4 text-center text-gray-500">Data not found</td>
+    </tr>
+  ) : (
+    currentData.map((record, index) => {
+      // Function to highlight the search query
+      const highlightText = (text) => {
+        if (!text || !searchQuery) return text;
+        const textString = String(text); // Convert to string if it's not already a string
+        const parts = textString.split(new RegExp(`(${searchQuery})`, 'gi')); // Split by search query, keeping it in the result
+        return parts.map((part, i) => 
+          part.toLowerCase() === searchQuery.toLowerCase() ? 
+            <span key={i} className="bg-yellow-300">{part}</span> : 
+            part
+        );
+      };
+      
+
+      return (
+        <tr
+          key={record.id}
+          className={`hover:bg-gray-100 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}
+          style={{ borderBottom: '1px solid #e0e0e0' }}
+        >
+          <td className="px-2 py-1 text-left">
+            <div
+              className="text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] text-base mb-1"
+              onClick={() => {
+                getdevicebyId(record.id);
+                setActiveTab("detail");
+                setSelectedLocation({ lat: record.latitude, lng: record.longitude });
+                setMapZoomLevel(15);
+                GetHistoryGraph(record.id);
+                GetEnergyHistoryGraph(record.id);
+              }}
+            >
+              {highlightText(record.name)} {/* Highlight the search term */}
+            </div>
+            <div>{highlightText(record.groupName)}</div>
+          </td>
+          <td className="px-2 py-1 text-center">{highlightText(record.kW)}</td>
+          <td className="px-2 py-1 text-center">{highlightText(record.kWh)}</td>
+          <td className="px-2 py-1 text-center">{highlightText(record.runningHour)}</td>
+          <td className="px-2 py-1 text-center">
+            <span
+              className={`inline-block px-2 py-1 text-sm font-bold  ${record.status === "on"
+                ? "text-[#12B981]"
+                : record.status === "off"
+                ? "text-[#9DA8B9]"
+                : "text-[#FF3D4B]"
+                }`}
+            >
+              {highlightText(record.status)} {/* Highlight the search term */}
+            </span>
+          </td>
+          <td className="px-2 py-1 text-right">{highlightText(record.percentDimming)}</td>
+          <td className="px-2 py-2 text-right text-balance">{highlightText(record.lastUpdated)}</td>
+        </tr>
+      );
+    })
+  )}
+</tbody>
+
 
                   </table>
                 </div>
@@ -712,8 +782,13 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
               <div className="flex-1 ml-6">
 
                 <DeviceDetail
+                  ref={devicedetailPopupRef}
                   device={selectedDevice}
                   setActiveTab={() => { setActiveTab("table"); setSelectedLocation(null); }}
+                  onhandleOpenPopupconfirm={handleOpenModalconfirmControl}
+                  OnsubmitControl={handlesubmitcontrol}
+
+                  
                 />
 
               </div>
@@ -795,7 +870,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
                     ? new Date(
                       Math.min(
                         new Date().getTime(), // วันที่ปัจจุบัน
-                        new Date(new Date(startDate2).setDate(new Date(startDate2).getDate() + 31)).getTime() // 31 วันหลัง startDate2
+                        new Date(new Date(startDate2).setDate(new Date(startDate2).getDate() + 365)).getTime() // 31 วันหลัง startDate2
                       )
                     )
                       .toISOString()
@@ -831,7 +906,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
         </div>)}
       {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
       {openModalfail && <ModalFail onCloseModal={handleClosePopup} />}
-
+      <ToastContainer />
     </>
   );
 };

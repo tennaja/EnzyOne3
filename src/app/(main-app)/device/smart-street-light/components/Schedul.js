@@ -13,7 +13,8 @@ import ModalFail from "./PopupFali";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-export default function ScheduleComponent({ scheduleData,
+export default function ScheduleComponent({ 
+  scheduleData,
   deviceData,
   FetchSchedule,
   Sitename,
@@ -38,6 +39,7 @@ export default function ScheduleComponent({ scheduleData,
   const [toggleId, setToggleId] = useState(null)
   const schedulePopupRef = useRef();
 
+  
 
   useEffect(() => {
     setData(scheduleData);
@@ -45,6 +47,16 @@ export default function ScheduleComponent({ scheduleData,
     console.log(data)
   }, [scheduleData]);
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+        // ทำงานถ้ามีป๊อบอัพอันใดอันหนึ่งเปิดอยู่
+        if (!openModalconfirm || !openModalSchedule) {
+          FetchSchedule()
+        }
+    }, 60000);
+
+    return () => clearInterval(intervalId);
+}, [openModalconfirm,openModalSchedule]);
 
   const handleClosePopup = () => {
     setopenModalconfirm(false)
@@ -164,10 +176,17 @@ export default function ScheduleComponent({ scheduleData,
         FetchSchedule();
         setScheduleData(null);
       } else {
-        console.log("No groups found!");
+        console.log(result);
+        setModalErorProps({
+          onCloseModal: handleClosePopup,
+          title: result?.response?.data?.error,  // ใช้ title จาก error ถ้ามี
+          content: result?.response?.data?.message || error.message || "Something went wrong!",  // ใช้ message จาก error ถ้ามี
+          buttonTypeColor: "primary",
+      });
         setopenModalfail(true)
       }
     } catch (error) {
+      
       console.log("Error creating schedule:", error);
     }
   };
@@ -186,7 +205,12 @@ export default function ScheduleComponent({ scheduleData,
         FetchSchedule()
         setScheduleData(null);
       } else {
-        console.log("No groups found!");
+        setModalErorProps({
+          onCloseModal: handleClosePopup,
+          title: result?.response?.data?.error,  // ใช้ title จาก error ถ้ามี
+          content: result?.response?.data?.message || error.message || "Something went wrong!",  // ใช้ message จาก error ถ้ามี
+          buttonTypeColor: "primary",
+      });
         setopenModalfail(true)
       }
     } catch (error) {
@@ -327,7 +351,7 @@ export default function ScheduleComponent({ scheduleData,
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-base font-semibold">{data.length} Schedules</h2>
             <button
-              className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
+              className="flex items-center gap-2 px-4 py-2 bg-[#33BFBF] text-white rounded-lg hover:bg-teal-600"
               onClick={() => { setopenModalSchedule(true); setAction("create"); }}
             >
               Add Schedule
@@ -463,7 +487,7 @@ export default function ScheduleComponent({ scheduleData,
                       <td className="p-3">
                         <Switch
                           checked={schedule.status === "active"}
-                          onChange={() => handleOpenModalsetToggleconfirm(schedule.id)}
+                          onChange={() => handleToggleStatus(schedule.id)}
                           className={`${schedule.status === "active" ? "bg-teal-500" : "bg-gray-300"} relative inline-flex h-6 w-11 items-center rounded-full`}
                         >
                           <span className={`${schedule.status === "active" ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform bg-white rounded-full`} />
@@ -534,7 +558,7 @@ export default function ScheduleComponent({ scheduleData,
 
       />
       {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
-      {openModalfail && <ModalFail onCloseModal={handleClosePopup} />}
+      {openModalfail && <ModalFail {...modalErrorProps}/>}
       <ToastContainer />
     </div>
 

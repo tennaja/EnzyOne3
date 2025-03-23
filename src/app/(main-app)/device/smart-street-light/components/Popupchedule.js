@@ -1,14 +1,7 @@
 import React, { useState, useEffect ,useImperativeHandle, forwardRef} from "react";
 import { Modal } from "@mantine/core";
-import {
-  postCreateSchedule, putUpdateSchedule
-} from "@/utils/api";
-import { useDispatch, useSelector } from "react-redux";
-import ModalConfirm from "./Popupconfirm";
-import ModalDone from "./Popupcomplete";
-import ModalFail from "./PopupFali";
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 const SchedulePopup = forwardRef(
   (
     {
@@ -25,14 +18,26 @@ const SchedulePopup = forwardRef(
     },
     ref
   ) => {
+    const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
   const [selectedDevices, setSelectedDevices] = useState([]);
   const [dimmingLevel, setDimmingLevel] = useState(scheduleData?.percentDimming || 10);
   const [repeatOption, setRepeatOption] = useState(scheduleData?.repeat || "once");
   const [startDatetime, setStartDatetime] = useState(scheduleData?.startTime || "");
   const [endDatetime, setEndDatetime] = useState(scheduleData?.endTime || "");
   const [scheduleName, setScheduleName] = useState(scheduleData?.name || "");
-  const [executionDateTime, setexecutionDateTime] = useState(scheduleData?.executionDateTime)
-  const [executionEndDateTime, setexecutionEndDateTime] = useState(scheduleData?.executionEndDateTime)
+ 
+  const [executionDateTime, setexecutionDateTime] = useState(() => {
+    const date = scheduleData?.executionDateTime?.split(" ")[0] || ""; // ดึงวันที่จาก executionDateTime และตัดเวลาออก
+    const time = scheduleData?.startTime || ""; // เวลาเริ่มต้น
+    return date ? `${date}T${time}` : ""; // รวมวันที่กับเวลา
+  });
+  
+  const [executionEndDateTime, setexecutionEndDateTime] = useState(() => {
+    const endDate = scheduleData?.executionEndDateTime?.split(" ")[0] || ""; // ดึงวันที่จาก executionEndDateTime และตัดเวลาออก
+    const endTime = scheduleData?.endTime || ""; // ใช้ endTime แทน startTime
+    return endDate ? `${endDate}T${endTime}` : ""; // รวมวันที่กับเวลา
+  });
+  
   const [selectedDays, setSelectedDays] = useState({
     monday: false,
     tuesday: false,
@@ -45,18 +50,26 @@ const SchedulePopup = forwardRef(
   const [searchQuery, setSearchQuery] = useState('');
 
 
-  const filteredDevices = deviceList.filter(device =>
-    device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    device.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+
+  
+  
  
   const schedule = scheduleData;
 
   useEffect(() => {
     if (isOpen) {
-      setScheduleName(schedule?.name || "")
-      setexecutionDateTime(schedule?.executionDateTime || "")
-      setexecutionEndDateTime(schedule?.executionEndDateTime || "")
+      setScheduleName(schedule?.name || "");
+      
+      // แปลง executionDateTime และ startDatetime รวมกันใน setExecutionDateTime
+      const executionDate = schedule?.executionDateTime?.split(" ")[0] || ""; // ดึงวันที่จาก executionDateTime และตัดเวลาออก
+      const executionTime = schedule?.startTime || ""; // เวลาเริ่มต้น
+      setexecutionDateTime(executionDate ? `${executionDate}T${executionTime}` : ""); // รวมวันที่กับเวลา
+  
+      // แปลง executionEndDateTime และ startDatetime รวมกันใน setExecutionEndDateTime
+      const endDate = schedule?.executionEndDateTime?.split(" ")[0] || ""; // ดึงวันที่จาก executionEndDateTime และตัดเวลาออก
+      const endTime = schedule?.endTime || ""; // เวลาเริ่มต้น
+      setexecutionEndDateTime(endDate ? `${endDate}T${endTime}` : ""); // รวมวันที่กับเวลา
+  
       setStartDatetime(schedule?.startTime || "");
       setEndDatetime(schedule?.endTime || "");
       setRepeatOption(schedule?.repeat || "once");
@@ -64,6 +77,8 @@ const SchedulePopup = forwardRef(
       setSelectedDevices(schedule?.scheduledDevices?.map(device => device.id) || []);
     }
   }, [isOpen]);
+  
+  
 
   const handleDayChange = (day) => {
     setSelectedDays((prevState) => ({
@@ -80,7 +95,38 @@ const SchedulePopup = forwardRef(
     }
   };
 
+  
 
+  
+
+  const handleSort = (column) => {
+    let direction = "asc";
+    if (sortConfig.key === column && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key: column, direction });
+  };
+
+  // การกรองตามคำค้นหา
+  const filteredDevices = deviceList.filter(device =>
+    device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    device.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // การจัดเรียงหลังจากการกรอง
+  const sortedDevices = [...filteredDevices].sort((a, b) => {
+    if (sortConfig.key) {
+      const aValue = a[sortConfig.key].toLowerCase();
+      const bValue = b[sortConfig.key].toLowerCase();
+
+      if (sortConfig.direction === "asc") {
+        return aValue.localeCompare(bValue);
+      } else {
+        return bValue.localeCompare(aValue);
+      }
+    }
+    return 0;
+  });
 
   const toggleSelectOne = (id) => {
     setSelectedDevices((prev) =>
@@ -321,15 +367,48 @@ const SchedulePopup = forwardRef(
                         />
 
                       </th>
-                      <th className="p-2 text-left">Device</th>
-                      <th className="p-2 text-left">Description</th>
+                      <th className="p-2 text-left" onClick={() => handleSort("name")}>Device 
+                        <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+        <ArrowDropUpIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "name" && sortConfig.direction === "asc" ? 1 : 0.3,
+            marginBottom: "-2px",
+          }}
+        />
+        <ArrowDropDownIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "name" && sortConfig.direction === "desc" ? 1 : 0.3,
+            marginTop: "-2px",
+          }}
+        />
+      </div></th>
+                      <th className="p-2 text-left" onClick={() => handleSort("description")}>Description
+                      <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+        <ArrowDropUpIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "description" && sortConfig.direction === "asc" ? 1 : 0.3,
+            marginBottom: "-2px",
+          }}
+        />
+        <ArrowDropDownIcon
+          style={{
+            fontSize: "14px",
+            opacity: sortConfig.key === "description" && sortConfig.direction === "desc" ? 1 : 0.3,
+            marginTop: "-2px",
+          }}
+        />
+      </div>
+                      </th>
                     </tr>
                   </thead>
                 </table>
                 <div className="overflow-auto h-full">
                   <table className="w-full text-sm">
                     <tbody>
-                      {filteredDevices?.map((device, index) => (
+                      {sortedDevices?.map((device, index) => (
                         <tr key={device.id} className={`${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} border-b`}>
                           <td className="p-2 text-center w-10">
                             <input
@@ -385,18 +464,28 @@ const SchedulePopup = forwardRef(
               {repeatOption === "once" && (
                 <div className="flex gap-2 mt-2">
                   <input
-                    type="datetime-local"
-                    className="w-full p-2 border rounded"
-                    value={executionDateTime}
-                    onChange={(e) => setexecutionDateTime(e.target.value)}
-                  />
-                  <span>-</span>
-                  <input
-                    type="datetime-local"
-                    className="w-full p-2 border rounded"
-                    value={executionEndDateTime}
-                    onChange={(e) => setexecutionEndDateTime(e.target.value)}
-                  />
+  type="datetime-local"
+  className="w-full p-2 border rounded"
+  value={executionDateTime}
+  onChange={(e) => {
+    setexecutionDateTime(e.target.value);
+    console.log("executionDateTime:", e.target.value);
+  }}
+  lang="en-GB"
+/>
+<span>-</span>
+<input
+  type="datetime-local"
+  className="w-full p-2 border rounded"
+  value={executionEndDateTime}
+  onChange={(e) => {
+    setexecutionEndDateTime(e.target.value);
+    console.log("executionEndDateTime:", e.target.value);
+  }}
+  lang="en-GB"
+/>
+่
+
                 </div>
               )}
               {(repeatOption === "everyday" || repeatOption === "weekday" || repeatOption === "weekend") && (
@@ -499,20 +588,22 @@ const SchedulePopup = forwardRef(
 </div>
 
             <div className="flex justify-center gap-2 mt-4">
-              <button
+            <button
                 type="button"
-                className="px-4 py-2 bg-gray-200 rounded"
-                onClick={onClose}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="px-4 py-2 bg-blue-500 text-white rounded"
+                className="px-6 py-2 w-40 bg-[#33BFBF] text-white rounded-md"
                 onClick={onHandleConfirm}
               >
                 Save
               </button>
+              <button
+  type="button"
+  className="px-6 py-2 w-40 rounded-md border border-[#33BFBF] text-[#33BFBF]"
+  onClick={onClose}
+>
+  Cancel
+</button>
+
+              
             </div>
           </form>
         </div>
