@@ -199,10 +199,17 @@ const Header1 = () => {
 
     
     useEffect(() => {
-        if (activeTab === "dashboard" || activeTab === "control") {
+        if (activeTab === "dashboard") {
             GetDeviceList();
         }
     }, [activeTab]); // ให้แน่ใจว่า `activeTab` เป็น dependency ตัวเดียว
+    
+    useEffect(() => {
+        if (activeTab === "control") {
+            GetDeviceList();
+        }
+    }, [activeTab]); // ให้แน่ใจว่า `activeTab` เป็น dependency ตัวเดียว
+    
 
     useEffect(() => {
         if (activeTab === "schedule" && sitelist?.length > 0) {

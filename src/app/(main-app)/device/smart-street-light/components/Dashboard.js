@@ -155,16 +155,16 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   }, [activeTab]);  // This will run whenever `activeTab` changes.
 
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-        // ทำงานถ้ามีป๊อบอัพอันใดอันหนึ่งเปิดอยู่
-        if (!openModalSchedule &&  !openModalconfirm) {
-            FetchDevice();
-        }
-    }, 15000);
+//   useEffect(() => {
+//     const intervalId = setInterval(() => {
+//         // ทำงานถ้ามีป๊อบอัพอันใดอันหนึ่งเปิดอยู่
+//         if (!openModalSchedule &&  !openModalconfirm) {
+//             FetchDevice();
+//         }
+//     }, 15000);
 
-    return () => clearInterval(intervalId);
-}, [openModalSchedule, openModalconfirm]);
+//     return () => clearInterval(intervalId);
+// }, [openModalSchedule, openModalconfirm]);
 
   const GetHistoryGraph = async (id) => {
     const Param = {

@@ -37,16 +37,16 @@ export default function DeviceControlPage({ deviceData ,FetchDevice,Sitename,Gro
   const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
       console.log('SelectIdSite:', SelectIdSite);    
   
-      useEffect(() => {
-          const intervalId = setInterval(() => {
-              // ทำงานถ้ามีป๊อบอัพอันใดอันหนึ่งเปิดอยู่
-              if (!openModalconfirm) {
-                  FetchDevice();
-              }
-          }, 6000);
+      // useEffect(() => {
+      //     const intervalId = setInterval(() => {
+      //         // ทำงานถ้ามีป๊อบอัพอันใดอันหนึ่งเปิดอยู่
+      //         if (!openModalconfirm) {
+      //             FetchDevice();
+      //         }
+      //     }, 6000);
       
-          return () => clearInterval(intervalId);
-      }, [openModalconfirm]);
+      //     return () => clearInterval(intervalId);
+      // }, [openModalconfirm]);
 
       const handleStatusChange = (newStatus) => {
         setDeviceStatus(newStatus);
