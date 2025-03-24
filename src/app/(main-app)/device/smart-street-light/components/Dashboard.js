@@ -49,6 +49,7 @@ const dispatch = useDispatch();
   const [timeUnit, setTimeUnit] = useState("hour");
   const [loading, setLoading] = useState(false);
   const [scheduleData, setScheduleData] = useState();
+  const [deviceForSchedule,setDeviceforSchedule] = useState([])
   const [openModalSchedule, setopenModalSchedule] = useState(false)
   const [openModalconfirm, setopenModalconfirm] = useState(false)
   const [openModalsuccess, setopenModalsuccess] = useState(false)
@@ -78,34 +79,58 @@ const dispatch = useDispatch();
   useEffect(() => {
     const intervalId = setInterval(() => {
       if (!openModalSchedule && !openModalconfirm) {
-        Promise.all([GetDeviceList(), getdevicebyId(SelectDeviceById)]);
+        Promise.all([GetDeviceList(false), getdevicebyId(SelectDeviceById)]);
       }
     }, 60000);
   
-    return () => clearInterval(intervalId); // ล้าง interval เมื่อ component ถูก unmount
+    return () => clearInterval(intervalId);
   }, [openModalSchedule, openModalconfirm, SelectDeviceById]);
   
-
-  const GetDeviceList = async () => {
+  const GetDeviceList = async (showLoading = true) => {
     const paramsNav = {
       siteId: siteIdRef.current,
       groupId: groupIdRef.current,
     };
   
-    setLoading(true); // เริ่มโหลด
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+  
     try {
       const result = await getDeviceListData(paramsNav);
       if (result?.data?.length > 0) {
-        setDevicelist(result.data); // อัปเดต state ด้วยข้อมูล
+        setDevicelist(result.data);
       } else {
-        setDevicelist([]); // ตั้งค่าเป็น array ว่างหากไม่มีข้อมูล
+        setDevicelist([]);
       }
     } catch (error) {
       console.error("Error fetching device list:", error);
     } finally {
-      setTimeout(() => setLoading(false), 3000); // หยุดโหลดหลังจาก 4 วินาที
+      if (showLoading) {
+        setTimeout(() => setLoading(false), 3000);
+      }
     }
   };
+  
+
+  // const GetDeviceList = async () => {
+  //   const paramsNav = {
+  //     siteId: siteIdRef.current,
+  //     groupId: groupIdRef.current,
+  //   };
+  
+  //   setLoading(true); // เริ่มโหลด
+  //   try {
+  //     const result = await getDeviceListData(paramsNav);
+  //     if (result?.data?.length > 0) {
+  //       setDevicelist(result.data); // อัปเดต state ด้วยข้อมูล
+  //     } else {
+  //       setDevicelist([]); // ตั้งค่าเป็น array ว่างหากไม่มีข้อมูล
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching device list:", error);
+  //   } finally {
+  //     setTimeout(() => setLoading(false), 3000); // หยุดโหลดหลังจาก 4 วินาที
+  //   }
+  // };
 
   // ดึงค่าพิกัดจาก deviceData และสร้าง locationDataList
   // const locationDataList = useMemo(() => {
@@ -251,21 +276,41 @@ const dispatch = useDispatch();
       console.log('ไม่เข้าาาาาาาาาาาาาาาาา')
     }
   };
+  
+  
   const getSchedulById = async (id) => {
     console.log("Device Id:", id);
+  
     try {
       const result = await getSchedulebyid(id);
       console.log("Group List Result:", result);
-
+  
       if (result) {
-
         setScheduleData(result.data);
-        setopenModalSchedule(true)
+        setopenModalSchedule(true);
+        
+        // ดึง siteId และ groupId จาก result
+        const paramsNav = {
+          siteId: result.data.siteId,
+          groupId: result.data.groupId,
+        };
+  
+        // เรียก getDeviceListData ด้วยค่าที่ได้มา
+        const deviceResult = await getDeviceListData(paramsNav);
+        if (deviceResult?.data?.length > 0) {
+          setDeviceforSchedule(deviceResult.data);
+        } else {
+          setDeviceforSchedule([]);
+        }
       } else {
         console.log("No groups found!");
       }
     } catch (error) {
-      console.error("Error fetching device data:", error);
+      console.error("Error fetching data:", error);
+    } finally {
+     
+        setLoading(false);
+      
     }
   };
 
@@ -347,8 +392,6 @@ const dispatch = useDispatch();
       }
     }
   };
-
-
   const handleStartDateChangeHistorical2 = (e) => {
     const newStartDate = e.target.value;
     console.log(newStartDate);
@@ -361,7 +404,6 @@ const dispatch = useDispatch();
 
     setEndDate2((prevEndDate) => (new Date(prevEndDate) > maxEndDate ? formattedMaxEndDate : prevEndDate));
   };
-
   const handleEndDateChangeHistorical2 = (e) => {
     const newEndDate = e.target.value;
     const startDateObj = new Date(startDate2);
@@ -375,7 +417,6 @@ const dispatch = useDispatch();
       setEndDate2(newEndDate);
     }
   };
-
   const notifySuccess = (title, message) =>
     toast.success(
       <div className="px-2">
@@ -393,8 +434,7 @@ const dispatch = useDispatch();
         theme: "light",
       }
     );
-
-    const handleExecute = () => {
+  const handleExecute = () => {
 
       if (devicedetailPopupRef.current) {
         console.log("🚀 กำลังเรียก triggerSave() จากภายนอก");
@@ -403,8 +443,7 @@ const dispatch = useDispatch();
         console.log("❌ schedulePopupRef.current เป็น null");
       }
     };
-
-    const handlesubmitcontrol = async (req) => {
+  const handlesubmitcontrol = async (req) => {
             const res = await DeviceControl(req);
         
             if (res.status === 200) {
@@ -424,8 +463,8 @@ const dispatch = useDispatch();
               });
               console.log(res)
             }
-          };
-    const handleOpenModalconfirmControl = (name,status,dimming) => {
+    };
+  const handleOpenModalconfirmControl = (name,status,dimming) => {
       setopenModalconfirm(true);
       setModalConfirmProps({
         onCloseModal: handleClosePopup,
@@ -481,7 +520,7 @@ const dispatch = useDispatch();
             <div className="flex justify-center w-full h-[500px] justify-items-center overflow-hidden mt-10 mb-7">
               <MapTH
                 locationList={devcielist.map((loca, index) => ({
-                  id: index + 1,
+                  id: loca.id,
                   name: loca.name,
                   kW: loca.kW,
                   kWh: loca.kWh,
@@ -634,7 +673,7 @@ const dispatch = useDispatch();
                           className="px-2 py-1 text-center text-gray-700 cursor-pointer"
                           onClick={() => handleSort("runningHour")}
                         >
-                          Running Hrs
+                          Running Hours
                           <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
                             <ArrowDropUpIcon
                               style={{
@@ -718,7 +757,7 @@ const dispatch = useDispatch();
                     <tbody>
   {currentData.length === 0 ? (
     <tr>
-      <td colSpan="7" className="px-2 py-4 text-center text-gray-500">Data not found</td>
+      <td colSpan="7" className="px-2 py-4 text-center text-gray-500">Device not found</td>
     </tr>
   ) : (
     currentData.map((record, index) => {
@@ -851,7 +890,6 @@ const dispatch = useDispatch();
                 onChange={handleStartDateChangeHistorical}
                 max={today}
               />
-
               <input
                 type="date"
                 className="w-60 p-2 border rounded"
@@ -931,7 +969,7 @@ const dispatch = useDispatch();
               setScheduleData(null);
             }}
             scheduleData={scheduleData}
-            deviceList={devcielist}
+            deviceList={deviceForSchedule}
             onUpdateSchedule={UpdateSchedul}
             onHandleConfirm={handleOpenModalconfirm}
             groupId={scheduleData?.groupId}

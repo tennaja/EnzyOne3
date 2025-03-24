@@ -48,36 +48,38 @@ export default function DeviceControlPage({FetchDevice,Sitename,Groupname}) {
        }, [SelectIdSite, SelectIdGroup]);
      
        useEffect(() => {
-         const intervalId = setInterval(() => {
-           // เช็คว่า modal เปิดอยู่หรือไม่
-           if (!openModalconfirm) {
-             GetDeviceList();
+           const intervalId = setInterval(() => {
+             if (!openModalconfirm) {
+               Promise.all([GetDeviceList(false)]);
+             }
+           }, 60000);
+         
+           return () => clearInterval(intervalId);
+         }, [openModalconfirm]);
+         
+         const GetDeviceList = async (showLoading = true) => {
+           const paramsNav = {
+             siteId: siteIdRef.current,
+             groupId: groupIdRef.current,
+           };
+         
+           if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+         
+           try {
+             const result = await getDeviceListData(paramsNav);
+             if (result?.data?.length > 0) {
+               setDevicelist(result.data);
+             } else {
+               setDevicelist([]);
+             }
+           } catch (error) {
+             console.error("Error fetching device list:", error);
+           } finally {
+             if (showLoading) {
+               setTimeout(() => setLoading(false), 3000);
+             }
            }
-         }, 60000); // รีเฟรชทุก 15 วินาที
-     
-         return () => clearInterval(intervalId); // เคลียร์ interval เมื่อคอมโพเนนต์ถูก unmount
-       }, [openModalconfirm]);
-     
-       const GetDeviceList = async () => {
-         const paramsNav = {
-           siteId: siteIdRef.current,
-           groupId: groupIdRef.current,
          };
-       
-         setLoading(true); // เริ่มโหลด
-         try {
-           const result = await getDeviceListData(paramsNav);
-           if (result?.data?.length > 0) {
-             setDevicelist(result.data); // อัปเดต state ด้วยข้อมูล
-           } else {
-             setDevicelist([]); // ตั้งค่าเป็น array ว่างหากไม่มีข้อมูล
-           }
-         } catch (error) {
-           console.error("Error fetching device list:", error);
-         } finally {
-           setTimeout(() => setLoading(false), 3000); // หยุดโหลดหลังจาก 4 วินาที
-         }
-       };
 
       const handleStatusChange = (newStatus) => {
         setDeviceStatus(newStatus);
@@ -290,15 +292,16 @@ const sortedData = useMemo(() => {
   <thead>
     <tr className="text-xs text-gray-500 border-b border-gray-300">
     <th className="p-2 w-10">
-        <input
-          type="checkbox"
-          checked={
-            selecteddeviceData.length === filtereddeviceData.filter(device => device.status !== "offline").length &&
-            filtereddeviceData.length > 0
-          }
-          onChange={toggleSelectAll}
-          
-        />
+    <input
+  type="checkbox"
+  checked={
+    filtereddeviceData.some(device => device.status === "offline") 
+      ? false 
+      : selecteddeviceData.length === filtereddeviceData.length && filtereddeviceData.length > 0
+  }
+  onChange={toggleSelectAll}
+/>
+
       </th>
       <th className="py-2 px-4 text-left" onClick={() => handleSort("name")}>Device
         <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>

@@ -171,7 +171,7 @@ const DeviceDetail = forwardRef (
             <td className="px-4 py-2 font-bold">{device?.kWh}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Running Hrs</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Running Hours</strong></td>
             <td className="px-4 py-2 font-bold">{device?.runningHour}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">

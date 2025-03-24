@@ -471,7 +471,7 @@ const SchedulePopup = forwardRef(
     setexecutionDateTime(e.target.value);
     console.log("executionDateTime:", e.target.value);
   }}
-  lang="en-GB"
+  lang="th-TH"
 />
 <span>-</span>
 <input
@@ -482,7 +482,7 @@ const SchedulePopup = forwardRef(
     setexecutionEndDateTime(e.target.value);
     console.log("executionEndDateTime:", e.target.value);
   }}
-  lang="en-GB"
+  lang="th-TH"
 />
 ่
 
@@ -510,6 +510,7 @@ const SchedulePopup = forwardRef(
                       value={startDatetime}
                       onChange={(e) => setStartDatetime(e.target.value)}
                       step="60"
+                      lang="th-TH"
                     />
                     <span>-</span>
                     <input
@@ -518,6 +519,7 @@ const SchedulePopup = forwardRef(
                       value={endDatetime}
                       onChange={(e) => setEndDatetime(e.target.value)}
                       step="60"
+                      lang="th-TH"
                     />
                   </div>
                 </div>
@@ -545,6 +547,7 @@ const SchedulePopup = forwardRef(
                       value={startDatetime}
                       onChange={(e) => setStartDatetime(e.target.value)}
                       step="60"
+                      lang="th-TH"
                     />
                     <span>-</span>
                     <input
@@ -553,6 +556,7 @@ const SchedulePopup = forwardRef(
                       value={endDatetime}
                       onChange={(e) => setEndDatetime(e.target.value)}
                       step="60"
+                      lang="th-TH"
                     />
                   </div>
                 </div>

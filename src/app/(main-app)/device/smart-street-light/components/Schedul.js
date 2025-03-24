@@ -36,6 +36,7 @@ export default function ScheduleComponent({
   const [openModalconfirm, setopenModalconfirm] = useState(false)
   const [openModalsuccess, setopenModalsuccess] = useState(false)
   const [openModalfail, setopenModalfail] = useState(false)
+  const [deviceForSchedule,setDeviceforSchedule] = useState([])
   const [modalConfirmProps, setModalConfirmProps] = useState(null);
   const [modalErrorProps, setModalErorProps] = useState(null);
   const [modalSuccessProps, setModalSuccessProps] = useState(null);
@@ -148,6 +149,7 @@ console.log("Select ID : " ,SelectIdSite , SelectIdGroup)
     if (selected.length === selectableIds.length) {
       setSelected([]);
     } else {
+      console.log(selectableIds)
       setSelected(selectableIds);
     }
   };
@@ -161,34 +163,60 @@ console.log("Select ID : " ,SelectIdSite , SelectIdGroup)
 
   const handleRemove = async () => {
     if (selected.length > 0) {
-      // Make sure selected is populated
+      // ตรวจสอบค่าที่เลือก
       console.log("Selected Items:", selected);
-
-      const id = selected[0]; // Assuming selected now has IDs directly (no objects)
-      if (id) {
-        console.log("ID to be deleted:", id);
-        await DeleteSchedul(id);
-        setSelected([]);
-      }
+  
+      // แปลง array เป็น string แบบ comma-separated
+      const selectedIds = selected.join(",");
+      console.log("ID to be deleted:", selectedIds);
+  
+      // ส่งค่าเป็น 1,2 แทน [1,2]
+      await DeleteSchedul(selectedIds);
+      setSelected([]);
     } else {
       console.log("No items selected.");
     }
   };
+  
 
 
 
 
   const getSchedulById = async (id) => {
-    try {
-      const result = await getSchedulebyid(id);
-      if (result) {
-        setScheduleData(result.data);
-        setopenModalSchedule(true);
+      console.log("Device Id:", id);
+    
+      try {
+        const result = await getSchedulebyid(id);
+        console.log("Group List Result:", result);
+    
+        if (result) {
+          setScheduleData(result.data);
+          setopenModalSchedule(true);
+          
+          // ดึง siteId และ groupId จาก result
+          const paramsNav = {
+            siteId: result.data.siteId,
+            groupId: result.data.groupId,
+          };
+    
+          // เรียก getDeviceListData ด้วยค่าที่ได้มา
+          const deviceResult = await getDeviceListData(paramsNav);
+          if (deviceResult?.data?.length > 0) {
+            setDeviceforSchedule(deviceResult.data);
+          } else {
+            setDeviceforSchedule([]);
+          }
+        } else {
+          console.log("No groups found!");
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+       
+          setLoading(false);
+        
       }
-    } catch (error) {
-      console.error("Error fetching schedule data:", error);
-    }
-  };
+    };
 
 
   const handleExternalSave = () => {
@@ -601,7 +629,7 @@ console.log("Select ID : " ,SelectIdSite , SelectIdGroup)
           setScheduleData(null);
         }}
         scheduleData={ScheduleData}
-        deviceList={devcielist}
+        deviceList={deviceForSchedule}
         onSaveSchedule={CreateSchedul}
         onUpdateSchedule={UpdateSchedul}
         onHandleConfirm={handleOpenModalconfirm}

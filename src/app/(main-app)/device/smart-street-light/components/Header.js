@@ -69,6 +69,8 @@ const Header1 = () => {
             if (isfirst) { // ใช้ isfirst จาก useState
                 setSiteName(result[0].name);
                 setSiteid(siteId);
+                setSelectedSiteId(siteId)
+                setSelectedSiteName(result[0].name)
                 setIsfirst(false); // เซ็ตให้เป็น false หลังจากใช้งานครั้งแรก
             }else{
                 setSelectedSiteId(siteId)
@@ -94,6 +96,8 @@ const Header1 = () => {
             if (isfirst ) { // ใช้ isfirst จาก useState
                 setGroupName(result[0].name);
                 setGroupid(firstGroupId);
+                setSelectedGroupId(firstGroupId)
+                setSelectedGroupName(result[0].name);
                 setIsfirst(false); // เซ็ตให้เป็น false หลังจากใช้งานครั้งแรก
             }else{
                 setGroupid(firstGroupId);
@@ -161,100 +165,56 @@ const Header1 = () => {
     
     
     
-
     useEffect(() => {
         if (activeTab === "schedule" && sitelist?.length > 0) {
-          // กรองรายการ sitelist
-          let filteredSiteList = sitelist.filter((item) => item.name !== "All sites");
-          console.log("Filtered Site List:", filteredSiteList);
-    
-          // ถ้ามีรายการที่กรองแล้วและ siteid ยังไม่ได้ถูกเซ็ต
+          const filteredSiteList = sitelist.filter((item) => item.name !== "All sites");
+      
           if (filteredSiteList.length > 0 && (!siteid || siteid === "0")) {
             const newSiteId = filteredSiteList[0]?.id;
-            console.log("Setting site ID:", newSiteId);
-    
-            // เซ็ต siteid ใหม่
-            setSiteId(newSiteId);
-            setSelectedSiteId(newSiteId);
-            dispatch(setSiteId(newSiteId));
-            setSiteName(filteredSiteList[0]?.name || "");
-            setSelectedSiteName(filteredSiteList[0]?.name || "");
-            getGroupList(newSiteId); // เรียก getGroupList ใหม่หลังจากเซ็ต siteid
-            hasFetchedSchedule.current = false; // รีเซ็ต fetch flag
-          }
-        }
-      }, [activeTab, sitelist]); // ตรวจสอบการเปลี่ยนแปลงของ activeTab หรือ sitelist
-    
-      // useEffect สำหรับการเซ็ตค่า groupid
-      useEffect(() => {
-        if (activeTab === "schedule" && grouplist?.length > 0) {
-          let filteredGroupList = grouplist.filter((item) => item.name !== "All groups");
-          console.log("Filtered Group List:", filteredGroupList);
-    
-          // ถ้ามีรายการที่กรองแล้วและ groupid ยังไม่ได้ถูกเซ็ต
-          if (filteredGroupList.length > 0 && (!groupid || groupid === "0")) {
-            const newGroupId = filteredGroupList[0]?.id;
-            console.log("Setting Group ID:", newGroupId);
-    
-            // เซ็ต groupid ใหม่
-            setSelectedGroupId(newGroupId);
-            dispatch(setGroupId(newGroupId));
-            Groupchange(newGroupId); // เรียก Groupchange เพื่ออัพเดตกลุ่ม
-            setGroupName(filteredGroupList[0]?.name || "");
-            setSelectedGroupName(filteredGroupList[0]?.name || "");
-            hasFetchedSchedule.current = false; // รีเซ็ต fetch flag
-          }
-        }
-      }, [activeTab, grouplist]); // ตรวจสอบการเปลี่ยนแปลงของ activeTab หรือ grouplist
-    
-      // useEffect สำหรับดึงข้อมูล schedule list
-      useEffect(() => {
-        if (activeTab === "schedule" && siteid && groupid) {
-          if (!hasFetchedSchedule.current) {
-            console.log("Fetching schedule list for the first time...");
-            
-            hasFetchedSchedule.current = true; // ตั้งค่าให้เป็น true หลังจากเรียก API ครั้งแรก
-          }
-        }
-      }, [activeTab, siteid, groupid]); // ตรวจสอบการเปลี่ยนแปลงของ activeTab, siteid, groupid
-    
-      // รีเซ็ต `hasFetchedSchedule` ถ้า sitelist หรือ grouplist เปลี่ยน (เช่น ถูกตัดรายการ)
-      useEffect(() => {
-        if (activeTab === "schedule") {
-          console.log("Resetting fetch flag due to site or group list change...");
-          hasFetchedSchedule.current = false; // ทำให้สามารถเรียกใหม่ได้
-        }
-      }, [sitelist, grouplist, activeTab]); // เมื่อ sitelist หรือ grouplist เปลี่ยน
-    
-      // useEffect ที่จะเซ็ตค่า `siteid` และ `groupid` เป็นค่าแรกเมื่อกลับมาที่หน้า "schedule"
-      useEffect(() => {
-        if (activeTab === "schedule") {
-          // กรองรายการ sitelist
-          let filteredSiteList = sitelist.filter((item) => item.name !== "All sites");
-          // ถ้ามีรายการที่กรองแล้ว และ siteid เป็น 0 หรือ null ให้เลือกค่าตำแหน่งแรก
-          if (filteredSiteList.length > 0 && (!siteid || siteid === "0")) {
-            const newSiteId = filteredSiteList[0]?.id;
+      
             setSiteId(newSiteId);
             setSelectedSiteId(newSiteId);
             dispatch(setSiteId(newSiteId));
             setSiteName(filteredSiteList[0]?.name || "");
             setSelectedSiteName(filteredSiteList[0]?.name || "");
             getGroupList(newSiteId);
+      
+            hasFetchedSchedule.current = false;
           }
-    
-          // กรองรายการ grouplist
-          let filteredGroupList = grouplist.filter((item) => item.name !== "All groups");
-          // ถ้ามีรายการที่กรองแล้ว และ groupid เป็น 0 หรือ null ให้เลือกค่าตำแหน่งแรก
+        }
+      }, [activeTab, sitelist, siteid, dispatch]);
+      
+      useEffect(() => {
+        if (activeTab === "schedule" && grouplist?.length > 0) {
+          const filteredGroupList = grouplist.filter((item) => item.name !== "All groups");
+      
           if (filteredGroupList.length > 0 && (!groupid || groupid === "0")) {
             const newGroupId = filteredGroupList[0]?.id;
+      
             setSelectedGroupId(newGroupId);
             dispatch(setGroupId(newGroupId));
             Groupchange(newGroupId);
             setGroupName(filteredGroupList[0]?.name || "");
+      
+            hasFetchedSchedule.current = false;
           }
         }
+      }, [activeTab, grouplist, groupid, dispatch]);
+      
+      useEffect(() => {
+        if (activeTab === "schedule" && siteid && groupid && !hasFetchedSchedule.current) {
+          console.log("Fetching schedule list for the first time...");
+      
+          hasFetchedSchedule.current = true;
+        }
+      }, [activeTab, siteid, groupid]);
+      
+      useEffect(() => {
+        if (activeTab === "schedule" && (sitelist?.length > 0 || grouplist?.length > 0)) {
+          hasFetchedSchedule.current = false;
+        }
       }, [activeTab, sitelist, grouplist]);
-
+      
     return (
         <>
             <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200">
