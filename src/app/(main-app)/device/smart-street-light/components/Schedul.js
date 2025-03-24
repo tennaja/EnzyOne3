@@ -414,7 +414,7 @@ const GetDeviceList = async (site, group) => {
             <h2 className="text-base font-semibold">{schedulelist.length} Schedules</h2>
             <button
               className="flex items-center gap-2 px-4 py-2 bg-[#33BFBF] text-white rounded-lg hover:bg-teal-600"
-              onClick={() => { setopenModalSchedule(true); setAction("create"); }}
+              onClick={() => { setopenModalSchedule(true); setAction("create"); setDeviceforSchedule([])}}
             >
               Add Schedule
             </button>
@@ -556,7 +556,7 @@ const GetDeviceList = async (site, group) => {
                         </Switch>
                       </td>
                       <td className="p-3">
-                        <button onClick={() => { getSchedulById(schedule.id); setAction("update"); }} className="text-gray-500 hover:text-gray-700">
+                        <button onClick={() => { getSchedulById(schedule.id); setAction("update"); setDevicelist([])}} className="text-gray-500 hover:text-gray-700">
                           <CreateIcon size={16} />
                         </button>
                       </td>
