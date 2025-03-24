@@ -4,7 +4,7 @@ import CreateIcon from "@mui/icons-material/Create";
 import SchedulePopup from "./Popupchedule";
 import ArrowForwardIosOutlinedIcon from '@mui/icons-material/ArrowForwardIosOutlined';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import { getSchedulebyid, postCreateSchedule, putUpdateSchedule, deleteSchedule, changeStatuschedule,getScheduleListData } from "@/utils/api";
+import { getSchedulebyid, postCreateSchedule, putUpdateSchedule,getDeviceListData, deleteSchedule, changeStatuschedule,getScheduleListData } from "@/utils/api";
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ModalConfirm from "./Popupconfirm";
@@ -28,6 +28,7 @@ export default function ScheduleComponent({
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [devcielist , setDevicelist] = useState([]);
   const [schedulelist , setSchedulelist] = useState([]);
   const [ScheduleData, setScheduleData] = useState();
   const [openModalSchedule, setopenModalSchedule] = useState(false);
@@ -49,20 +50,20 @@ console.log("Select ID : " ,SelectIdSite , SelectIdGroup)
   
   useEffect(() => {
     // อัปเดต siteId และ groupId และเรียก GetScheduleList พร้อมค่าล่าสุด
-   
+    GetDeviceList(SelectIdSite, SelectIdGroup)
     GetScheduleList(SelectIdSite, SelectIdGroup);
   }, [SelectIdSite, SelectIdGroup]);
   
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      // เช็คว่า modal เปิดอยู่หรือไม่
-      if (!openModalSchedule && !openModalconfirm) {
-        GetScheduleList(SelectIdSite, SelectIdGroup);
-      }
-    }, 15000); // รีเฟรชทุก 15 วินาที
+  // useEffect(() => {
+  //   const intervalId = setInterval(() => {
+  //     // เช็คว่า modal เปิดอยู่หรือไม่
+  //     if (!openModalSchedule && !openModalconfirm) {
+  //       GetScheduleList(SelectIdSite, SelectIdGroup);
+  //     }
+  //   }, 15000); // รีเฟรชทุก 15 วินาที
   
-    return () => clearInterval(intervalId); // เคลียร์ interval เมื่อคอมโพเนนต์ถูก unmount
-  }, [openModalSchedule, openModalconfirm, SelectIdSite, SelectIdGroup]);
+  //   return () => clearInterval(intervalId); // เคลียร์ interval เมื่อคอมโพเนนต์ถูก unmount
+  // }, [openModalSchedule, openModalconfirm, SelectIdSite, SelectIdGroup]);
   
   const GetScheduleList = async (site, group) => {
     setLoading(true); // เริ่มโหลด
@@ -86,6 +87,26 @@ console.log("Select ID : " ,SelectIdSite , SelectIdGroup)
       setLoading(false); // หยุดโหลดไม่ว่าผลลัพธ์จะสำเร็จหรือผิดพลาด
     }
   };
+  const GetDeviceList = async (site, group) => {
+      const paramsNav = {
+        siteId: site,
+        groupId: group
+      };
+    
+      setLoading(true); // เริ่มโหลด
+      try {
+        const result = await getDeviceListData(paramsNav);
+        if (result?.data?.length > 0) {
+          setDevicelist(result.data); // อัปเดต state ด้วยข้อมูล
+        } else {
+          setDevicelist([]); // ตั้งค่าเป็น array ว่างหากไม่มีข้อมูล
+        }
+      } catch (error) {
+        console.error("Error fetching device list:", error);
+      } finally {
+        setLoading(false)
+      }
+    };
 
   const handleClosePopup = () => {
     setopenModalconfirm(false)
@@ -580,7 +601,7 @@ console.log("Select ID : " ,SelectIdSite , SelectIdGroup)
           setScheduleData(null);
         }}
         scheduleData={ScheduleData}
-        deviceList={deviceData}
+        deviceList={devcielist}
         onSaveSchedule={CreateSchedul}
         onUpdateSchedule={UpdateSchedul}
         onHandleConfirm={handleOpenModalconfirm}

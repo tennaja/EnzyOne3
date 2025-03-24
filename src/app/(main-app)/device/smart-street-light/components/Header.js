@@ -137,8 +137,6 @@ const Header1 = () => {
         switch (activeTab) {
             case "dashboard":
                 return <Dashboard 
-                deviceData={devcielist} 
-                
                 Sitename={siteName}
                 Groupname={groupName}
                 />;
@@ -151,9 +149,6 @@ const Header1 = () => {
                 />;
             case "schedule":
                 return <ScheduleComponent  
-                deviceData={devcielist} 
-                scheduleData ={schedulelist} 
-                
                 GroupId={groupid}
                 Sitename={siteName}
                 Groupname={groupName}
