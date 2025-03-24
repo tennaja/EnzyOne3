@@ -7,9 +7,9 @@ import DeviceDetail from "./DeviceDetail";
 import MapTH from "./MapLeaflet";
 import CreateIcon from '@mui/icons-material/Create';
 import {
-  getDevicebyId, getHistoryGraphDataa, getEnergyHistoryGraphDataa, getSchedulebyid, putUpdateSchedule,DeviceControl
+  getDeviceListData,getDevicebyId, getHistoryGraphDataa, getEnergyHistoryGraphDataa, getSchedulebyid, putUpdateSchedule,DeviceControl
 } from "@/utils/api";
-
+import { ClipLoader } from "react-spinners";
 import { useDispatch, useSelector} from "react-redux";
 import MyChart from "./Chart1";
 import SchedulePopup from "./Popupchedule";
@@ -19,10 +19,12 @@ import ModalDone from "./Popupcomplete";
 import ModalFail from "./PopupFali";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Loading from "./Loading";
 const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
 
   const today = new Date().toISOString().split("T")[0];
   const [activeTab, setActiveTab] = useState("table");
+  const [devcielist , setDevicelist] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState();
   const [selectedStatus, setSelectedStatus] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,7 +43,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   const [startDate2, setStartDate2] = useState(today);
   const [endDate2, setEndDate2] = useState(today);
   const [timeUnit, setTimeUnit] = useState("hour");
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [scheduleData, setScheduleData] = useState();
   const [openModalSchedule, setopenModalSchedule] = useState(false)
   const [openModalconfirm, setopenModalconfirm] = useState(false)
@@ -50,17 +52,54 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   const [modalConfirmProps, setModalConfirmProps] = useState(null);
   const [modalErrorProps, setModalErorProps] = useState(null);
   const [modalSuccessProps, setModalSuccessProps] = useState(null);
-  const devicedetailPopupRef = useRef();
-  const schedulePopupRef = useRef();
+
   const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
   const SelectIdGroup = useSelector((state) => state.smartstreetlightData.groupId);
+  const siteIdRef = useRef(SelectIdSite);
+  const groupIdRef = useRef(SelectIdGroup);
+  const devicedetailPopupRef = useRef();
+  const schedulePopupRef = useRef();
+  
   useEffect(() => {
-    if (!deviceData || Object.keys(deviceData).length === 0) {
-      setIsLoading(true); // ยังโหลดไม่เสร็จ
-    } else {
-      setIsLoading(false); // โหลดเสร็จแล้ว
+    // อัพเดต useRef เมื่อ SelectIdSite หรือ SelectIdGroup เปลี่ยนแปลง
+    siteIdRef.current = SelectIdSite;
+    groupIdRef.current = SelectIdGroup;
+
+    // เรียก GetDeviceList เมื่อค่าของ SelectIdSite หรือ SelectIdGroup เปลี่ยน
+    GetDeviceList();
+  }, [SelectIdSite, SelectIdGroup]);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      // เช็คว่า modal เปิดอยู่หรือไม่
+      if (!openModalSchedule && !openModalconfirm) {
+        GetDeviceList();
+      }
+    }, 15000); // รีเฟรชทุก 15 วินาที
+
+    return () => clearInterval(intervalId); // เคลียร์ interval เมื่อคอมโพเนนต์ถูก unmount
+  }, [openModalSchedule, openModalconfirm]);
+
+  const GetDeviceList = async () => {
+    const paramsNav = {
+      siteId: siteIdRef.current,
+      groupId: groupIdRef.current,
+    };
+  
+    setLoading(true); // เริ่มโหลด
+    try {
+      const result = await getDeviceListData(paramsNav);
+      if (result?.data?.length > 0) {
+        setDevicelist(result.data); // อัปเดต state ด้วยข้อมูล
+      } else {
+        setDevicelist([]); // ตั้งค่าเป็น array ว่างหากไม่มีข้อมูล
+      }
+    } catch (error) {
+      console.error("Error fetching device list:", error);
+    } finally {
+      setTimeout(() => setLoading(false), 3000); // หยุดโหลดหลังจาก 4 วินาที
     }
-  }, [deviceData]);
+  };
 
   // ดึงค่าพิกัดจาก deviceData และสร้าง locationDataList
   // const locationDataList = useMemo(() => {
@@ -75,7 +114,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
     setSearchQuery(e.target.value);
   };
 
-  const filteredData = deviceData.filter((item) =>
+  const filteredData = devcielist.filter((item) =>
     item.name?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.kW?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.kWh?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -434,11 +473,12 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
           <span className="text-lg font-bold block mb-2">Device List</span>
           <p className="text-base mb-4">{Sitename} | {Groupname}</p>
         </div>
+        
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="w-full lg:w-[450px]">
             <div className="flex justify-center w-full h-[500px] justify-items-center overflow-hidden mt-10 mb-7">
               <MapTH
-                locationList={deviceData.map((loca, index) => ({
+                locationList={devcielist.map((loca, index) => ({
                   id: index + 1,
                   name: loca.name,
                   kW: loca.kW,
@@ -458,8 +498,8 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
                 setActiveTab={setActiveTab}
                 mapCenter={mapCenter} // ถ้าไม่เปลี่ยนแปลง mapCenter จะใช้ค่าเดิม
                 selectedStatus={selectedStatus} // ส่ง selectedStatus เข้าไปที่ MapTH
-                SiteId={SelectIdSite}
-                GroupId={SelectIdGroup}
+                SiteId={siteIdRef.current}
+                GroupId={groupIdRef.current}
               />
 
 
@@ -796,15 +836,8 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
 
           </div>
 
-        </div>
-
-
-
-
-
-
-      </div>
-      {activeTab === "table" ? <></> : (
+        </div> 
+        {activeTab === "table" ? <></> : (
         <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
           <div>
             <span className="text-lg font-bold block mb-2">Historical</span>
@@ -904,8 +937,12 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
             />
             
         </div>)}
+      
+      </div>
+      
       {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
       {openModalfail && <ModalFail onCloseModal={handleClosePopup} />}
+      {loading && <Loading/>}      
       <ToastContainer />
     </>
   );

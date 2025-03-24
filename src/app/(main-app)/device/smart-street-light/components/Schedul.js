@@ -4,7 +4,7 @@ import CreateIcon from "@mui/icons-material/Create";
 import SchedulePopup from "./Popupchedule";
 import ArrowForwardIosOutlinedIcon from '@mui/icons-material/ArrowForwardIosOutlined';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import { getSchedulebyid, postCreateSchedule, putUpdateSchedule, deleteSchedule, changeStatuschedule } from "@/utils/api";
+import { getSchedulebyid, postCreateSchedule, putUpdateSchedule, deleteSchedule, changeStatuschedule,getScheduleListData } from "@/utils/api";
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ModalConfirm from "./Popupconfirm";
@@ -12,6 +12,8 @@ import ModalDone from "./Popupcomplete";
 import ModalFail from "./PopupFali";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useDispatch, useSelector} from "react-redux";
+import Loading from "./Loading";
 
 export default function ScheduleComponent({ 
   scheduleData,
@@ -26,6 +28,7 @@ export default function ScheduleComponent({
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [schedulelist , setSchedulelist] = useState([]);
   const [ScheduleData, setScheduleData] = useState();
   const [openModalSchedule, setopenModalSchedule] = useState(false);
   const [action, setAction] = useState("")
@@ -37,26 +40,52 @@ export default function ScheduleComponent({
   const [modalSuccessProps, setModalSuccessProps] = useState(null);
   const [sortConfig, setSortConfig] = useState({});
   const [toggleId, setToggleId] = useState(null)
+  const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
+  const SelectIdGroup = useSelector((state) => state.smartstreetlightData.groupId);
+console.log("Select ID : " ,SelectIdSite , SelectIdGroup)
   const schedulePopupRef = useRef();
 
+  const [loading, setLoading] = useState(false); // เพิ่ม state สำหรับ loading
   
-
   useEffect(() => {
-    setData(scheduleData);
-    console.log(scheduleData)
-    console.log(data)
-  }, [scheduleData]);
-
+    // อัปเดต siteId และ groupId และเรียก GetScheduleList พร้อมค่าล่าสุด
+   
+    GetScheduleList(SelectIdSite, SelectIdGroup);
+  }, [SelectIdSite, SelectIdGroup]);
+  
   useEffect(() => {
     const intervalId = setInterval(() => {
-        // ทำงานถ้ามีป๊อบอัพอันใดอันหนึ่งเปิดอยู่
-        if (!openModalconfirm || !openModalSchedule) {
-          FetchSchedule()
-        }
-    }, 60000);
-
-    return () => clearInterval(intervalId);
-}, [openModalconfirm,openModalSchedule]);
+      // เช็คว่า modal เปิดอยู่หรือไม่
+      if (!openModalSchedule && !openModalconfirm) {
+        GetScheduleList(SelectIdSite, SelectIdGroup);
+      }
+    }, 15000); // รีเฟรชทุก 15 วินาที
+  
+    return () => clearInterval(intervalId); // เคลียร์ interval เมื่อคอมโพเนนต์ถูก unmount
+  }, [openModalSchedule, openModalconfirm, SelectIdSite, SelectIdGroup]);
+  
+  const GetScheduleList = async (site, group) => {
+    setLoading(true); // เริ่มโหลด
+    try {
+      const paramsNav = {
+        siteId: site,
+        groupId: group,
+      };
+  
+      const result = await getScheduleListData(paramsNav);
+      console.log(result);
+  
+      if (result?.data?.length > 0) {
+        setSchedulelist(result.data);
+      } else {
+        setSchedulelist([]);
+      }
+    } catch (error) {
+      console.error("Error fetching schedule list:", error);
+    } finally {
+      setLoading(false); // หยุดโหลดไม่ว่าผลลัพธ์จะสำเร็จหรือผิดพลาด
+    }
+  };
 
   const handleClosePopup = () => {
     setopenModalconfirm(false)
@@ -73,14 +102,14 @@ export default function ScheduleComponent({
 
   // การ sort ข้อมูลที่ใช้ useMemo เพื่อลดการคำนวณซ้ำ
   const sortedData = useMemo(() => {
-    const sorted = [...data];
+    const sorted = [...schedulelist];
     sorted.sort((a, b) => {
       if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === "asc" ? -1 : 1;
       if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === "asc" ? 1 : -1;
       return 0;
     });
     return sorted;
-  }, [data, sortConfig]);
+  }, [schedulelist, sortConfig]);
 
 
   const toggleSwitch = (id) => {
@@ -94,7 +123,7 @@ export default function ScheduleComponent({
   };
 
   const toggleSelectAll = () => {
-    const selectableIds = data.filter((item) => item.status !== "active").map((item) => item.id);
+    const selectableIds = schedulelist.filter((item) => item.status !== "active").map((item) => item.id);
     if (selected.length === selectableIds.length) {
       setSelected([]);
     } else {
@@ -173,7 +202,7 @@ export default function ScheduleComponent({
         setIsPopupOpen(false)
         setopenModalSchedule(false)
         notifySuccess(result?.data?.title, result?.data?.message);
-        FetchSchedule();
+        GetScheduleList(SelectIdSite,SelectIdGroup)
         setScheduleData(null);
       } else {
         console.log(result);
@@ -202,7 +231,7 @@ export default function ScheduleComponent({
         setIsPopupOpen(false)
         setopenModalSchedule(false)
         notifySuccess(result?.data?.title, result?.data?.message);
-        FetchSchedule()
+        GetScheduleList(SelectIdSite,SelectIdGroup)
         setScheduleData(null);
       } else {
         setModalErorProps({
@@ -229,8 +258,7 @@ export default function ScheduleComponent({
         console.log("Success");
         setopenModalconfirm(false);
         notifySuccess(result?.data?.title, result?.data?.message);
-        FetchSchedule()
-        onClose();
+        GetScheduleList(SelectIdSite,SelectIdGroup)
       } else {
         console.log("No groups found!");
         setopenModalfail(true);
@@ -288,7 +316,7 @@ export default function ScheduleComponent({
       if (result.status === 200) {
         console.log("Success");
         notifySuccess(result?.data?.title, result?.data?.message); // Show success message
-        FetchSchedule()
+        GetScheduleList(SelectIdSite,SelectIdGroup)
         setopenModalconfirm(false); // Close the confirmation modal
         onClose(); // Close any other relevant modal or action
       } else {
@@ -302,7 +330,7 @@ export default function ScheduleComponent({
   // Helper function to determine current status (active/inactive)
   const getCurrentStatus = (id) => {
     // Replace this with your logic to find the current status of the schedule based on `id`
-    const schedule = data.find(item => item.id === id); // Assuming `data` contains the schedules
+    const schedule = schedulelist.find(item => item.id === id); // Assuming `data` contains the schedules
     return schedule ? schedule.status : "inactive"; // Return the current status
   };
   const handleCancel = () => setSelected([]);
@@ -318,8 +346,8 @@ export default function ScheduleComponent({
   const indexOfFirstDevice = indexOfLastDevice - rowsPerPage;
   const currentData = sortedData.slice(indexOfFirstDevice, indexOfLastDevice);
 
-  const totalPages = Math.ceil(data.length / rowsPerPage);
-  const paginatedData = data.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+  const totalPages = Math.ceil(schedulelist.length / rowsPerPage);
+  const paginatedData = schedulelist.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   const notifySuccess = (title, message) =>
     toast.success(
@@ -347,9 +375,11 @@ export default function ScheduleComponent({
 
 
         </div>
+        
+        
         <div className="p-2 max-w-full mx-auto mt-10">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-base font-semibold">{data.length} Schedules</h2>
+            <h2 className="text-base font-semibold">{schedulelist.length} Schedules</h2>
             <button
               className="flex items-center gap-2 px-4 py-2 bg-[#33BFBF] text-white rounded-lg hover:bg-teal-600"
               onClick={() => { setopenModalSchedule(true); setAction("create"); }}
@@ -386,7 +416,7 @@ export default function ScheduleComponent({
                     <input
                       type="checkbox"
                       onChange={toggleSelectAll}
-                      checked={selected.length > 0 && selected.length === data.filter((item) => item.status !== "active").length}
+                      checked={selected.length > 0 && selected.length === schedulelist.filter((item) => item.status !== "active").length}
                     />
                   </th>
                   <th className="p-3" onClick={() => handleSort("name")}>Schedule Name
@@ -465,7 +495,7 @@ export default function ScheduleComponent({
                 </tr>
               </thead>
               <tbody>
-                {data.length === 0 ? (
+                {schedulelist.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="text-center text-gray-500 p-5">Schedule not found</td>
                   </tr>
@@ -540,6 +570,7 @@ export default function ScheduleComponent({
             </div>
           </div>
         </div>
+
       </div>
       <SchedulePopup
         ref={schedulePopupRef}
@@ -559,6 +590,7 @@ export default function ScheduleComponent({
       />
       {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
       {openModalfail && <ModalFail {...modalErrorProps}/>}
+      {loading && <Loading/>} 
       <ToastContainer />
     </div>
 

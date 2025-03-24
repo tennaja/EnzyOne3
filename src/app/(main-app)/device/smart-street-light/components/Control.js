@@ -9,14 +9,14 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import {
-  DeviceControl
+  DeviceControl,getDeviceListData
 } from "@/utils/api";
 import ModalConfirm from "./Popupconfirm";
 import ModalDone from "./Popupcomplete";
 import ModalFail from "./PopupFali";
 import { useDispatch, useSelector} from "react-redux";
-
-export default function DeviceControlPage({ deviceData ,FetchDevice,Sitename,Groupname}) {
+import Loading from "./Loading";
+export default function DeviceControlPage({FetchDevice,Sitename,Groupname}) {
   const [selecteddeviceData, setSelecteddeviceData] = useState([]);
   const [powerOn, setPowerOn] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,23 +30,54 @@ export default function DeviceControlPage({ deviceData ,FetchDevice,Sitename,Gro
   const [modalConfirmProps, setModalConfirmProps] = useState(null);
   const [modalErrorProps, setModalErorProps] = useState(null);
   const [modalSuccessProps, setModalSuccessProps] = useState(null);
-  
+  const [devcielist , setDevicelist] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "" });
-  const [isSelectingAll, setIsSelectingAll] = useState(false);
   const isSortingDisabled = useRef(false);
   const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
-      console.log('SelectIdSite:', SelectIdSite);    
-  
-      // useEffect(() => {
-      //     const intervalId = setInterval(() => {
-      //         // ทำงานถ้ามีป๊อบอัพอันใดอันหนึ่งเปิดอยู่
-      //         if (!openModalconfirm) {
-      //             FetchDevice();
-      //         }
-      //     }, 6000);
-      
-      //     return () => clearInterval(intervalId);
-      // }, [openModalconfirm]);
+    const SelectIdGroup = useSelector((state) => state.smartstreetlightData.groupId);
+    const siteIdRef = useRef(SelectIdSite);
+    const groupIdRef = useRef(SelectIdGroup);
+     useEffect(() => {
+         // อัพเดต useRef เมื่อ SelectIdSite หรือ SelectIdGroup เปลี่ยนแปลง
+         siteIdRef.current = SelectIdSite;
+         groupIdRef.current = SelectIdGroup;
+     
+         // เรียก GetDeviceList เมื่อค่าของ SelectIdSite หรือ SelectIdGroup เปลี่ยน
+         GetDeviceList();
+       }, [SelectIdSite, SelectIdGroup]);
+     
+       useEffect(() => {
+         const intervalId = setInterval(() => {
+           // เช็คว่า modal เปิดอยู่หรือไม่
+           if (!openModalconfirm) {
+             GetDeviceList();
+           }
+         }, 15000); // รีเฟรชทุก 15 วินาที
+     
+         return () => clearInterval(intervalId); // เคลียร์ interval เมื่อคอมโพเนนต์ถูก unmount
+       }, [openModalconfirm]);
+     
+       const GetDeviceList = async () => {
+         const paramsNav = {
+           siteId: siteIdRef.current,
+           groupId: groupIdRef.current,
+         };
+       
+         setLoading(true); // เริ่มโหลด
+         try {
+           const result = await getDeviceListData(paramsNav);
+           if (result?.data?.length > 0) {
+             setDevicelist(result.data); // อัปเดต state ด้วยข้อมูล
+           } else {
+             setDevicelist([]); // ตั้งค่าเป็น array ว่างหากไม่มีข้อมูล
+           }
+         } catch (error) {
+           console.error("Error fetching device list:", error);
+         } finally {
+           setTimeout(() => setLoading(false), 3000); // หยุดโหลดหลังจาก 4 วินาที
+         }
+       };
 
       const handleStatusChange = (newStatus) => {
         setDeviceStatus(newStatus);
@@ -129,7 +160,7 @@ export default function DeviceControlPage({ deviceData ,FetchDevice,Sitename,Gro
           setopenModalsuccess(false)
           setopenModalfail(false)
         }
-  const filtereddeviceData = deviceData.filter(item =>
+  const filtereddeviceData = devcielist.filter(item =>
     item.name?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.kW?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.kWh?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -230,7 +261,7 @@ const sortedData = useMemo(() => {
   useEffect(() => {
     // Reset all keys in the sortConfig when deviceData changes
     setSortConfig({}); // Clear the sortConfig object completely
-  }, [deviceData]); // This will trigger when deviceData changes
+  }, [devcielist]); // This will trigger when deviceData changes
   return (
     
     <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
@@ -244,7 +275,7 @@ const sortedData = useMemo(() => {
       <div className="lg:w-1/2 w-full  border-r p-2">
       
       <div className="flex items-center justify-between mb-3">
-  <h2 className="text-sm font-semibold">{deviceData?.length} Devices</h2>
+  <h2 className="text-sm font-semibold">{devcielist?.length} Devices</h2>
   <input
     type="text"
     placeholder="ค้นหา"
@@ -528,6 +559,7 @@ const sortedData = useMemo(() => {
       {openModalconfirm && <ModalConfirm {...modalConfirmProps}/>}
       {openModalsuccess && <ModalDone {...modalSuccessProps}/>}
       {openModalfail && <ModalFail {...modalErrorProps}/>}
+      {loading && <Loading/>}  
     </div>
     <ToastContainer />
     </div>

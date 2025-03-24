@@ -17,7 +17,7 @@ import {
 import { ClipLoader } from "react-spinners";
 
 import {
-    setSiteId,setGroupId
+    setSiteId,setGroupId,clearAll
 } from "@/redux/slicer/smartstreetlightSlice"
 
 const Header1 = () => {
@@ -47,8 +47,13 @@ const Header1 = () => {
 
 
     useEffect(() => {
-        getSiteList();
-    }, []);
+        const clearAndFetch = async () => {
+          dispatch(clearAll()); // Dispatch clearAll first
+          await getSiteList(); // Wait for the data to be fetched (if it's async)
+        };
+      
+        clearAndFetch();
+      }, [dispatch]);
     
 
     //Get site
@@ -111,45 +116,7 @@ const Header1 = () => {
       };
 
     
-    //Get DeviceList use in search button 
-    const GetDeviceList = async () => {
-        setLoading(true); // เริ่มโหลด
-        setSiteid(siteid);
-        setGroupid(groupid);
     
-        const paramsNav = {
-            siteId: siteid,
-            groupId: groupid
-        };
-    
-        try {
-            const result = await getDeviceListData(paramsNav);
-            if (result.data.length > 0) {
-                setDevicelist(result.data);
-            }
-        } catch (error) {
-            console.error("Error fetching device list:", error);
-        } finally {
-            setLoading(false); // หยุดโหลด ไม่ว่า success หรือ error
-        }
-    };
-    
-
-    const GetScheduleList = async () => {
-        setSiteid(siteid)
-        setGroupid(groupid);
-        const paramsNav = {
-            siteId: siteid,
-            groupId: groupid
-          };
-    const result = await getScheduleListData(paramsNav)
-    console.log(result)
-    if(result?.data?.length > 0){
-        setSchedulelist(result.data)
-    }else{
-        setSchedulelist([])
-    }
-      };
 
 
       const handleSearch = () => {
@@ -162,8 +129,7 @@ const Header1 = () => {
         setGroupid(selectedGroupId)
         dispatch(setSiteId(selectedSiteId));
         dispatch(setGroupId(selectedGroupId));
-        GetDeviceList();
-        GetScheduleList();
+       
     };
       
 
@@ -172,14 +138,14 @@ const Header1 = () => {
             case "dashboard":
                 return <Dashboard 
                 deviceData={devcielist} 
-                FetchDevice={GetDeviceList}
+                
                 Sitename={siteName}
                 Groupname={groupName}
                 />;
             case "control":
                 return <DeviceControlPage 
                 deviceData={devcielist} 
-                FetchDevice={GetDeviceList}
+                
                 Sitename={siteName}
                 Groupname={groupName}
                 />;
@@ -187,7 +153,7 @@ const Header1 = () => {
                 return <ScheduleComponent  
                 deviceData={devcielist} 
                 scheduleData ={schedulelist} 
-                FetchSchedule={GetScheduleList} 
+                
                 GroupId={groupid}
                 Sitename={siteName}
                 Groupname={groupName}
@@ -198,17 +164,7 @@ const Header1 = () => {
     };
 
     
-    useEffect(() => {
-        if (activeTab === "dashboard") {
-            GetDeviceList();
-        }
-    }, [activeTab]); // ให้แน่ใจว่า `activeTab` เป็น dependency ตัวเดียว
     
-    useEffect(() => {
-        if (activeTab === "control") {
-            GetDeviceList();
-        }
-    }, [activeTab]); // ให้แน่ใจว่า `activeTab` เป็น dependency ตัวเดียว
     
 
     useEffect(() => {
@@ -225,6 +181,7 @@ const Header1 = () => {
             // เซ็ต siteid ใหม่
             setSiteId(newSiteId);
             setSelectedSiteId(newSiteId);
+            dispatch(setSiteId(newSiteId));
             setSiteName(filteredSiteList[0]?.name || "");
             setSelectedSiteName(filteredSiteList[0]?.name || "");
             getGroupList(newSiteId); // เรียก getGroupList ใหม่หลังจากเซ็ต siteid
@@ -246,6 +203,7 @@ const Header1 = () => {
     
             // เซ็ต groupid ใหม่
             setSelectedGroupId(newGroupId);
+            dispatch(setGroupId(newGroupId));
             Groupchange(newGroupId); // เรียก Groupchange เพื่ออัพเดตกลุ่ม
             setGroupName(filteredGroupList[0]?.name || "");
             setSelectedGroupName(filteredGroupList[0]?.name || "");
@@ -259,7 +217,7 @@ const Header1 = () => {
         if (activeTab === "schedule" && siteid && groupid) {
           if (!hasFetchedSchedule.current) {
             console.log("Fetching schedule list for the first time...");
-            GetScheduleList(); // เรียก API เพื่อดึงข้อมูล
+            
             hasFetchedSchedule.current = true; // ตั้งค่าให้เป็น true หลังจากเรียก API ครั้งแรก
           }
         }
@@ -283,6 +241,7 @@ const Header1 = () => {
             const newSiteId = filteredSiteList[0]?.id;
             setSiteId(newSiteId);
             setSelectedSiteId(newSiteId);
+            dispatch(setSiteId(newSiteId));
             setSiteName(filteredSiteList[0]?.name || "");
             setSelectedSiteName(filteredSiteList[0]?.name || "");
             getGroupList(newSiteId);
@@ -294,6 +253,7 @@ const Header1 = () => {
           if (filteredGroupList.length > 0 && (!groupid || groupid === "0")) {
             const newGroupId = filteredGroupList[0]?.id;
             setSelectedGroupId(newGroupId);
+            dispatch(setGroupId(newGroupId));
             Groupchange(newGroupId);
             setGroupName(filteredGroupList[0]?.name || "");
           }
