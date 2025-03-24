@@ -49,63 +49,80 @@ console.log("Select ID : " ,SelectIdSite , SelectIdGroup)
 
   const [loading, setLoading] = useState(false); // เพิ่ม state สำหรับ loading
   
-  useEffect(() => {
-    // อัปเดต siteId และ groupId และเรียก GetScheduleList พร้อมค่าล่าสุด
-    GetDeviceList(SelectIdSite, SelectIdGroup)
-    GetScheduleList(SelectIdSite, SelectIdGroup);
-  }, [SelectIdSite, SelectIdGroup]);
-  
-  // useEffect(() => {
-  //   const intervalId = setInterval(() => {
-  //     // เช็คว่า modal เปิดอยู่หรือไม่
-  //     if (!openModalSchedule && !openModalconfirm) {
-  //       GetScheduleList(SelectIdSite, SelectIdGroup);
-  //     }
-  //   }, 15000); // รีเฟรชทุก 15 วินาที
-  
-  //   return () => clearInterval(intervalId); // เคลียร์ interval เมื่อคอมโพเนนต์ถูก unmount
-  // }, [openModalSchedule, openModalconfirm, SelectIdSite, SelectIdGroup]);
-  
-  const GetScheduleList = async (site, group) => {
-    setLoading(true); // เริ่มโหลด
-    try {
-      const paramsNav = {
-        siteId: site,
-        groupId: group,
-      };
-  
-      const result = await getScheduleListData(paramsNav);
-      console.log(result);
-  
-      if (result?.data?.length > 0) {
-        setSchedulelist(result.data);
-      } else {
-        setSchedulelist([]);
-      }
-    } catch (error) {
-      console.error("Error fetching schedule list:", error);
-    } finally {
-      setLoading(false); // หยุดโหลดไม่ว่าผลลัพธ์จะสำเร็จหรือผิดพลาด
-    }
-  };
-  const GetDeviceList = async (site, group) => {
-      const paramsNav = {
-        siteId: site,
-        groupId: group
-      };
+  const latestIds = useRef({ siteId: null, groupId: null });
+
+useEffect(() => {
+  if (SelectIdSite && SelectIdGroup) {
+    latestIds.current = { siteId: SelectIdSite, groupId: SelectIdGroup };
+    fetchData();
+  }
+}, [SelectIdSite, SelectIdGroup]);
+
+const fetchData = () => {
+  const { siteId, groupId } = latestIds.current;
+  GetDeviceList(siteId, groupId);
+  GetScheduleList(siteId, groupId);
+};
+
+const GetScheduleList = async (site, group) => {
+  setLoading(true);
+  try {
+    const paramsNav = { siteId: site, groupId: group };
+    const result = await getScheduleListData(paramsNav);
+    setSchedulelist(result?.data?.length > 0 ? result.data : []);
+  } catch (error) {
+    console.error("Error fetching schedule list:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const GetDeviceList = async (site, group) => {
+  setLoading(true);
+  try {
+    const paramsNav = { siteId: site, groupId: group };
+    const result = await getDeviceListData(paramsNav);
+    setDevicelist(result?.data?.length > 0 ? result.data : []);
+  } catch (error) {
+    console.error("Error fetching device list:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+    const getSchedulById = async (id) => {
+      console.log("Device Id:", id);
     
-      setLoading(true); // เริ่มโหลด
       try {
-        const result = await getDeviceListData(paramsNav);
-        if (result?.data?.length > 0) {
-          setDevicelist(result.data); // อัปเดต state ด้วยข้อมูล
+        const result = await getSchedulebyid(id);
+        console.log("Group List Result:", result);
+    
+        if (result) {
+          setScheduleData(result.data);
+          setopenModalSchedule(true);
+          
+          // ดึง siteId และ groupId จาก result
+          const paramsNav = {
+            siteId: result.data.siteId,
+            groupId: result.data.groupId,
+          };
+    
+          // เรียก getDeviceListData ด้วยค่าที่ได้มา
+          const deviceResult = await getDeviceListData(paramsNav);
+          if (deviceResult?.data?.length > 0) {
+            setDeviceforSchedule(deviceResult.data);
+          } else {
+            setDeviceforSchedule([]);
+          }
         } else {
-          setDevicelist([]); // ตั้งค่าเป็น array ว่างหากไม่มีข้อมูล
+          console.log("No groups found!");
         }
       } catch (error) {
-        console.error("Error fetching device list:", error);
+        console.error("Error fetching data:", error);
       } finally {
-        setLoading(false)
+       
+          setLoading(false);
+        
       }
     };
 
@@ -182,41 +199,7 @@ console.log("Select ID : " ,SelectIdSite , SelectIdGroup)
 
 
 
-  const getSchedulById = async (id) => {
-      console.log("Device Id:", id);
-    
-      try {
-        const result = await getSchedulebyid(id);
-        console.log("Group List Result:", result);
-    
-        if (result) {
-          setScheduleData(result.data);
-          setopenModalSchedule(true);
-          
-          // ดึง siteId และ groupId จาก result
-          const paramsNav = {
-            siteId: result.data.siteId,
-            groupId: result.data.groupId,
-          };
-    
-          // เรียก getDeviceListData ด้วยค่าที่ได้มา
-          const deviceResult = await getDeviceListData(paramsNav);
-          if (deviceResult?.data?.length > 0) {
-            setDeviceforSchedule(deviceResult.data);
-          } else {
-            setDeviceforSchedule([]);
-          }
-        } else {
-          console.log("No groups found!");
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-       
-          setLoading(false);
-        
-      }
-    };
+  
 
 
   const handleExternalSave = () => {
@@ -629,7 +612,7 @@ console.log("Select ID : " ,SelectIdSite , SelectIdGroup)
           setScheduleData(null);
         }}
         scheduleData={ScheduleData}
-        deviceList={deviceForSchedule}
+        deviceList={deviceForSchedule?.length ? deviceForSchedule : devcielist}
         onSaveSchedule={CreateSchedul}
         onUpdateSchedule={UpdateSchedul}
         onHandleConfirm={handleOpenModalconfirm}

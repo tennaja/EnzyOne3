@@ -42,8 +42,7 @@ const Header1 = () => {
     
     const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
     const SelectIdGroup = useSelector((state) => state.smartstreetlightData.groupId);
-    console.log('SelectIdSite:', SelectIdSite);
-    console.log('SelectIdGroup:', SelectIdGroup);
+    
 
 
     useEffect(() => {
@@ -73,6 +72,7 @@ const Header1 = () => {
                 setSelectedSiteName(result[0].name)
                 setIsfirst(false); // เซ็ตให้เป็น false หลังจากใช้งานครั้งแรก
             }else{
+                setSiteid(siteId);
                 setSelectedSiteId(siteId)
                 setSelectedSiteName(result[0].name)
             }
@@ -171,18 +171,20 @@ const Header1 = () => {
       
           if (filteredSiteList.length > 0 && (!siteid || siteid === "0")) {
             const newSiteId = filteredSiteList[0]?.id;
-      
             setSiteId(newSiteId);
             setSelectedSiteId(newSiteId);
             dispatch(setSiteId(newSiteId));
             setSiteName(filteredSiteList[0]?.name || "");
             setSelectedSiteName(filteredSiteList[0]?.name || "");
-            getGroupList(newSiteId);
+      
+            if (siteid !== newSiteId) {
+              getGroupList(newSiteId); // เรียกเฉพาะเมื่อ siteId เปลี่ยนจริง ๆ
+            }
       
             hasFetchedSchedule.current = false;
           }
         }
-      }, [activeTab, sitelist, siteid, dispatch]);
+      }, [activeTab, sitelist, siteid]); // เพิ่ม siteid เพื่อลดการเซ็ตค่าใหม่โดยไม่จำเป็น
       
       useEffect(() => {
         if (activeTab === "schedule" && grouplist?.length > 0) {
@@ -190,30 +192,35 @@ const Header1 = () => {
       
           if (filteredGroupList.length > 0 && (!groupid || groupid === "0")) {
             const newGroupId = filteredGroupList[0]?.id;
-      
             setSelectedGroupId(newGroupId);
             dispatch(setGroupId(newGroupId));
-            Groupchange(newGroupId);
             setGroupName(filteredGroupList[0]?.name || "");
+            setSelectedGroupName(filteredGroupList[0]?.name || "");
+      
+            if (groupid !== newGroupId) {
+              Groupchange(newGroupId); // เรียกเฉพาะเมื่อ groupId เปลี่ยนจริง ๆ
+            }
       
             hasFetchedSchedule.current = false;
           }
         }
-      }, [activeTab, grouplist, groupid, dispatch]);
+      }, [activeTab, grouplist, groupid]); // เพิ่ม groupid เพื่อลดการเซ็ตค่าใหม่โดยไม่จำเป็น
       
-      useEffect(() => {
-        if (activeTab === "schedule" && siteid && groupid && !hasFetchedSchedule.current) {
-          console.log("Fetching schedule list for the first time...");
+    //   useEffect(() => {
+    //     if (activeTab === "schedule" && siteid && groupid) {
+    //       if (!hasFetchedSchedule.current) {
+    //         console.log("Fetching schedule list for the first time...");
+    //         hasFetchedSchedule.current = true;
+    //       }
+    //     }
+    //   }, [activeTab, siteid, groupid]);
       
-          hasFetchedSchedule.current = true;
-        }
-      }, [activeTab, siteid, groupid]);
-      
-      useEffect(() => {
-        if (activeTab === "schedule" && (sitelist?.length > 0 || grouplist?.length > 0)) {
-          hasFetchedSchedule.current = false;
-        }
-      }, [activeTab, sitelist, grouplist]);
+    //   useEffect(() => {
+    //     if (activeTab === "schedule") {
+    //       console.log("Resetting fetch flag due to site or group list change...");
+    //       hasFetchedSchedule.current = false;
+    //     }
+    //   }, [sitelist, grouplist]); // ตัด activeTab ออกเพราะไม่จำเป็น
       
     return (
         <>
