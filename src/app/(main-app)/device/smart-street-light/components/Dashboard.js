@@ -9,8 +9,11 @@ import CreateIcon from '@mui/icons-material/Create';
 import {
   getDeviceListData,getDevicebyId, getHistoryGraphDataa, getEnergyHistoryGraphDataa, getSchedulebyid, putUpdateSchedule,DeviceControl
 } from "@/utils/api";
-import { ClipLoader } from "react-spinners";
+
 import { useDispatch, useSelector} from "react-redux";
+import {
+  setDeviceById
+} from "@/redux/slicer/smartstreetlightSlice"
 import MyChart from "./Chart1";
 import SchedulePopup from "./Popupchedule";
 import BarChartComponent from "./Barchart";
@@ -21,6 +24,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from "./Loading";
 const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
+const dispatch = useDispatch();
 
   const today = new Date().toISOString().split("T")[0];
   const [activeTab, setActiveTab] = useState("table");
@@ -52,14 +56,16 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   const [modalConfirmProps, setModalConfirmProps] = useState(null);
   const [modalErrorProps, setModalErorProps] = useState(null);
   const [modalSuccessProps, setModalSuccessProps] = useState(null);
-
+  
   const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
   const SelectIdGroup = useSelector((state) => state.smartstreetlightData.groupId);
+  const SelectDeviceById = useSelector((state) => state.smartstreetlightData.devicebyId);
   const siteIdRef = useRef(SelectIdSite);
   const groupIdRef = useRef(SelectIdGroup);
   const devicedetailPopupRef = useRef();
   const schedulePopupRef = useRef();
   
+  console.log(SelectDeviceById)
   useEffect(() => {
     // อัพเดต useRef เมื่อ SelectIdSite หรือ SelectIdGroup เปลี่ยนแปลง
     siteIdRef.current = SelectIdSite;
@@ -71,14 +77,14 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      // เช็คว่า modal เปิดอยู่หรือไม่
       if (!openModalSchedule && !openModalconfirm) {
-        GetDeviceList();
+        Promise.all([GetDeviceList(), getdevicebyId(SelectDeviceById)]);
       }
-    }, 15000); // รีเฟรชทุก 15 วินาที
-
-    return () => clearInterval(intervalId); // เคลียร์ interval เมื่อคอมโพเนนต์ถูก unmount
-  }, [openModalSchedule, openModalconfirm]);
+    }, 60000);
+  
+    return () => clearInterval(intervalId); // ล้าง interval เมื่อ component ถูก unmount
+  }, [openModalSchedule, openModalconfirm, SelectDeviceById]);
+  
 
   const GetDeviceList = async () => {
     const paramsNav = {
@@ -170,7 +176,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
 
   const getdevicebyId = async (id) => {
     console.log("Device Id:", id);
-
+    dispatch(setDeviceById(id))
     try {
       const result = await getDevicebyId(id);
       console.log("Group List Result:", result);
@@ -247,7 +253,6 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   };
   const getSchedulById = async (id) => {
     console.log("Device Id:", id);
-
     try {
       const result = await getSchedulebyid(id);
       console.log("Group List Result:", result);
@@ -295,7 +300,8 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
         setopenModalconfirm(false)
         setopenModalSchedule(false)
         notifySuccess(result?.data?.title, result?.data?.message);
-        FetchSchedule()
+        GetDeviceList()
+        getdevicebyId(SelectDeviceById)
         setScheduleData(null);
       } else {
         console.log("No groups found!");
@@ -399,18 +405,14 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
     };
 
     const handlesubmitcontrol = async (req) => {
-            // const Param = {
-            //   id: device?.id,
-            //   action: deviceStatus ? "on" : "off",
-            //   dimming:deviceStatus ? Number(dimming) : 0
-            // };
             const res = await DeviceControl(req);
         
             if (res.status === 200) {
               setopenModalconfirm(false)
               setopenModalconfirm(false);
               notifySuccess(res?.data?.title,res?.data?.message);
-              FetchDevice();
+              GetDeviceList()
+              getdevicebyId(SelectDeviceById)
             } else {
               setopenModalconfirm(false)
               setopenModalfail(true)
@@ -929,7 +931,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
               setScheduleData(null);
             }}
             scheduleData={scheduleData}
-            deviceList={deviceData}
+            deviceList={devcielist}
             onUpdateSchedule={UpdateSchedul}
             onHandleConfirm={handleOpenModalconfirm}
             groupId={scheduleData?.groupId}

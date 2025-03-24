@@ -21,6 +21,7 @@ import {
 } from "@/redux/slicer/smartstreetlightSlice"
 
 const Header1 = () => {
+    const dispatch = useDispatch();
     
     const [activeTab, setActiveTab] = useState("dashboard");
     const [sitelist, setSitelist] = useState();
@@ -36,10 +37,9 @@ const Header1 = () => {
     const [selectedGroupId, setSelectedGroupId] = useState('');
     const [selectedSiteName, setSelectedSiteName] = useState('');
     const [selectedGroupName, setSelectedGroupName] = useState('');
-
     const [isfirst,setIsfirst] = useState(true)
     const hasFetchedSchedule = useRef(false); // ใช้เพื่อป้องกันการเรียกซ้ำ
-    const dispatch = useDispatch();
+    
     const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
     const SelectIdGroup = useSelector((state) => state.smartstreetlightData.groupId);
     console.log('SelectIdSite:', SelectIdSite);

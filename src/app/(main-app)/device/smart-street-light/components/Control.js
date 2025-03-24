@@ -53,7 +53,7 @@ export default function DeviceControlPage({FetchDevice,Sitename,Groupname}) {
            if (!openModalconfirm) {
              GetDeviceList();
            }
-         }, 15000); // รีเฟรชทุก 15 วินาที
+         }, 60000); // รีเฟรชทุก 15 วินาที
      
          return () => clearInterval(intervalId); // เคลียร์ interval เมื่อคอมโพเนนต์ถูก unmount
        }, [openModalconfirm]);
@@ -123,7 +123,7 @@ export default function DeviceControlPage({FetchDevice,Sitename,Groupname}) {
             setRowsPerPage(20); // Reset rows per page
             setopenModalconfirm(false);
             notifySuccess(res?.data?.title,res?.data?.message);
-            FetchDevice(); // Refresh device data
+            GetDeviceList() // Refresh device data
             
         } else {
             setopenModalconfirm(false);

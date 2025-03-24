@@ -7,6 +7,7 @@ const initialState = {
   listSchdules : [],
   siteId : 0,
   groupId : 0 ,
+  devicebyId : 0
 };
 
 const smartstreetlightSlice = createSlice({
@@ -31,6 +32,9 @@ const smartstreetlightSlice = createSlice({
     setGroupId: (state, action) => {
       state.groupId = action.payload;  // เปลี่ยนแปลงค่า id
     },
+    setDeviceById: (state, action) => {
+      state.devicebyId = action.payload;  // เปลี่ยนแปลงค่า id
+    },
     clearAll: (state) => {
       // Reset state to initial values
       state.listSite = [];
@@ -44,6 +48,6 @@ const smartstreetlightSlice = createSlice({
   },
 });
 
-export const { setListSite, setListDevice , setListGroup , setListSchedules , setSiteId , setGroupId ,clearAll} = smartstreetlightSlice.actions;
+export const { setListSite, setListDevice , setListGroup , setListSchedules , setSiteId , setGroupId , setDeviceById , clearAll} = smartstreetlightSlice.actions;
 
 export default smartstreetlightSlice.reducer;
