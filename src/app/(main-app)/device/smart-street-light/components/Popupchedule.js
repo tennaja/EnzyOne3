@@ -222,12 +222,13 @@ const SchedulePopup = forwardRef(
   }, [repeatOption, scheduleData]);
 
   const formatDate = date => date ? `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}` : null;
-const formatTime = date => date ? `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}` : null;
-
-const executionDate = formatDate(new Date(executionDateTime));
-const executionTime = formatTime(new Date(executionDateTime));
-const executionEndDate = formatDate(new Date(executionEndDateTime));
-const executionEndTime = formatTime(new Date(executionEndDateTime));
+  const formatTime = date => date ? `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}` : null;
+  
+  const executionDate = executionDateTime ? formatDate(new Date(executionDateTime)) : null;
+  const executionTime = executionDateTime ? formatTime(new Date(executionDateTime)) : null;
+  const executionEndDate = executionEndDateTime ? formatDate(new Date(executionEndDateTime)) : null;
+  const executionEndTime = executionEndDateTime ? formatTime(new Date(executionEndDateTime)) : null;
+  
   
 
 
