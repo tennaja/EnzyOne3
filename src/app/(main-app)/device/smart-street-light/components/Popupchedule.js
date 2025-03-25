@@ -392,7 +392,7 @@ const SchedulePopup = forwardRef(
                         />
 
                       </th>
-                      <th className="p-2 text-left" onClick={() => handleSort("name")}>Device 
+                      <th className="p-2 text-left w-48" onClick={() => handleSort("name")}>Device 
                         <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
         <ArrowDropUpIcon
           style={{
@@ -409,7 +409,7 @@ const SchedulePopup = forwardRef(
           }}
         />
       </div></th>
-                      <th className="p-2 text-left" onClick={() => handleSort("description")}>Description
+                      <th className="p-2 text-left !important " onClick={() => handleSort("description")}>Description
                       <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
         <ArrowDropUpIcon
           style={{
@@ -431,7 +431,7 @@ const SchedulePopup = forwardRef(
                   </thead>
                 </table>
                 <div className="overflow-auto h-full">
-                  <table className="w-full text-sm">
+                  <table className="w-full text-sm border-collapse">
                     <tbody>
                       {sortedDevices?.map((device, index) => (
                         <tr key={device.id} className={`${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} border-b`}>
@@ -442,8 +442,8 @@ const SchedulePopup = forwardRef(
                               onChange={() => toggleSelectOne(device.id)}
                             />
                           </td>
-                          <td className="p-2">{device.name}</td>
-                          <td className="p-2">{device.description}</td>
+                          <td className="p-2 w-48">{device.name}</td>
+                          <td className="p-2 text-left">{device.description}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -500,7 +500,7 @@ const SchedulePopup = forwardRef(
                   }}
                   format="YYYY-MM-DD HH:mm"
                   locale="th"
-                  className="w-full"
+                  className="w-full bg-white p-2"
                 />
                 <span>-</span>
                 <DatePicker
@@ -515,7 +515,7 @@ const SchedulePopup = forwardRef(
                   disabledDate={(current) => {
                     return executionDateTime ? current && current.isBefore(dayjs(executionDateTime), "day") : false;
                   }}
-                  className="w-full"
+                  className="w-full bg-white p-2"
                 />
               </div>
               
@@ -541,7 +541,7 @@ const SchedulePopup = forwardRef(
         onChange={handleStartTimeChange}
         format="HH:mm"
         minuteStep={1}
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white"
       />
       <span>-</span>
       <TimePicker
@@ -549,7 +549,7 @@ const SchedulePopup = forwardRef(
         onChange={handleEndTimeChange}
         format="HH:mm"
         minuteStep={1}
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white"
       />
                   </div>
                 </div>
@@ -576,7 +576,7 @@ const SchedulePopup = forwardRef(
         onChange={handleStartTimeChange}
         format="HH:mm"
         minuteStep={1}
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white"
       />
       <span>-</span>
       <TimePicker
@@ -584,7 +584,7 @@ const SchedulePopup = forwardRef(
         onChange={handleEndTimeChange}
         format="HH:mm"
         minuteStep={1}
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-white"
       />
                   </div>
                 </div>

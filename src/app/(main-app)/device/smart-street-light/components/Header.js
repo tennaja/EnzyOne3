@@ -206,21 +206,21 @@ const Header1 = () => {
         }
       }, [activeTab, grouplist, groupid]); // เพิ่ม groupid เพื่อลดการเซ็ตค่าใหม่โดยไม่จำเป็น
       
-    //   useEffect(() => {
-    //     if (activeTab === "schedule" && siteid && groupid) {
-    //       if (!hasFetchedSchedule.current) {
-    //         console.log("Fetching schedule list for the first time...");
-    //         hasFetchedSchedule.current = true;
-    //       }
-    //     }
-    //   }, [activeTab, siteid, groupid]);
+      useEffect(() => {
+        if (activeTab === "schedule" && siteid && groupid) {
+          if (!hasFetchedSchedule.current) {
+            console.log("Fetching schedule list for the first time...");
+            hasFetchedSchedule.current = true;
+          }
+        }
+      }, [activeTab, siteid, groupid]);
       
-    //   useEffect(() => {
-    //     if (activeTab === "schedule") {
-    //       console.log("Resetting fetch flag due to site or group list change...");
-    //       hasFetchedSchedule.current = false;
-    //     }
-    //   }, [sitelist, grouplist]); // ตัด activeTab ออกเพราะไม่จำเป็น
+      useEffect(() => {
+        if (activeTab === "schedule") {
+          console.log("Resetting fetch flag due to site or group list change...");
+          hasFetchedSchedule.current = false;
+        }
+      }, [sitelist, grouplist]); // ตัด activeTab ออกเพราะไม่จำเป็น
       
     return (
         <>

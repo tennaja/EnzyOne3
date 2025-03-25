@@ -6,7 +6,7 @@ export default function Loading() {
   return (
     <div className="fixed inset-0 z-[9999] bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
             <div
-              className="py-12 border w-auto shadow-lg rounded-md bg-white items-center text-center"
+              className="py-12 w-auto items-center text-center"
               style={{ textAlign: "-webkit-center" }}
             >
               <RotatingLines
@@ -22,7 +22,7 @@ export default function Loading() {
               />
               <div className="text-center">
                 <div className="mt-2 px-7 py-3">
-                  <p className="text-lg text-gray-500 mt-5">
+                  <p className="text-lg text-white mt-5">
                     Processing please wait ...
                   </p>
                 </div>

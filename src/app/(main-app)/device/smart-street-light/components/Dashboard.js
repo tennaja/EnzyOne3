@@ -7,10 +7,10 @@ import DeviceDetail from "./DeviceDetail";
 import MapTH from "./MapLeaflet";
 import CreateIcon from '@mui/icons-material/Create';
 import {
-  getDeviceListData,getDevicebyId, getHistoryGraphDataa, getEnergyHistoryGraphDataa, getSchedulebyid, putUpdateSchedule,DeviceControl
+  getDeviceListData, getDevicebyId, getHistoryGraphDataa, getEnergyHistoryGraphDataa, getSchedulebyid, putUpdateSchedule, DeviceControl
 } from "@/utils/api";
 
-import { useDispatch, useSelector} from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   setDeviceById
 } from "@/redux/slicer/smartstreetlightSlice"
@@ -24,11 +24,11 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Loading from "./Loading";
 const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
-const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
   const today = new Date().toISOString().split("T")[0];
   const [activeTab, setActiveTab] = useState("table");
-  const [devcielist , setDevicelist] = useState([]);
+  const [devcielist, setDevicelist] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState();
   const [selectedStatus, setSelectedStatus] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,7 +49,7 @@ const dispatch = useDispatch();
   const [timeUnit, setTimeUnit] = useState("hour");
   const [loading, setLoading] = useState(false);
   const [scheduleData, setScheduleData] = useState();
-  const [deviceForSchedule,setDeviceforSchedule] = useState([])
+  const [deviceForSchedule, setDeviceforSchedule] = useState([])
   const [openModalSchedule, setopenModalSchedule] = useState(false)
   const [openModalconfirm, setopenModalconfirm] = useState(false)
   const [openModalsuccess, setopenModalsuccess] = useState(false)
@@ -57,7 +57,7 @@ const dispatch = useDispatch();
   const [modalConfirmProps, setModalConfirmProps] = useState(null);
   const [modalErrorProps, setModalErorProps] = useState(null);
   const [modalSuccessProps, setModalSuccessProps] = useState(null);
-  
+
   const SelectIdSite = useSelector((state) => state.smartstreetlightData.siteId);
   const SelectIdGroup = useSelector((state) => state.smartstreetlightData.groupId);
   const SelectDeviceById = useSelector((state) => state.smartstreetlightData.devicebyId);
@@ -65,7 +65,7 @@ const dispatch = useDispatch();
   const groupIdRef = useRef(SelectIdGroup);
   const devicedetailPopupRef = useRef();
   const schedulePopupRef = useRef();
-  
+
   console.log(SelectDeviceById)
   useEffect(() => {
     // อัพเดต useRef เมื่อ SelectIdSite หรือ SelectIdGroup เปลี่ยนแปลง
@@ -82,18 +82,18 @@ const dispatch = useDispatch();
         Promise.all([GetDeviceList(false), getdevicebyId(SelectDeviceById)]);
       }
     }, 60000);
-  
+
     return () => clearInterval(intervalId);
   }, [openModalSchedule, openModalconfirm, SelectDeviceById]);
-  
+
   const GetDeviceList = async (showLoading = true) => {
     const paramsNav = {
       siteId: siteIdRef.current,
       groupId: groupIdRef.current,
     };
-  
+
     if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
-  
+
     try {
       const result = await getDeviceListData(paramsNav);
       if (result?.data?.length > 0) {
@@ -105,18 +105,18 @@ const dispatch = useDispatch();
       console.error("Error fetching device list:", error);
     } finally {
       if (showLoading) {
-        setTimeout(() => setLoading(false), 3000);
+        setTimeout(() => setLoading(false), 1000);
       }
     }
   };
-  
+
 
   // const GetDeviceList = async () => {
   //   const paramsNav = {
   //     siteId: siteIdRef.current,
   //     groupId: groupIdRef.current,
   //   };
-  
+
   //   setLoading(true); // เริ่มโหลด
   //   try {
   //     const result = await getDeviceListData(paramsNav);
@@ -156,12 +156,12 @@ const dispatch = useDispatch();
     item.groupName?.toString().toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  
+
   useEffect(() => {
     // รีเซ็ต sortConfig เมื่อ devcielist เปลี่ยนแปลง
     setSortConfig({ key: "device", direction: "asc" });
   }, [devcielist]); // ฟังการเปลี่ยนแปลงของ devcielist
-  
+
   // ฟังก์ชั่นการ sort
   const handleSort = (column) => {
     let direction = "asc";
@@ -230,16 +230,16 @@ const dispatch = useDispatch();
   }, [activeTab]);  // This will run whenever `activeTab` changes.
 
 
-//   useEffect(() => {
-//     const intervalId = setInterval(() => {
-//         // ทำงานถ้ามีป๊อบอัพอันใดอันหนึ่งเปิดอยู่
-//         if (!openModalSchedule &&  !openModalconfirm) {
-//             FetchDevice();
-//         }
-//     }, 15000);
+  //   useEffect(() => {
+  //     const intervalId = setInterval(() => {
+  //         // ทำงานถ้ามีป๊อบอัพอันใดอันหนึ่งเปิดอยู่
+  //         if (!openModalSchedule &&  !openModalconfirm) {
+  //             FetchDevice();
+  //         }
+  //     }, 15000);
 
-//     return () => clearInterval(intervalId);
-// }, [openModalSchedule, openModalconfirm]);
+  //     return () => clearInterval(intervalId);
+  // }, [openModalSchedule, openModalconfirm]);
 
   const GetHistoryGraph = async (id) => {
     const Param = {
@@ -281,25 +281,25 @@ const dispatch = useDispatch();
       console.log('ไม่เข้าาาาาาาาาาาาาาาาา')
     }
   };
-  
-  
+
+
   const getSchedulById = async (id) => {
     console.log("Device Id:", id);
-  
+
     try {
       const result = await getSchedulebyid(id);
       console.log("Group List Result:", result);
-  
+
       if (result) {
         setScheduleData(result.data);
         setopenModalSchedule(true);
-        
+
         // ดึง siteId และ groupId จาก result
         const paramsNav = {
           siteId: result.data.siteId,
           groupId: result.data.groupId,
         };
-  
+
         // เรียก getDeviceListData ด้วยค่าที่ได้มา
         const deviceResult = await getDeviceListData(paramsNav);
         if (deviceResult?.data?.length > 0) {
@@ -313,9 +313,9 @@ const dispatch = useDispatch();
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
-     
-        setLoading(false);
-      
+
+      setLoading(false);
+
     }
   };
 
@@ -441,52 +441,52 @@ const dispatch = useDispatch();
     );
   const handleExecute = () => {
 
-      if (devicedetailPopupRef.current) {
-        console.log("🚀 กำลังเรียก triggerSave() จากภายนอก");
-        devicedetailPopupRef.current.triggerExecute(); // ✅ เรียก triggerSave() ใน SchedulePopup.js
-      } else {
-        console.log("❌ schedulePopupRef.current เป็น null");
-      }
-    };
+    if (devicedetailPopupRef.current) {
+      console.log("🚀 กำลังเรียก triggerSave() จากภายนอก");
+      devicedetailPopupRef.current.triggerExecute(); // ✅ เรียก triggerSave() ใน SchedulePopup.js
+    } else {
+      console.log("❌ schedulePopupRef.current เป็น null");
+    }
+  };
   const handlesubmitcontrol = async (req) => {
-            const res = await DeviceControl(req);
-        
-            if (res.status === 200) {
-              setopenModalconfirm(false)
-              setopenModalconfirm(false);
-              notifySuccess(res?.data?.title,res?.data?.message);
-              GetDeviceList()
-              getdevicebyId(SelectDeviceById)
-            } else {
-              setopenModalconfirm(false)
-              setopenModalfail(true)
-              setModalErorProps({
-                onCloseModal: handleClosePopup,
-                title: res?.title,
-                content: res?.message,
-                buttonTypeColor: "danger",
-              });
-              console.log(res)
-            }
-    };
-  const handleOpenModalconfirmControl = (name,status,dimming) => {
-      setopenModalconfirm(true);
-      setModalConfirmProps({
+    const res = await DeviceControl(req);
+
+    if (res.status === 200) {
+      setopenModalconfirm(false)
+      setopenModalconfirm(false);
+      notifySuccess(res?.data?.title, res?.data?.message);
+      GetDeviceList()
+      getdevicebyId(SelectDeviceById)
+    } else {
+      setopenModalconfirm(false)
+      setopenModalfail(true)
+      setModalErorProps({
         onCloseModal: handleClosePopup,
-        onClickConfirmBtn: handleExecute,
-        title: "Confirm Execution",
-        content: `
+        title: res?.title,
+        content: res?.message,
+        buttonTypeColor: "danger",
+      });
+      console.log(res)
+    }
+  };
+  const handleOpenModalconfirmControl = (name, status, dimming) => {
+    setopenModalconfirm(true);
+    setModalConfirmProps({
+      onCloseModal: handleClosePopup,
+      onClickConfirmBtn: handleExecute,
+      title: "Confirm Execution",
+      content: `
           <div class="mx-auto w-fit px-4 text-left">
             <p>Device: ${name}</p>
             <p>Status: ${status ? "on" : "off"}</p>
             ${status && dimming ? `<p>% Dimming: ${dimming}%</p>` : ""}
           </div>
         `,
-        buttonTypeColor: "primary",
-      });
-    };
+      buttonTypeColor: "primary",
+    });
+  };
 
-    
+
   // ให้แน่ใจว่า API ถูกเรียกหลังจาก endDate2 ถูกอัปเดตจริง
   useEffect(() => {
     if (selectedDevice?.id) {
@@ -519,7 +519,7 @@ const dispatch = useDispatch();
           <span className="text-lg font-bold block mb-2">Device List</span>
           <p className="text-base mb-4">{Sitename} | {Groupname}</p>
         </div>
-        
+
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="w-full lg:w-[450px]">
             <div className="flex justify-center w-full h-[500px] justify-items-center overflow-hidden mt-10 mb-7">
@@ -542,7 +542,6 @@ const dispatch = useDispatch();
                 setSelectedLocation={setSelectedLocation}
                 onDeviceClick={handleDeviceClick} // คลิกที่อุปกรณ์จะทำการ fetch ข้อมูลอุปกรณ์
                 setActiveTab={setActiveTab}
-                mapCenter={mapCenter} // ถ้าไม่เปลี่ยนแปลง mapCenter จะใช้ค่าเดิม
                 selectedStatus={selectedStatus} // ส่ง selectedStatus เข้าไปที่ MapTH
                 SiteId={siteIdRef.current}
                 GroupId={groupIdRef.current}
@@ -560,19 +559,19 @@ const dispatch = useDispatch();
 
                 <h1 className="text-base font-bold mb-2">Active Schedule</h1>
                 <div className="max-h-72 overflow-y-auto">
-                  <table className="min-w-full bg-white rounded-lg border-t border-gray-300 text-sm">
+                  <table className="min-w-full rounded-lg border-t border-gray-300 text-sm">
                     <tbody>
                       {selectedDevice?.schedules?.map((schedule, index) => (
-                        <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} border-b border-gray-300`}>
+                        <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-100 dark:bg-gray-800' : 'bg-white dark:bg-gray-900'} border-b border-gray-300`}>
                           <td className="py-2 px-4">
-                            <div className="font-bold">{schedule.name}</div>
-                            <div className="font-bold">{schedule.percentDimming}% Dimming</div>
-                            <div className="font-bold">{schedule.startTime} - {schedule.endTime}</div>
-                            <div className="text-xs">{schedule.repeat}</div>
+                            <div className="font-bold text-gray-900 dark:text-white">{schedule.name}</div>
+                            <div className="font-bold text-gray-900 dark:text-white">{schedule.percentDimming}% Dimming</div>
+                            <div className="font-bold text-gray-900 dark:text-white">{schedule.startTime} - {schedule.endTime}</div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">{schedule.repeat}</div>
                           </td>
 
                           <td className="py-2 px-4">
-                            <button className="text-gray-500 hover:text-gray-700" onClick={() => {
+                            <button className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100" onClick={() => {
                               getSchedulById(schedule.id);
                             }}>
                               <CreateIcon />
@@ -581,6 +580,7 @@ const dispatch = useDispatch();
                         </tr>
                       ))}
                     </tbody>
+
                   </table>
                 </div>
 
@@ -604,9 +604,9 @@ const dispatch = useDispatch();
                 <div className="overflow-x-auto">
                   <table className="min-w-full table-auto text-sm">
                     <thead>
-                      <tr className="text-xs text-gray-500 border-b border-gray-300">
+                      <tr className="text-xs text-black border-b border-gray-300 dark:text-white">
                         <th
-                          className="px-2 py-1 text-left text-gray-700 cursor-pointer"
+                          className="px-2 py-1 text-left cursor-pointer"
                           onClick={() => handleSort("name")}
                         >
                           Device
@@ -629,7 +629,7 @@ const dispatch = useDispatch();
                         </th>
 
                         <th
-                          className="px-2 py-1 text-center text-gray-700 cursor-pointer"
+                          className="px-2 py-1 text-center cursor-pointer"
                           onClick={() => handleSort("kW")}
                         >
                           kW
@@ -652,7 +652,7 @@ const dispatch = useDispatch();
                         </th>
 
                         <th
-                          className="px-2 py-1 text-center text-gray-700 cursor-pointer"
+                          className="px-2 py-1 text-center cursor-pointer"
                           onClick={() => handleSort("kWh")}
                         >
                           kWh
@@ -675,7 +675,7 @@ const dispatch = useDispatch();
                         </th>
 
                         <th
-                          className="px-2 py-1 text-center text-gray-700 cursor-pointer"
+                          className="px-2 py-1 text-center cursor-pointer"
                           onClick={() => handleSort("runningHour")}
                         >
                           Running Hours
@@ -697,7 +697,7 @@ const dispatch = useDispatch();
                           </div>
                         </th>
 
-                        <th className="px-2 py-1 text-center text-gray-700" onClick={() => handleSort("status")}>
+                        <th className="px-2 py-1 text-center" onClick={() => handleSort("status")}>
                           Status
                           <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
                             <ArrowDropUpIcon
@@ -717,7 +717,7 @@ const dispatch = useDispatch();
                           </div>
                         </th>
 
-                        <th className="px-2 py-1 text-right text-gray-700" onClick={() => handleSort("percentDimming")}>
+                        <th className="px-2 py-1 text-right" onClick={() => handleSort("percentDimming")}>
                           % Dimming
                           <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
                             <ArrowDropUpIcon
@@ -737,7 +737,7 @@ const dispatch = useDispatch();
                           </div>
                         </th>
 
-                        <th className="px-2 py-1 text-right text-gray-700" onClick={() => handleSort("lastUpdated")}>
+                        <th className="px-2 py-1 text-right" onClick={() => handleSort("lastUpdated")}>
                           Last Updated
                           <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
                             <ArrowDropUpIcon
@@ -758,71 +758,70 @@ const dispatch = useDispatch();
                         </th>
                       </tr>
                     </thead>
-
                     <tbody>
-  {currentData.length === 0 ? (
-    <tr>
-      <td colSpan="7" className="px-2 py-4 text-center text-gray-500">Device not found</td>
-    </tr>
-  ) : (
-    currentData.map((record, index) => {
-      // Function to highlight the search query
-      const highlightText = (text) => {
-        if (!text || !searchQuery) return text;
-        const textString = String(text); // Convert to string if it's not already a string
-        const parts = textString.split(new RegExp(`(${searchQuery})`, 'gi')); // Split by search query, keeping it in the result
-        return parts.map((part, i) => 
-          part.toLowerCase() === searchQuery.toLowerCase() ? 
-            <span key={i} className="bg-yellow-300">{part}</span> : 
-            part
-        );
-      };
-      
+                      {currentData.length === 0 ? (
+                        <tr>
+                          <td colSpan="7" className="px-2 py-4 text-center text-gray-500 dark:text-gray-400">Device not found</td>
+                        </tr>
+                      ) : (
+                        currentData.map((record, index) => {
+                          // Function to highlight the search query
+                          const highlightText = (text) => {
+                            if (!text || !searchQuery) return text;
+                            const textString = String(text); // Convert to string if it's not already a string
+                            const parts = textString.split(new RegExp(`(${searchQuery})`, 'gi')); // Split by search query, keeping it in the result
+                            return parts.map((part, i) =>
+                              part.toLowerCase() === searchQuery.toLowerCase() ?
+                                <span key={i} className="bg-yellow-300 dark:bg-yellow-600">{part}</span> :
+                                part
+                            );
+                          };
 
-      return (
-        <tr
-          key={record.id}
-          className={`hover:bg-gray-100 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}
-          style={{ borderBottom: '1px solid #e0e0e0' }}
-        >
-          <td className="px-2 py-1 text-left">
-            <div
-              className="text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] text-base mb-1"
-              onClick={() => {
-                getdevicebyId(record.id);
-                setActiveTab("detail");
-                setSelectedLocation({ lat: record.latitude, lng: record.longitude });
-                setMapZoomLevel(15);
-                GetHistoryGraph(record.id);
-                GetEnergyHistoryGraph(record.id);
-              }}
-            >
-              {highlightText(record.name)} {/* Highlight the search term */}
-            </div>
-            <div>{highlightText(record.groupName)}</div>
-          </td>
-          <td className="px-2 py-1 text-center">{highlightText(record.kW)}</td>
-          <td className="px-2 py-1 text-center">{highlightText(record.kWh)}</td>
-          <td className="px-2 py-1 text-center">{highlightText(record.runningHour)}</td>
-          <td className="px-2 py-1 text-center">
-            <span
-              className={`inline-block px-2 py-1 text-sm font-bold  ${record.status === "on"
-                ? "text-[#12B981]"
-                : record.status === "off"
-                ? "text-[#9DA8B9]"
-                : "text-[#FF3D4B]"
-                }`}
-            >
-              {highlightText(record.status)} {/* Highlight the search term */}
-            </span>
-          </td>
-          <td className="px-2 py-1 text-right">{highlightText(record.percentDimming)}</td>
-          <td className="px-2 py-2 text-right text-balance">{highlightText(record.lastUpdated)}</td>
-        </tr>
-      );
-    })
-  )}
-</tbody>
+                          return (
+                            <tr
+                              key={record.id}
+                              className={`hover:bg-gray-100 dark:hover:bg-gray-800 ${index % 2 === 0 ? 'bg-gray-100 dark:bg-gray-900' : 'bg-white dark:bg-gray-800'}`}
+                              style={{ borderBottom: '1px solid #e0e0e0' }}
+                            >
+                              <td className="px-2 py-1 text-left">
+                                <div
+                                  className="text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] dark:text-[#33BFBF] dark:hover:text-[#28A9A9] text-base mb-1"
+                                  onClick={() => {
+                                    getdevicebyId(record.id);
+                                    setActiveTab("detail");
+                                    setSelectedLocation({ lat: record.latitude, lng: record.longitude });
+                                    setMapZoomLevel(15);
+                                    GetHistoryGraph(record.id);
+                                    GetEnergyHistoryGraph(record.id);
+                                  }}
+                                >
+                                  {highlightText(record.name)} {/* Highlight the search term */}
+                                </div>
+                                <div className="dark:text-white">{highlightText(record.groupName)}</div>
+                              </td>
+                              <td className="px-2 py-1 text-center dark:text-white">{highlightText(record.kW)}</td>
+                              <td className="px-2 py-1 text-center dark:text-white">{highlightText(record.kWh)}</td>
+                              <td className="px-2 py-1 text-center dark:text-white">{highlightText(record.runningHour)}</td>
+                              <td className="px-2 py-1 text-center">
+                                <span
+                                  className={`inline-block px-2 py-1 text-sm font-bold ${record.status === "on"
+                                    ? "text-[#12B981] dark:text-[#12B981]"
+                                    : record.status === "off"
+                                      ? "text-[#9DA8B9] dark:text-[#9DA8B9]"
+                                      : "text-[#FF3D4B] dark:text-[#FF3D4B]"
+                                    }`}
+                                >
+                                  {highlightText(record.status)} {/* Highlight the search term */}
+                                </span>
+                              </td>
+                              <td className="px-2 py-1 text-right dark:text-white">{highlightText(record.percentDimming)}</td>
+                              <td className="px-2 py-2 text-right text-balance dark:text-white">{highlightText(record.lastUpdated)}</td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+
 
 
                   </table>
@@ -855,10 +854,10 @@ const dispatch = useDispatch();
                       {currentPage} / {totalPages}
                     </span>
                     <button
-  onClick={() => handleChangePage(currentPage + 1)}
-  disabled={currentPage === totalPages || filteredData.length === 0}
-  className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
->
+                      onClick={() => handleChangePage(currentPage + 1)}
+                      disabled={currentPage === totalPages || filteredData.length === 0}
+                      className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+                    >
                       <ArrowForwardIosOutlinedIcon style={{ fontSize: '12px' }} />
                     </button>
                   </div>
@@ -870,11 +869,11 @@ const dispatch = useDispatch();
                 <DeviceDetail
                   ref={devicedetailPopupRef}
                   device={selectedDevice}
-                  setActiveTab={() => { setActiveTab("table"); setSelectedLocation(null); setTimeUnit("hour")}}
+                  setActiveTab={() => { setActiveTab("table"); setSelectedLocation(null); setTimeUnit("hour") }}
                   onhandleOpenPopupconfirm={handleOpenModalconfirmControl}
                   OnsubmitControl={handlesubmitcontrol}
 
-                  
+
                 />
 
               </div>
@@ -882,112 +881,112 @@ const dispatch = useDispatch();
 
           </div>
 
-        </div> 
+        </div>
         {activeTab === "table" ? <></> : (
-        <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
-          <div>
-            <span className="text-lg font-bold block mb-2">Historical</span>
-            <div className="flex gap-2 mt-5">
-              <input
-                type="date"
-                className="w-60 p-2 border rounded"
-                value={startDate}
-                onChange={handleStartDateChangeHistorical}
-                max={today}
-              />
-              <input
-                type="date"
-                className="w-60 p-2 border rounded"
-                value={endDate}
-                min={startDate || ""} // ถ้า startDate เป็น null/"" จะไม่กำหนดค่า min
-                max={
-                  startDate
-                    ? new Date(
-                      Math.min(
-                        new Date().getTime(), // วันที่ปัจจุบัน
-                        new Date(new Date(startDate).setDate(new Date(startDate).getDate() + 31)).getTime() // 31 วันหลัง startDate
+          <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
+            <div>
+              <span className="text-lg font-bold block mb-2">Historical</span>
+              <div className="flex gap-2 mt-5">
+                <input
+                  type="date"
+                  className="w-60 p-2 border rounded"
+                  value={startDate}
+                  onChange={handleStartDateChangeHistorical}
+                  max={today}
+                />
+                <input
+                  type="date"
+                  className="w-60 p-2 border rounded"
+                  value={endDate}
+                  min={startDate || ""} // ถ้า startDate เป็น null/"" จะไม่กำหนดค่า min
+                  max={
+                    startDate
+                      ? new Date(
+                        Math.min(
+                          new Date().getTime(), // วันที่ปัจจุบัน
+                          new Date(new Date(startDate).setDate(new Date(startDate).getDate() + 31)).getTime() // 31 วันหลัง startDate
+                        )
                       )
-                    )
-                      .toISOString()
-                      .split("T")[0] // แปลงเป็น YYYY-MM-DD
-                    : new Date().toISOString().split("T")[0] // ถ้า startDate ไม่มีค่า ใช้วันนี้เป็น max
-                }
-                onChange={handleEndDateChangeHistorical}
-              />
+                        .toISOString()
+                        .split("T")[0] // แปลงเป็น YYYY-MM-DD
+                      : new Date().toISOString().split("T")[0] // ถ้า startDate ไม่มีค่า ใช้วันนี้เป็น max
+                  }
+                  onChange={handleEndDateChangeHistorical}
+                />
 
 
-            </div>
-            <div className="mt-5">
-              <MyChart graphdata={graphData} />
-            </div>
-            <div className="flex gap-4 mt-5">
-              <select
-                className="w-60 p-2 border rounded"
-                value={timeUnit}
-                onChange={handleTimeUnitChange}
-              >
-                <option value="hour">Hourly</option>
-                <option value="day">Daily</option>
-                <option value="month">Monthly</option>
-              </select>
-              <input
-                type="date"
-                className="w-60 p-2 border rounded"
-                value={startDate2}
-                onChange={handleStartDateChangeHistorical2}
-                max={today}
-              />
+              </div>
+              <div className="mt-5">
+                <MyChart graphdata={graphData} />
+              </div>
+              <div className="flex gap-4 mt-5">
+                <select
+                  className="w-60 p-2 border rounded"
+                  value={timeUnit}
+                  onChange={handleTimeUnitChange}
+                >
+                  <option value="hour">Hourly</option>
+                  <option value="day">Daily</option>
+                  <option value="month">Monthly</option>
+                </select>
+                <input
+                  type="date"
+                  className="w-60 p-2 border rounded"
+                  value={startDate2}
+                  onChange={handleStartDateChangeHistorical2}
+                  max={today}
+                />
 
-              <input
-                type="date"
-                className="w-60 p-2 border rounded"
-                value={endDate2}
-                min={startDate2 || ""} // ถ้า startDate2 เป็น null/"" จะไม่กำหนดค่า min
-                max={
-                  startDate2
-                    ? new Date(
-                      Math.min(
-                        new Date().getTime(), // วันที่ปัจจุบัน
-                        new Date(new Date(startDate2).setDate(new Date(startDate2).getDate() + 365)).getTime() // 31 วันหลัง startDate2
+                <input
+                  type="date"
+                  className="w-60 p-2 border rounded"
+                  value={endDate2}
+                  min={startDate2 || ""} // ถ้า startDate2 เป็น null/"" จะไม่กำหนดค่า min
+                  max={
+                    startDate2
+                      ? new Date(
+                        Math.min(
+                          new Date().getTime(), // วันที่ปัจจุบัน
+                          new Date(new Date(startDate2).setDate(new Date(startDate2).getDate() + 365)).getTime() // 31 วันหลัง startDate2
+                        )
                       )
-                    )
-                      .toISOString()
-                      .split("T")[0] // แปลงเป็น YYYY-MM-DD
-                    : new Date().toISOString().split("T")[0] // ถ้า startDate2 ไม่มีค่า ใช้วันนี้เป็น max
-                }
-                onChange={handleEndDateChangeHistorical2}
-              />
+                        .toISOString()
+                        .split("T")[0] // แปลงเป็น YYYY-MM-DD
+                      : new Date().toISOString().split("T")[0] // ถ้า startDate2 ไม่มีค่า ใช้วันนี้เป็น max
+                  }
+                  onChange={handleEndDateChangeHistorical2}
+                />
 
 
 
+              </div>
+
+              <div className="mt-5">
+                <BarChartComponent data={graphData2} type={timeUnit} />
+              </div>
             </div>
-
-            <div className="mt-5">
-              <BarChartComponent data={graphData2} type={timeUnit} />
-            </div>
-          </div>
-          <SchedulePopup
-            ref={schedulePopupRef}
-            isOpen={openModalSchedule}
-            onClose={() => {
-              setopenModalSchedule(false);
-              setScheduleData(null);
-            }}
-            scheduleData={scheduleData}
-            deviceList={deviceForSchedule}
-            onUpdateSchedule={UpdateSchedul}
-            onHandleConfirm={handleOpenModalconfirm}
-            groupId={scheduleData?.groupId}
-            action={"update"}
+            <SchedulePopup
+              ref={schedulePopupRef}
+              isOpen={openModalSchedule}
+              onClose={() => {
+                setopenModalSchedule(false);
+                setScheduleData(null);
+              }}
+              scheduleData={scheduleData}
+              deviceList={deviceForSchedule}
+              onUpdateSchedule={UpdateSchedul}
+              onHandleConfirm={handleOpenModalconfirm}
+              groupId={scheduleData?.groupId}
+              action={"update"}
             />
-            
-        </div>)}
-      
+
+          </div>)}
+
       </div>
-      
+
       {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
       {openModalfail && <ModalFail {...modalErrorProps} />}
-      {loading && <Loading/>}      
+      {loading && <Loading />}
       <ToastContainer />
     </>
   );

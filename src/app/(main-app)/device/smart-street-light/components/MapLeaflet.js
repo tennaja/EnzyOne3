@@ -29,7 +29,7 @@ const MapTH = ({
   selectedStatus,
   SiteId,
   GroupId,
-  className = "w-[450px] h-500px] rounded-lg shadow-md overflow-hidden",
+  className = "w-[auto] h-500px] rounded-lg shadow-md overflow-hidden",
 }) => {
   const mapRef = useRef(null);
   const prevSiteIdRef = useRef(SiteId);

@@ -147,35 +147,35 @@ const DeviceDetail = forwardRef (
       <table className="w-full mt-5 text-sm">
         <tbody>
         <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Device Name</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white"><strong>Device Name</strong></td>
             <td className="px-4 py-2 font-bold">{device?.name}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Description</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white"><strong>Description</strong></td>
             <td className="px-4 py-2 font-bold">{device?.description}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Site</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white"><strong>Site</strong></td>
             <td className="px-4 py-2 font-bold">{device?.siteName}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Group</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white"><strong>Group</strong></td>
             <td className="px-4 py-2 font-bold">{device?.groupName}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Active Power (kW)</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white"><strong>Active Power (kW)</strong></td>
             <td className="px-4 py-2 font-bold">{device?.kW}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Energy Usage (kWh)</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white"><strong>Energy Usage (kWh)</strong></td>
             <td className="px-4 py-2 font-bold">{device?.kWh}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Running Hours</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white"><strong>Running Hours</strong></td>
             <td className="px-4 py-2 font-bold">{device?.runningHour}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Status</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white"><strong>Status</strong></td>
             <td className={`px-4 py-2 font-bold ${
                             device?.status === "on"
                               ? "text-[#12B981]"
@@ -184,8 +184,8 @@ const DeviceDetail = forwardRef (
                               : "text-[#9DA9B9]"
                           }`}>{device?.status}</td>
           </tr>
-          <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Connection Status</strong></td>
+          <tr className="text-xs  border-b border-gray-200 ">
+            <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white"><strong>Connection Status</strong></td>
             <td className={`px-4 py-2 font-bold ${
                             device?.connectionStatus === "connected"
                               ? "text-[#12B981]"
@@ -193,11 +193,11 @@ const DeviceDetail = forwardRef (
                           }`}>{device?.connectionStatus}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>% Dimming</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white"><strong>% Dimming</strong></td>
             <td className="px-4 py-2 font-bold">{device?.percentDimming}</td>
           </tr>
           <tr className="text-xs  border-b border-gray-200">
-            <td className="px-4 py-2 bg-[#F2FAFA]"><strong>Last Updated</strong></td>
+            <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white"><strong>Last Updated</strong></td>
             <td className="px-4 py-2 font-bold">{device?.lastUpdated}</td>
           </tr>
         </tbody>

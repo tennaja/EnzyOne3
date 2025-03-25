@@ -150,7 +150,12 @@ const GetDeviceList = async (site, group) => {
     return sorted;
   }, [schedulelist, sortConfig]);
 
+  useEffect(() => {
+    // Reset all keys in the sortConfig when deviceData changes
+    setSortConfig({}); // Clear the sortConfig object completely
+  }, [schedulelist]);
 
+  
   const toggleSwitch = (id) => {
     setData((prev) =>
       prev.map((item) =>
@@ -420,7 +425,7 @@ const GetDeviceList = async (site, group) => {
             </button>
           </div>
           {selected.length > 0 && (
-            <div className="bg-green-100 p-2 rounded-lg mb-2 flex justify-between items-center">
+            <div className="bg-green-100 p-2 rounded-lg mb-2 flex justify-between items-center dark:text-gray-700">
               <span>{selected.length} items selected</span>
               <div>
                 <button
@@ -440,7 +445,7 @@ const GetDeviceList = async (site, group) => {
             </div>
           )}
 
-          <div className="bg-white overflow-hidden">
+          <div className="overflow-hidden">
             <table className="w-full border-collapse text-base">
               <thead className="text-left border-b">
                 <tr>
@@ -469,7 +474,7 @@ const GetDeviceList = async (site, group) => {
                       />
                     </div>
                   </th>
-                  <th className="p-3" onClick={() => handleSort("repeat")}>Repeat
+                  <th className="p-3 text-center" onClick={() => handleSort("repeat")}>Repeat
                     <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
                       <ArrowDropUpIcon
                         style={{
@@ -486,7 +491,7 @@ const GetDeviceList = async (site, group) => {
                         }}
                       />
                     </div></th>
-                  <th className="p-3" onClick={() => handleSort("startTime")}>Start-Stop Time
+                  <th className="p-3 text-right" onClick={() => handleSort("startTime")}>Start-Stop Time
                     <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
                       <ArrowDropUpIcon
                         style={{
@@ -504,7 +509,7 @@ const GetDeviceList = async (site, group) => {
                       />
                     </div>
                   </th>
-                  <th className="p-3" onClick={() => handleSort("percentDimming")}>% Dimming
+                  <th className="p-3 text-right" onClick={() => handleSort("percentDimming")}>% Dimming
                     <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
                       <ArrowDropUpIcon
                         style={{
@@ -527,48 +532,62 @@ const GetDeviceList = async (site, group) => {
                 </tr>
               </thead>
               <tbody>
-                {schedulelist.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="text-center text-gray-500 p-5">Schedule not found</td>
-                  </tr>
-                ) : (
-                  currentData.map((schedule, index) => (
-                    <tr key={schedule.id} className={`${index % 2 === 0 ? "bg-gray-100" : "bg-white"} border-b`}>
-                      <td className="p-3 w-10">
-                        <input
-                          type="checkbox"
-                          checked={selected.includes(schedule.id)}
-                          onChange={() => toggleSelect(schedule.id)}
-                          disabled={schedule.status === "active"}
-                        />
-                      </td>
-                      <td className="p-3">{schedule.name}</td>
-                      <td className="p-3">{schedule.repeat}</td>
-                      <td className="p-3">
-  {schedule.startTime && schedule.endTime
-    ? `${schedule.startTime} - ${schedule.endTime}`
-    : "ยังไม่ได้กำหนด"}
-</td>
+  {schedulelist.length === 0 ? (
+    <tr>
+      <td colSpan="7" className="text-center text-gray-500 dark:text-gray-400 p-5">
+        Schedule not found
+      </td>
+    </tr>
+  ) : (
+    currentData.map((schedule, index) => (
+      <tr
+        key={schedule.id}
+        className={`border-b ${index % 2 === 0 ? "bg-gray-100  dark:bg-gray-900" : "bg-white dark:bg-gray-800"} border-b border-gray-300 dark:border-gray-700`}
+        style={{ borderBottom: '1px solid #e0e0e0' }}
+      >
+        <td className="p-3 w-10">
+          <input
+            type="checkbox"
+            checked={selected.includes(schedule.id)}
+            onChange={() => toggleSelect(schedule.id)}
+            disabled={schedule.status === "active"}
+          />
+        </td>
+        <td className="p-3 text-gray-900 dark:text-white">{schedule.name}</td>
+        <td className="p-3 text-gray-700 dark:text-gray-300 text-center">{schedule.repeat}</td>
+        <td className="p-3 text-gray-700 dark:text-gray-300 text-right">
+          {schedule.startTime && schedule.endTime
+            ? `${schedule.startTime} - ${schedule.endTime}`
+            : "ยังไม่ได้กำหนด"}
+        </td>
+        <td className="p-3 text-gray-700 dark:text-gray-300 text-right">{schedule.percentDimming}%</td>
+        <td className="p-3 text-center">
+          <Switch
+            checked={schedule.status === "active"}
+            onChange={() => handleToggleStatus(schedule.id)}
+            className={`${schedule.status === "active" ? "bg-teal-500 dark:bg-teal-400" : "bg-gray-300 dark:bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full`}
+          >
+            <span
+              className={`${schedule.status === "active" ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform bg-white rounded-full`}
+            />
+          </Switch>
+        </td>
+        <td className="p-3 text-center">
+          <button
+            onClick={() => {
+              getSchedulById(schedule.id);
+              setAction("update");
+            }}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
+          >
+            <CreateIcon size={16} />
+          </button>
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
 
-                      <td className="p-3">{schedule.percentDimming}%</td>
-                      <td className="p-3">
-                        <Switch
-                          checked={schedule.status === "active"}
-                          onChange={() => handleToggleStatus(schedule.id)}
-                          className={`${schedule.status === "active" ? "bg-teal-500" : "bg-gray-300"} relative inline-flex h-6 w-11 items-center rounded-full`}
-                        >
-                          <span className={`${schedule.status === "active" ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform bg-white rounded-full`} />
-                        </Switch>
-                      </td>
-                      <td className="p-3">
-                        <button onClick={() => { getSchedulById(schedule.id); setAction("update");}} className="text-gray-500 hover:text-gray-700">
-                          <CreateIcon size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
             </table>
           </div>
           <div className="flex justify-between items-center mt-4">

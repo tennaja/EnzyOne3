@@ -76,7 +76,7 @@ export default function DeviceControlPage({FetchDevice,Sitename,Groupname}) {
              console.error("Error fetching device list:", error);
            } finally {
              if (showLoading) {
-               setTimeout(() => setLoading(false), 3000);
+               setTimeout(() => setLoading(false), 1000);
              }
            }
          };
@@ -290,7 +290,7 @@ const sortedData = useMemo(() => {
         
 <table className="w-full table-auto mt-5">
   <thead>
-    <tr className="text-xs text-gray-500 border-b border-gray-300">
+    <tr className="text-xs text-black border-b border-gray-300 font-bold dark:text-white">
     <th className="p-2 w-10">
     <input
   type="checkbox"
@@ -402,12 +402,12 @@ const sortedData = useMemo(() => {
   <tbody>
   {currentdeviceData.length === 0 ? (
     <tr>
-      <td colSpan="7" className="px-2 py-4 text-center text-gray-500">Device not found</td>
+      <td colSpan="7" className="px-2 py-4 text-center text-gray-500 dark:text-gray-400">Device not found</td>
     </tr>
   ) : currentdeviceData.map((device, index) => (
     <tr
       key={device.id}
-      className={`border-b ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} ${device.status === 'offline' ? 'pointer-events-none opacity-50' : ''}`}
+      className={`border-b ${index % 2 === 0 ? 'bg-gray-100 dark:bg-gray-900' : 'bg-white dark:bg-gray-800'} ${device.status === 'offline' ? 'pointer-events-none opacity-50' : ''}`}
     >
       <td className="p-2 text-center w-10">
         <input
@@ -417,10 +417,10 @@ const sortedData = useMemo(() => {
           disabled={device.status === 'offline'}
         />
       </td>
-      <td className="py-2 px-4">{device.name}</td>
-      <td className="py-2 px-4 text-sm text-gray-600">{device.description}</td>
-      <td className="py-2 px-4 text-sm text-gray-600">{device.groupName}</td>
-      <td className="py-2 px-4 text-sm text-gray-600">
+      <td className="py-2 px-4 dark:text-white">{device.name}</td>
+      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white">{device.description}</td>
+      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white">{device.groupName}</td>
+      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white">
         <button
           onClick={() => toggleStatus(device.id)}
           className={`px-3 py-1 text-sm font-bold ${
@@ -435,10 +435,11 @@ const sortedData = useMemo(() => {
           {device.status}
         </button>
       </td>
-      <td className="py-2 px-4 text-sm text-gray-600 text-right">{device.lastUpdated}</td>
+      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white text-right">{device.lastUpdated}</td>
     </tr>
   ))}
 </tbody>
+
 
 </table>
 
@@ -466,7 +467,7 @@ const sortedData = useMemo(() => {
             <button
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
-              className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+              className="px-2 py-1 text-sm bg-gray-200 dark:text-white rounded-lg disabled:opacity-50"
             >
               <ArrowBackIosNewIcon style={{ fontSize: '12px' }} />
             </button>
@@ -474,7 +475,7 @@ const sortedData = useMemo(() => {
             <button
               disabled={currentPage === totalPages || filtereddeviceData.length === 0}
               onClick={() => handlePageChange(currentPage + 1)}
-              className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+              className="px-2 py-1 text-sm bg-gray-200 dark:text-white rounded-lg disabled:opacity-50"
             >
               <ArrowForwardIosOutlinedIcon style={{ fontSize: '12px' }} />
             </button>
