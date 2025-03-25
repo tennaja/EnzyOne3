@@ -174,6 +174,12 @@ export default function DeviceControlPage({FetchDevice,Sitename,Groupname}) {
     item.description?.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+    useEffect(() => {
+      // รีเซ็ต sortConfig เมื่อ devcielist เปลี่ยนแปลง
+      setSortConfig({ key: "device", direction: "asc" });
+    }, [devcielist]); // ฟังการเปลี่ยนแปลงของ devcielist
+
+    
   const handleSort = (column) => {
     let direction = "asc";
     if (sortConfig.key === column && sortConfig.direction === "asc") {
@@ -182,24 +188,18 @@ export default function DeviceControlPage({FetchDevice,Sitename,Groupname}) {
     setSortConfig({ key: column, direction });
   };
 // การ sort ข้อมูลที่ใช้ useMemo เพื่อลดการคำนวณซ้ำ
+const [isUserChecked, setIsUserChecked] = useState(false);
+
 const toggleSelectAll = () => {
+  const selectableDevices = filtereddeviceData.filter(device => device.status !== "offline");
+  const isAllSelected = selecteddeviceData.length === selectableDevices.length;
 
-  let updatedDeviceData;
+  const updatedDeviceData = isAllSelected ? [] : selectableDevices.map(device => device.id);
 
-  if (
-    selecteddeviceData.length === filtereddeviceData.filter(device => device.status !== "offline").length &&
-    filtereddeviceData.length > 0
-  ) {
-    updatedDeviceData = [];
-  } else {
-    updatedDeviceData = filtereddeviceData
-      .filter(device => device.status !== "offline")
-      .map(device => device.id);
-  }
-
-  console.log("Selected deviceData after select all toggle:", updatedDeviceData);
   setSelecteddeviceData(updatedDeviceData);
+  setIsUserChecked(!isAllSelected); // ให้เปลี่ยนสถานะตามการกด
 };
+
 
 const sortedData = useMemo(() => {
   if (isSortingDisabled.current) return filtereddeviceData; // ถ้า isSortingDisabled เป็น true ให้ข้ามการ sort
@@ -295,12 +295,15 @@ const sortedData = useMemo(() => {
     <input
   type="checkbox"
   checked={
-    filtereddeviceData.some(device => device.status === "offline") 
-      ? false 
-      : selecteddeviceData.length === filtereddeviceData.length && filtereddeviceData.length > 0
+    isUserChecked && 
+    selecteddeviceData.length > 0 &&
+    selecteddeviceData.length === filtereddeviceData.filter(device => device.status !== "offline").length
   }
   onChange={toggleSelectAll}
 />
+
+
+
 
       </th>
       <th className="py-2 px-4 text-left" onClick={() => handleSort("name")}>Device
@@ -397,42 +400,46 @@ const sortedData = useMemo(() => {
   </thead>
 
   <tbody>
-    {currentdeviceData.map((device, index) => (
-      <tr
-        key={device.id}
-        className={`border-b ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} ${device.status === 'offline' ? 'pointer-events-none opacity-50' : ''}`}
-      >
-        <td className="p-2 text-center w-10">
-          <input
-            type="checkbox"
-            checked={selecteddeviceData.includes(device.id)}
-            onChange={() => toggleDevice(device.id)}
-            
-            disabled={device.status === 'offline'}
-          />
-        </td>
-        <td className="py-2 px-4">{device.name}</td>
-        <td className="py-2 px-4 text-sm text-gray-600">{device.description}</td>
-        <td className="py-2 px-4 text-sm text-gray-600">{device.groupName}</td>
-        <td className="py-2 px-4 text-sm text-gray-600">
-          <button
-            onClick={() => toggleStatus(device.id)}
-            className={`px-3 py-1 text-sm font-bold ${
-              device.status === "on"
-                ? "text-[#33BFBF]"
-                : device.status === "offline"
-                ? "text-red-500"
-                : "text-gray-400"
-            }`}
-            disabled={device.status === "offline"}
-          >
-            {device.status}
-          </button>
-        </td>
-        <td className="py-2 px-4 text-sm text-gray-600 text-right">{device.lastUpdated}</td>
-      </tr>
-    ))}
-  </tbody>
+  {currentdeviceData.length === 0 ? (
+    <tr>
+      <td colSpan="7" className="px-2 py-4 text-center text-gray-500">Device not found</td>
+    </tr>
+  ) : currentdeviceData.map((device, index) => (
+    <tr
+      key={device.id}
+      className={`border-b ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} ${device.status === 'offline' ? 'pointer-events-none opacity-50' : ''}`}
+    >
+      <td className="p-2 text-center w-10">
+        <input
+          type="checkbox"
+          checked={selecteddeviceData.includes(device.id)}
+          onChange={() => toggleDevice(device.id)}
+          disabled={device.status === 'offline'}
+        />
+      </td>
+      <td className="py-2 px-4">{device.name}</td>
+      <td className="py-2 px-4 text-sm text-gray-600">{device.description}</td>
+      <td className="py-2 px-4 text-sm text-gray-600">{device.groupName}</td>
+      <td className="py-2 px-4 text-sm text-gray-600">
+        <button
+          onClick={() => toggleStatus(device.id)}
+          className={`px-3 py-1 text-sm font-bold ${
+            device.status === "on"
+              ? "text-[#12B981]"
+              : device.status === "offl"
+              ? "text-[#9DA8B9]"
+              : "text-[#FF3D4B]"
+          }`}
+          disabled={device.status === "offline"}
+        >
+          {device.status}
+        </button>
+      </td>
+      <td className="py-2 px-4 text-sm text-gray-600 text-right">{device.lastUpdated}</td>
+    </tr>
+  ))}
+</tbody>
+
 </table>
 
 
@@ -465,7 +472,7 @@ const sortedData = useMemo(() => {
             </button>
             <span className="text-sm">{currentPage} of {totalPages}</span>
             <button
-              disabled={currentPage === totalPages}
+              disabled={currentPage === totalPages || filtereddeviceData.length === 0}
               onClick={() => handlePageChange(currentPage + 1)}
               className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
             >

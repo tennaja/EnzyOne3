@@ -156,7 +156,12 @@ const dispatch = useDispatch();
     item.groupName?.toString().toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-
+  
+  useEffect(() => {
+    // รีเซ็ต sortConfig เมื่อ devcielist เปลี่ยนแปลง
+    setSortConfig({ key: "device", direction: "asc" });
+  }, [devcielist]); // ฟังการเปลี่ยนแปลงของ devcielist
+  
   // ฟังก์ชั่นการ sort
   const handleSort = (column) => {
     let direction = "asc";
@@ -850,10 +855,10 @@ const dispatch = useDispatch();
                       {currentPage} / {totalPages}
                     </span>
                     <button
-                      onClick={() => handleChangePage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
-                    >
+  onClick={() => handleChangePage(currentPage + 1)}
+  disabled={currentPage === totalPages || filteredData.length === 0}
+  className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+>
                       <ArrowForwardIosOutlinedIcon style={{ fontSize: '12px' }} />
                     </button>
                   </div>
@@ -865,7 +870,7 @@ const dispatch = useDispatch();
                 <DeviceDetail
                   ref={devicedetailPopupRef}
                   device={selectedDevice}
-                  setActiveTab={() => { setActiveTab("table"); setSelectedLocation(null); }}
+                  setActiveTab={() => { setActiveTab("table"); setSelectedLocation(null); setTimeUnit("hour")}}
                   onhandleOpenPopupconfirm={handleOpenModalconfirmControl}
                   OnsubmitControl={handlesubmitcontrol}
 
@@ -981,7 +986,7 @@ const dispatch = useDispatch();
       </div>
       
       {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
-      {openModalfail && <ModalFail onCloseModal={handleClosePopup} />}
+      {openModalfail && <ModalFail {...modalErrorProps} />}
       {loading && <Loading/>}      
       <ToastContainer />
     </>

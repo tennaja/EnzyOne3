@@ -2,6 +2,10 @@ import React, { useState, useEffect ,useImperativeHandle, forwardRef} from "reac
 import { Modal } from "@mantine/core";
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { DatePicker,TimePicker } from 'antd';
+import moment from 'moment';
+import dayjs from "dayjs";
+
 const SchedulePopup = forwardRef(
   (
     {
@@ -22,21 +26,23 @@ const SchedulePopup = forwardRef(
   const [selectedDevices, setSelectedDevices] = useState([]);
   const [dimmingLevel, setDimmingLevel] = useState(scheduleData?.percentDimming || 10);
   const [repeatOption, setRepeatOption] = useState(scheduleData?.repeat || "once");
-  const [startDatetime, setStartDatetime] = useState(scheduleData?.startTime || "");
-  const [endDatetime, setEndDatetime] = useState(scheduleData?.endTime || "");
+  const [startDatetime, setStartDatetime] = useState(scheduleData?.startTime || null);
+  const [endDatetime, setEndDatetime] = useState(scheduleData?.endTime || null);
   const [scheduleName, setScheduleName] = useState(scheduleData?.name || "");
  
   const [executionDateTime, setexecutionDateTime] = useState(() => {
-    const date = scheduleData?.executionDateTime?.split(" ")[0] || ""; // ดึงวันที่จาก executionDateTime และตัดเวลาออก
+    const date = scheduleData?.executionDateTime?.split(" ")[0] || ""; // ดึงวันที่
     const time = scheduleData?.startTime || ""; // เวลาเริ่มต้น
-    return date ? `${date}T${time}` : ""; // รวมวันที่กับเวลา
+    return date && time ? `${date} ${time}` : ""; // รวมวันที่กับเวลา
   });
   
   const [executionEndDateTime, setexecutionEndDateTime] = useState(() => {
-    const endDate = scheduleData?.executionEndDateTime?.split(" ")[0] || ""; // ดึงวันที่จาก executionEndDateTime และตัดเวลาออก
-    const endTime = scheduleData?.endTime || ""; // ใช้ endTime แทน startTime
-    return endDate ? `${endDate}T${endTime}` : ""; // รวมวันที่กับเวลา
+    const endDate = scheduleData?.executionEndDateTime?.split(" ")[0] || ""; // ดึงวันที่
+    const endTime = scheduleData?.endTime || ""; // เวลาเสร็จสิ้น
+    return endDate && endTime ? `${endDate} ${endTime}` : ""; // รวมวันที่กับเวลา
   });
+  
+  
   
   const [selectedDays, setSelectedDays] = useState({
     monday: false,
@@ -63,18 +69,22 @@ const SchedulePopup = forwardRef(
       // แปลง executionDateTime และ startDatetime รวมกันใน setExecutionDateTime
       const executionDate = schedule?.executionDateTime?.split(" ")[0] || ""; // ดึงวันที่จาก executionDateTime และตัดเวลาออก
       const executionTime = schedule?.startTime || ""; // เวลาเริ่มต้น
-      setexecutionDateTime(executionDate ? `${executionDate}T${executionTime}` : ""); // รวมวันที่กับเวลา
+      setexecutionDateTime(executionDate ? `${executionDate} ${executionTime}` : ""); // รวมวันที่กับเวลา
   
       // แปลง executionEndDateTime และ startDatetime รวมกันใน setExecutionEndDateTime
       const endDate = schedule?.executionEndDateTime?.split(" ")[0] || ""; // ดึงวันที่จาก executionEndDateTime และตัดเวลาออก
       const endTime = schedule?.endTime || ""; // เวลาเริ่มต้น
-      setexecutionEndDateTime(endDate ? `${endDate}T${endTime}` : ""); // รวมวันที่กับเวลา
+      setexecutionEndDateTime(endDate ? `${endDate} ${endTime}` : ""); // รวมวันที่กับเวลา
   
-      setStartDatetime(schedule?.startTime || "");
-      setEndDatetime(schedule?.endTime || "");
+      setStartDatetime(schedule?.startTime || null);
+      setEndDatetime(schedule?.endTime || null);
       setRepeatOption(schedule?.repeat || "once");
       setDimmingLevel(schedule?.percentDimming || 10);
       setSelectedDevices(schedule?.scheduledDevices?.map(device => device.id) || []);
+    
+    console.log(executionDateTime)
+    console.log(executionEndDateTime)
+    
     }
   }, [isOpen]);
   
@@ -211,11 +221,15 @@ const SchedulePopup = forwardRef(
     setSelectedDays(updateSelectedDays());
   }, [repeatOption, scheduleData]);
 
-  const executionDate = executionDateTime?.split("T")[0]; // ได้ YYYY-MM-DD
-  const executionTime = executionDateTime?.split("T")[1]; // ได้ HH:mm
+  const formatDate = date => date ? `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}` : null;
+const formatTime = date => date ? `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}` : null;
 
-  const executionEndDate = executionEndDateTime?.split("T")[0]; // ได้ YYYY-MM-DD
-  const executionEndTime = executionEndDateTime?.split("T")[1]; // ได้ HH:mm
+const executionDate = formatDate(new Date(executionDateTime));
+const executionTime = formatTime(new Date(executionDateTime));
+const executionEndDate = formatDate(new Date(executionEndDateTime));
+const executionEndTime = formatTime(new Date(executionEndDateTime));
+  
+
 
   useImperativeHandle(ref, () => ({
     triggerSave: async () => {
@@ -300,6 +314,16 @@ const SchedulePopup = forwardRef(
       }
     }
   }));
+
+  const handleStartTimeChange = (time) => {
+    setStartDatetime(time ? time.format("HH:mm") : null);
+    console.log("Start Time:", time ? time.format("HH:mm") : null);
+  };
+
+  const handleEndTimeChange = (time) => {
+    setEndDatetime(time ? time.format("HH:mm") : null);
+    console.log("End Time:", time ? time.format("HH:mm") : null);
+  };
  
   const days = updateSelectedDays();
 
@@ -462,31 +486,38 @@ const SchedulePopup = forwardRef(
             <div className="grid grid-cols-[0.5fr_2fr] items-center gap-x-4">
               <label className="text-sm font-medium text-left">Start - Stop Time</label>
               {repeatOption === "once" && (
-                <div className="flex gap-2 mt-2">
-                  <input
-  type="datetime-local"
-  className="w-full p-2 border rounded"
-  value={executionDateTime}
-  onChange={(e) => {
-    setexecutionDateTime(e.target.value);
-    console.log("executionDateTime:", e.target.value);
-  }}
-  lang="th-TH"
-/>
-<span>-</span>
-<input
-  type="datetime-local"
-  className="w-full p-2 border rounded"
-  value={executionEndDateTime}
-  onChange={(e) => {
-    setexecutionEndDateTime(e.target.value);
-    console.log("executionEndDateTime:", e.target.value);
-  }}
-  lang="th-TH"
-/>
-่
-
-                </div>
+                <div className="flex gap-2 mt-2 w-full">
+                <DatePicker
+                  showTime
+                  value={executionDateTime ? dayjs(executionDateTime) : null}
+                  onChange={(date) => {
+                    setexecutionDateTime(date ? date.toISOString() : null);
+                    if (executionEndDateTime && dayjs(date).isAfter(dayjs(executionEndDateTime))) {
+                      setexecutionDateTime(null); // Reset end date if start date exceeds end date
+                    }
+                    console.log("executionDateTime:", date ? date.format("YYYY-MM-DD HH:mm") : null);
+                  }}
+                  format="YYYY-MM-DD HH:mm"
+                  locale="th"
+                  className="w-full"
+                />
+                <span>-</span>
+                <DatePicker
+                  showTime
+                  value={executionEndDateTime ? dayjs(executionEndDateTime) : null}
+                  onChange={(date) => {
+                    setexecutionEndDateTime(date ? date.toISOString() : null);
+                    console.log("executionEndDateTime:", date ? date.format("YYYY-MM-DD HH:mm") : null);
+                  }}
+                  format="YYYY-MM-DD HH:mm"
+                  locale="th"
+                  disabledDate={(current) => {
+                    return executionDateTime ? current && current.isBefore(dayjs(executionDateTime), "day") : false;
+                  }}
+                  className="w-full"
+                />
+              </div>
+              
               )}
               {(repeatOption === "everyday" || repeatOption === "weekday" || repeatOption === "weekend") && (
                 <div className="flex flex-col gap-2 mt-2 ">
@@ -504,23 +535,21 @@ const SchedulePopup = forwardRef(
                     ))}
                   </div>
                   <div className="flex gap-2 mt-2">
-                    <input
-                      type="time"
-                      className="w-full p-2 border rounded"
-                      value={startDatetime}
-                      onChange={(e) => setStartDatetime(e.target.value)}
-                      step="60"
-                      lang="th-TH"
-                    />
-                    <span>-</span>
-                    <input
-                      type="time"
-                      className="w-full p-2 border rounded"
-                      value={endDatetime}
-                      onChange={(e) => setEndDatetime(e.target.value)}
-                      step="60"
-                      lang="th-TH"
-                    />
+                  <TimePicker
+        value={startDatetime ? dayjs(startDatetime, "HH:mm") : null}
+        onChange={handleStartTimeChange}
+        format="HH:mm"
+        minuteStep={1}
+        className="w-full p-2 border rounded"
+      />
+      <span>-</span>
+      <TimePicker
+        value={endDatetime ? dayjs(endDatetime, "HH:mm") : null}
+        onChange={handleEndTimeChange}
+        format="HH:mm"
+        minuteStep={1}
+        className="w-full p-2 border rounded"
+      />
                   </div>
                 </div>
               )}
@@ -541,23 +570,21 @@ const SchedulePopup = forwardRef(
                     ))}
                   </div>
                   <div className="flex gap-2 mt-2">
-                    <input
-                      type="time"
-                      className="w-full p-2 border rounded"
-                      value={startDatetime}
-                      onChange={(e) => setStartDatetime(e.target.value)}
-                      step="60"
-                      lang="th-TH"
-                    />
-                    <span>-</span>
-                    <input
-                      type="time"
-                      className="w-full p-2 border rounded"
-                      value={endDatetime}
-                      onChange={(e) => setEndDatetime(e.target.value)}
-                      step="60"
-                      lang="th-TH"
-                    />
+                  <TimePicker
+        value={startDatetime ? dayjs(startDatetime, "HH:mm") : null}
+        onChange={handleStartTimeChange}
+        format="HH:mm"
+        minuteStep={1}
+        className="w-full p-2 border rounded"
+      />
+      <span>-</span>
+      <TimePicker
+        value={endDatetime ? dayjs(endDatetime, "HH:mm") : null}
+        onChange={handleEndTimeChange}
+        format="HH:mm"
+        minuteStep={1}
+        className="w-full p-2 border rounded"
+      />
                   </div>
                 </div>
               )}

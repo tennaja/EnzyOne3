@@ -1,7 +1,15 @@
-import { useState } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea
-} from 'recharts';
+import { useState, useEffect } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  ReferenceArea,
+} from "recharts";
 
 const getMonthAbbreviation = (date) => {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -31,9 +39,16 @@ const BarChartComponent = ({ data, type = "hour" }) => {
     kw: true,
     hover: null,
   });
+
   const [zoomDomain, setZoomDomain] = useState(null);
   const [refAreaLeft, setRefAreaLeft] = useState(null);
   const [refAreaRight, setRefAreaRight] = useState(null);
+  const [chartKey, setChartKey] = useState(0); // ใช้บังคับให้ BarChart re-render
+
+  useEffect(() => {
+    setZoomDomain(null);
+    setChartKey((prevKey) => prevKey + 1); // บังคับให้ BarChart วาดใหม่
+  }, [data]);
 
   if (!data?.timestamp || !data?.kw || data.timestamp.length !== data.kw.length) {
     return <p>ไม่มีข้อมูลสำหรับแสดงผล</p>;
@@ -53,13 +68,13 @@ const BarChartComponent = ({ data, type = "hour" }) => {
   const xAxisKey = {
     hour: "fullTime",
     day: "day",
-    month: "month"
+    month: "month",
   }[type] || "fullTime";
 
   let chartData = aggregateData(rawData, xAxisKey);
 
   if (zoomDomain) {
-    chartData = chartData.filter(d => d[xAxisKey] >= zoomDomain[0] && d[xAxisKey] <= zoomDomain[1]);
+    chartData = chartData.filter((d) => d[xAxisKey] >= zoomDomain[0] && d[xAxisKey] <= zoomDomain[1]);
   }
 
   const selectBar = (e) => {
@@ -110,25 +125,20 @@ const BarChartComponent = ({ data, type = "hour" }) => {
   };
 
   return (
-    <div style={{ textAlign: 'left' }}>
-      <button onClick={zoomOut} style={{ marginBottom: 10 }} className="border-2 border-gray-400 rounded-lg p-1">Zoom Out</button>
+    <div style={{ textAlign: "left" }}>
+      <button onClick={zoomOut} style={{ marginBottom: 10 }} className="border-2 border-gray-400 rounded-lg p-1">
+        Zoom Out
+      </button>
       <ResponsiveContainer width="100%" height={400}>
-        <BarChart 
+        <BarChart
+          key={chartKey} // ใช้ key เพื่อบังคับให้ BarChart วาดใหม่
           data={chartData}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
-            dataKey={xAxisKey} 
-            angle={-45} 
-            textAnchor="end" 
-            fontSize={10} 
-            interval={0} 
-            height={80} 
-            allowDataOverflow={true}
-          />
+          <XAxis dataKey={xAxisKey} angle={-45} textAnchor="end" fontSize={10} interval={0} height={80} allowDataOverflow={true} />
           <YAxis />
           <Tooltip />
           <Legend
@@ -141,17 +151,9 @@ const BarChartComponent = ({ data, type = "hour" }) => {
             onMouseOut={handleLegendMouseLeave}
           />
           {barProps.kw !== undefined && (
-            <Bar 
-              dataKey="kw" 
-              fill="#4bc0c0" 
-              name="Kilowatt (kw)" 
-              opacity={barProps.hover === 'kw' || !barProps.hover ? 1 : 0.6} 
-              hide={barProps.kw === false} 
-            />
+            <Bar dataKey="kw" fill="#4bc0c0" name="kWh" opacity={barProps.hover === "kw" || !barProps.hover ? 1 : 0.6} hide={barProps.kw === false} />
           )}
-          {refAreaLeft && refAreaRight ? (
-            <ReferenceArea x1={refAreaLeft} x2={refAreaRight} strokeOpacity={0.3} fill="gray" />
-          ) : null}
+          {refAreaLeft && refAreaRight ? <ReferenceArea x1={refAreaLeft} x2={refAreaRight} strokeOpacity={0.3} fill="gray" /> : null}
         </BarChart>
       </ResponsiveContainer>
     </div>

@@ -414,7 +414,7 @@ const GetDeviceList = async (site, group) => {
             <h2 className="text-base font-semibold">{schedulelist.length} Schedules</h2>
             <button
               className="flex items-center gap-2 px-4 py-2 bg-[#33BFBF] text-white rounded-lg hover:bg-teal-600"
-              onClick={() => { setopenModalSchedule(true); setAction("create"); setDeviceforSchedule([])}}
+              onClick={() => { setopenModalSchedule(true); setAction("create");}}
             >
               Add Schedule
             </button>
@@ -544,7 +544,12 @@ const GetDeviceList = async (site, group) => {
                       </td>
                       <td className="p-3">{schedule.name}</td>
                       <td className="p-3">{schedule.repeat}</td>
-                      <td className="p-3">{schedule.startTime + " - " + schedule.endTime}</td>
+                      <td className="p-3">
+  {schedule.startTime && schedule.endTime
+    ? `${schedule.startTime} - ${schedule.endTime}`
+    : "ยังไม่ได้กำหนด"}
+</td>
+
                       <td className="p-3">{schedule.percentDimming}%</td>
                       <td className="p-3">
                         <Switch
@@ -556,7 +561,7 @@ const GetDeviceList = async (site, group) => {
                         </Switch>
                       </td>
                       <td className="p-3">
-                        <button onClick={() => { getSchedulById(schedule.id); setAction("update"); setDevicelist([])}} className="text-gray-500 hover:text-gray-700">
+                        <button onClick={() => { getSchedulById(schedule.id); setAction("update");}} className="text-gray-500 hover:text-gray-700">
                           <CreateIcon size={16} />
                         </button>
                       </td>
@@ -612,7 +617,7 @@ const GetDeviceList = async (site, group) => {
           setScheduleData(null);
         }}
         scheduleData={ScheduleData}
-        deviceList={deviceForSchedule?.length ? deviceForSchedule : devcielist}
+        deviceList={action === "create" ? devcielist : deviceForSchedule}
         onSaveSchedule={CreateSchedul}
         onUpdateSchedule={UpdateSchedul}
         onHandleConfirm={handleOpenModalconfirm}

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer, ReferenceArea } from "recharts";
 
 const MyChart = ({ graphdata }) => {
@@ -12,6 +12,13 @@ const MyChart = ({ graphdata }) => {
   const [zoomDomain, setZoomDomain] = useState(null);
   const [startZoom, setStartZoom] = useState(null);
   const [tempDomain, setTempDomain] = useState(null);
+  const [chartKey, setChartKey] = useState(0); // เพิ่ม state เพื่อเปลี่ยน key ของ chart
+
+  // Reset zoomDomain when graphdata changes & force re-render
+  useEffect(() => {
+    setZoomDomain(null);
+    setChartKey(prevKey => prevKey + 1); // บังคับให้ chart re-render
+  }, [graphdata]);
 
   const data = useMemo(() => {
     if (!graphdata || !graphdata.timestamp) return [];
@@ -30,13 +37,11 @@ const MyChart = ({ graphdata }) => {
     }));
   };
 
-  const getLegendStyle = (dataKey) => {
-    return {
-      color: visibleBars[dataKey] ? "black" : "gray",
-      fontWeight: hoveredLegend === dataKey ? "bold" : "normal",
-      cursor: "pointer",
-    };
-  };
+  const getLegendStyle = (dataKey) => ({
+    color: visibleBars[dataKey] ? "black" : "gray",
+    fontWeight: hoveredLegend === dataKey ? "bold" : "normal",
+    cursor: "pointer",
+  });
 
   const handleMouseDown = useCallback((event) => {
     if (event.activeLabel) {
@@ -45,13 +50,15 @@ const MyChart = ({ graphdata }) => {
     }
   }, []);
 
-  const handleMouseMove = useCallback((event) => {
-    if (startZoom !== null && event.activeLabel) {
-      const newDomain = [startZoom, event.activeLabel].sort();
-      console.log("Dragging domain:", newDomain); // เช็คค่าขณะลาก
-      setTempDomain(newDomain);
-    }
-  }, [startZoom]);
+  const handleMouseMove = useCallback(
+    (event) => {
+      if (startZoom !== null && event.activeLabel) {
+        const newDomain = [startZoom, event.activeLabel].sort();
+        setTempDomain(newDomain);
+      }
+    },
+    [startZoom]
+  );
 
   const handleMouseUp = useCallback(() => {
     if (tempDomain) {
@@ -67,14 +74,17 @@ const MyChart = ({ graphdata }) => {
 
   const filteredData = useMemo(() => {
     if (!zoomDomain) return data;
-    return data.filter(d => d.timestamp >= zoomDomain[0] && d.timestamp <= zoomDomain[1]);
+    return data.filter((d) => d.timestamp >= zoomDomain[0] && d.timestamp <= zoomDomain[1]);
   }, [data, zoomDomain]);
 
   return (
-    <div style={{ userSelect: 'none', width: '100%' , textAlign: 'left' }}>
-      <button onClick={handleDoubleClick} className="border-2 border-gray-400 rounded-lg p-1">Zoom Out</button>
+    <div style={{ userSelect: "none", width: "100%", textAlign: "left" }}>
+      <button onClick={handleDoubleClick} className="border-2 border-gray-400 rounded-lg p-1">
+        Zoom Out
+      </button>
       <ResponsiveContainer width="100%" height={400}>
         <ComposedChart
+          key={chartKey} // ใช้ key เพื่อบังคับให้ component re-render
           data={filteredData}
           margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
           onMouseDown={handleMouseDown}
@@ -82,21 +92,15 @@ const MyChart = ({ graphdata }) => {
           onMouseUp={handleMouseUp}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
-  dataKey="timestamp" 
-  tick={{ fontSize: 12 }} 
-  domain={zoomDomain || ['dataMin', 'dataMax']} 
-  allowDataOverflow={true} 
-/>
-
+          <XAxis dataKey="timestamp" tick={{ fontSize: 12 }} domain={zoomDomain || ["dataMin", "dataMax"]} allowDataOverflow={true} />
           <YAxis yAxisId="left" orientation="left" label={{ value: "kw", position: "top", offset: 15, angle: 0 }} />
           <YAxis yAxisId="statusAxis" orientation="left" domain={[0, 1]} tickCount={2} label={{ value: "Status", position: "top", offset: 15, angle: 0 }} />
           <YAxis yAxisId="right" orientation="right" label={{ value: "Dimming", position: "top", offset: 15, angle: 0 }} />
           <Tooltip />
 
           {visibleBars.dimming && <Bar dataKey="dimming" fill="#FFCC33" yAxisId="right" name="Dimming" />}
-          {visibleBars.status && <Line type="stepAfter" dataKey="status" stroke="green" strokeWidth={2} yAxisId="statusAxis" dot={true} name="Status" />}
-          {visibleBars.kw && <Line type="monotone" dataKey="kw" stroke="blue" strokeWidth={2} yAxisId="left" dot={true} name="Kilowatt (kw)" />}
+          {visibleBars.status && <Line type="stepAfter" dataKey="status" stroke="green" strokeWidth={2} yAxisId="statusAxis" dot name="Status" />}
+          {visibleBars.kw && <Line type="monotone" dataKey="kw" stroke="blue" strokeWidth={2} yAxisId="left" dot name="Kilowatt (kw)" />}
 
           <Legend
             onClick={selectBar}
@@ -106,25 +110,15 @@ const MyChart = ({ graphdata }) => {
             align="center"
             wrapperStyle={{ paddingBottom: 20 }}
             payload={[
-              { value: 'Kilowatt (kw)', type: 'line', color: visibleBars.kw ? 'blue' : 'gray', dataKey: 'kw', style: getLegendStyle('kw') },
-              { value: 'Dimming', type: 'bar', color: visibleBars.dimming ? '#FFCC33' : 'gray', dataKey: 'dimming', style: getLegendStyle('dimming') },
-              { value: 'Status', type: 'line', color: visibleBars.status ? 'green' : 'gray', dataKey: 'status', style: getLegendStyle('status') },
+              { value: "Kilowatt (kw)", type: "line", color: visibleBars.kw ? "blue" : "gray", dataKey: "kw", style: getLegendStyle("kw") },
+              { value: "Dimming", type: "bar", color: visibleBars.dimming ? "#FFCC33" : "gray", dataKey: "dimming", style: getLegendStyle("dimming") },
+              { value: "Status", type: "line", color: visibleBars.status ? "green" : "gray", dataKey: "status", style: getLegendStyle("status") },
             ]}
           />
 
-{tempDomain && tempDomain.length === 2 && tempDomain[0] !== tempDomain[1] && (
-  <ReferenceArea 
-    x1={tempDomain[0]} 
-    x2={tempDomain[1]} 
-    stroke="red" 
-    strokeOpacity={1} 
-    strokeWidth={2} 
-    fill="rgba(255, 0, 0, 0.3)" 
-    fillOpacity={0.6}  // เพิ่มความเข้มของสี
-    ifOverflow="hidden" // ใช้ "hidden" แทน extendDomain 
-  />
-)}
-
+          {tempDomain && tempDomain.length === 2 && tempDomain[0] !== tempDomain[1] && (
+            <ReferenceArea x1={tempDomain[0]} x2={tempDomain[1]} stroke="red" strokeOpacity={1} strokeWidth={2} fill="rgba(255, 0, 0, 0.3)" fillOpacity={0.6} ifOverflow="hidden" />
+          )}
         </ComposedChart>
       </ResponsiveContainer>
     </div>
