@@ -179,7 +179,7 @@ export default function DeviceControlPage({FetchDevice,Sitename,Groupname}) {
       setSortConfig({ key: "device", direction: "asc" });
     }, [devcielist]); // ฟังการเปลี่ยนแปลงของ devcielist
 
-    
+
   const handleSort = (column) => {
     let direction = "asc";
     if (sortConfig.key === column && sortConfig.direction === "asc") {
@@ -426,7 +426,7 @@ const sortedData = useMemo(() => {
           className={`px-3 py-1 text-sm font-bold ${
             device.status === "on"
               ? "text-[#12B981]"
-              : device.status === "offl"
+              : device.status === "off"
               ? "text-[#9DA8B9]"
               : "text-[#FF3D4B]"
           }`}
