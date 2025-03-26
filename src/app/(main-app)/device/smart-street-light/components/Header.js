@@ -229,19 +229,19 @@ const Header1 = () => {
                     <span className="text-lg font-bold">Smart Street Light</span>
                     <div className="flex gap-3">
                         <button
-                            className={`px-4 py-2 rounded-lg transition ${activeTab === "dashboard" ? "bg-[#33BFBF] text-white" : "bg-gray-100"}`}
+                            className={`px-4 py-2 rounded-lg transition ${activeTab === "dashboard" ? "bg-[#33BFBF] text-white" : "border border-[#33BFBF] text-[#33BFBF]"}`}
                             onClick={() => setActiveTab("dashboard")}
                         >
                             <DvrIcon className="mr-2" /> Dashboard
                         </button>
                         <button
-                            className={`px-4 py-2 rounded-lg transition ${activeTab === "control" ? "bg-[#33BFBF] text-white" : "bg-gray-100"}`}
+                            className={`px-4 py-2 rounded-lg transition ${activeTab === "control" ? "bg-[#33BFBF] text-white" : "border border-[#33BFBF] text-[#33BFBF]"}`}
                             onClick={() => setActiveTab("control")}
                         >
                             <TuneIcon className="mr-2" /> Control
                         </button>
                         <button
-                            className={`px-4 py-2 rounded-lg transition ${activeTab === "schedule" ? "bg-[#33BFBF] text-white" : "bg-gray-100"}`}
+                            className={`px-4 py-2 rounded-lg transition ${activeTab === "schedule" ? "bg-[#33BFBF] text-white" : "border border-[#33BFBF] text-[#33BFBF]"}`}
                             onClick={() => setActiveTab("schedule")}
                         >
                             <CalendarMonthOutlinedIcon className="mr-2" /> Schedule

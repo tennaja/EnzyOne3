@@ -353,18 +353,20 @@ const SchedulePopup = forwardRef(
           <h2 className="text-xl font-semibold mb-4">{action == "create" ? "Add" : "Edit"} Schedule</h2>
           <form>
             <div className="mb-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
               <label className="text-sm font-medium">Schedule Name</label>
-              <div className="flex items-center gap-3">
-                <span className="text-red-500">*</span>
+              <span className="text-red-500">*</span>
+              </div>
+                
                 <input
                   type="text"
-                  className="w-96 p-2 border rounded"
+                  className="w-96 p-2 border rounded bg-white"
                   placeholder="Enter schedule name"
                   value={scheduleName} // ใช้ค่า state ในการแสดงผล
                   onChange={(e) => setScheduleName(e.target.value)} // อัพเดต state เมื่อมีการเปลี่ยนแปลง
                   required
                 />
-              </div>
+             
             </div>
 
             {/* Device Table */}
@@ -373,7 +375,7 @@ const SchedulePopup = forwardRef(
                 <label className="text-sm font-medium">Device</label>
                 <input
                   type="text"
-                  className="w-40 p-2 border rounded"
+                  className="w-40 p-2 border rounded bg-white"
                   placeholder="ค้นหา"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -457,7 +459,7 @@ const SchedulePopup = forwardRef(
             <div className="grid grid-cols-[0.5fr_2fr] items-center gap-x-4 mt-3">
               <label className="text-sm font-medium text-left">Repeat</label>
               <select
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded bg-white"
                 value={repeatOption} // กำหนดค่าเริ่มต้นจาก scheduleData
                 onChange={(e) => {
                   const newRepeat = e.target.value;

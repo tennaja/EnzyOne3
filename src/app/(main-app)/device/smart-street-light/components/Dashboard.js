@@ -224,6 +224,11 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   useEffect(() => {
     // Check if the active tab is 'dashboard'
     if (activeTab === "table") {
+      setStartDate(today)
+      setEndDate(today)
+      setStartDate2(today)
+      setEndDate2(today)
+      setTimeUnit("hour")
       // FetchDevice();
       setSearchQuery("")
     }
@@ -772,7 +777,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
                             const parts = textString.split(new RegExp(`(${searchQuery})`, 'gi')); // Split by search query, keeping it in the result
                             return parts.map((part, i) =>
                               part.toLowerCase() === searchQuery.toLowerCase() ?
-                                <span key={i} className="bg-yellow-300 dark:bg-yellow-600">{part}</span> :
+                                <span key={i} className="bg-yellow-300 dark:bg-yellow-300">{part}</span> :
                                 part
                             );
                           };
@@ -869,7 +874,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
                 <DeviceDetail
                   ref={devicedetailPopupRef}
                   device={selectedDevice}
-                  setActiveTab={() => { setActiveTab("table"); setSelectedLocation(null); setTimeUnit("hour") }}
+                  setActiveTab={() => { setActiveTab("table"); setSelectedLocation(null); }}
                   onhandleOpenPopupconfirm={handleOpenModalconfirmControl}
                   OnsubmitControl={handlesubmitcontrol}
 
