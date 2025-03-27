@@ -1,0 +1,8 @@
+/* ในไฟล์ CSS */
+.ant-picker-input input::placeholder {
+  color: #000; /* สี placeholder ในโหมดปกติ */
+}
+
+.dark .ant-picker-input input::placeholder {
+  color: #a0a0a0; /* สี placeholder ในโหมดมืด */
+}

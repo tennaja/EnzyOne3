@@ -125,23 +125,26 @@ const MapTH = ({
   return (
     <div className="relative w-full h-full">
       {!selectedMarker && (
-        <div className="absolute bottom-2 right-2 bg-white/90 p-2 rounded-md shadow-md z-[1000] flex flex-col gap-1">
-          {[
-            { label: "on", color: "bg-[#12B981]", count: statusCount.on },
-            { label: "off", color: "bg-[#9DA8B9]", count: statusCount.off },
-            { label: "offline", color: "bg-[#FF3D4B]", count: statusCount.offline },
-          ].map(({ label, color, count }) => (
-            <div key={label} className="flex items-center justify-between w-24">
-              <div className="flex items-center gap-1">
-                <span className={`w-3 h-3 rounded-full ${color}`}></span>
-                <span className="text-gray-700 text-xs">{label}</span>
-              </div>
-              <span className="px-2 py-0.5 text-gray-900 bg-gray-200 rounded-md text-xs">
-                {count}
-              </span>
-            </div>
-          ))}
-        </div>
+       <div className="absolute bottom-2 right-2 bg-white/90 p-2 rounded-md shadow-md z-[1000] flex flex-col gap-1">
+       {[
+         { label: "on", labelColor: "bg-[#12B981]", countColor: "bg-[#c9e9dd]", count: statusCount.on },
+         { label: "off", labelColor: "bg-[#9DA8B9]", countColor: "bg-[#e1e5e9]", count: statusCount.off },
+         { label: "offline", labelColor: "bg-[#FF3D4B]", countColor: "bg-[#f8d1d4]", count: statusCount.offline },
+       ].map(({ label, labelColor, countColor, count }) => (
+         <div key={label} className="flex items-center justify-between w-24">
+           <div className="flex items-center gap-1">
+             <span className={`w-3 h-3 rounded-full ${labelColor}`}></span>
+             <span className="text-gray-700 text-xs">{label}</span>
+           </div>
+           <span
+             className={`px-2 py-0.5 text-gray-900 rounded-md text-xs ${countColor}`}
+           >
+             {count}
+           </span>
+         </div>
+       ))}
+     </div>
+     
       )}
 
       <MapContainer

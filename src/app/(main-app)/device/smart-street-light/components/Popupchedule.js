@@ -5,7 +5,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { DatePicker,TimePicker } from 'antd';
 import moment from 'moment';
 import dayjs from "dayjs";
-
+import "../components/css/style.css"
 const SchedulePopup = forwardRef(
   (
     {
@@ -58,7 +58,11 @@ const SchedulePopup = forwardRef(
 
 
   
-  
+  const bg = {
+    overlay: {
+      background: "#FFFF00"
+    }
+  };
  
   const schedule = scheduleData;
 
@@ -331,25 +335,17 @@ const SchedulePopup = forwardRef(
   return (
     <div>
       <Modal
-        size="xl"
-        opened={isOpen}
-        onClose={onClose}
-        withCloseButton={false}
-        closeOnClickOutside={false}
-        centered
-        style={{
-          zIndex: 9999, // Ensure the modal is always on top
-          // Fixed position so it stays on top of the page
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
-        overlayStyle={{
-          zIndex: 9998, // Overlay just below the modal
-        }}
-      >
-        <div className="p-4">
+  size="xl"
+  opened={isOpen}
+  onClose={onClose}
+  withCloseButton={false}
+  closeOnClickOutside={false}
+  centered
+  styles={{ body: { padding: 0, borderRadius: "12px" } }}
+  style={{ zIndex: 9999, padding: 0 }}
+>
+
+        <div className="p-4 dark:bg-gray-800 border dark:text-white border-gray-600 rounded-md">
           <h2 className="text-xl font-semibold mb-4">{action == "create" ? "Add" : "Edit"} Schedule</h2>
           <form>
             <div className="mb-3 flex items-center justify-between gap-4">
@@ -360,7 +356,7 @@ const SchedulePopup = forwardRef(
                 
                 <input
                   type="text"
-                  className="w-96 p-2 border rounded bg-white"
+                  className="w-96 p-2 border rounded dark:text-white"
                   placeholder="Enter schedule name"
                   value={scheduleName} // ใช้ค่า state ในการแสดงผล
                   onChange={(e) => setScheduleName(e.target.value)} // อัพเดต state เมื่อมีการเปลี่ยนแปลง
@@ -375,7 +371,7 @@ const SchedulePopup = forwardRef(
                 <label className="text-sm font-medium">Device</label>
                 <input
                   type="text"
-                  className="w-40 p-2 border rounded bg-white"
+                  className="w-40 p-2 border rounded dark:text-white"
                   placeholder="ค้นหา"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -436,7 +432,7 @@ const SchedulePopup = forwardRef(
                   <table className="w-full text-sm border-collapse">
                     <tbody>
                       {sortedDevices?.map((device, index) => (
-                        <tr key={device.id} className={`${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} border-b`}>
+                        <tr key={device.id} className={`${index % 2 === 0 ? 'bg-gray-100 dark:bg-gray-900' : 'bg-white dark:bg-gray-800'} border-b`}>
                           <td className="p-2 text-center w-10">
                             <input
                               type="checkbox"
@@ -459,7 +455,7 @@ const SchedulePopup = forwardRef(
             <div className="grid grid-cols-[0.5fr_2fr] items-center gap-x-4 mt-3">
               <label className="text-sm font-medium text-left">Repeat</label>
               <select
-                className="w-full p-2 border rounded bg-white"
+                className="w-full p-2 border rounded dark:text-white"
                 value={repeatOption} // กำหนดค่าเริ่มต้นจาก scheduleData
                 onChange={(e) => {
                   const newRepeat = e.target.value;
@@ -491,6 +487,8 @@ const SchedulePopup = forwardRef(
               {repeatOption === "once" && (
                 <div className="flex gap-2 mt-2 w-full">
                 <DatePicker
+                
+                className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
                   showTime
                   value={executionDateTime ? dayjs(executionDateTime) : null}
                   onChange={(date) => {
@@ -500,24 +498,27 @@ const SchedulePopup = forwardRef(
                     }
                     console.log("executionDateTime:", date ? date.format("YYYY-MM-DD HH:mm") : null);
                   }}
-                  format="YYYY-MM-DD HH:mm"
-                  locale="th"
-                  className="w-full bg-white p-2"
+                  placeholder="sdsdfdsfdsf"
+                  format="YYYY/MM/DD HH:mm"
+                  
+                  
+                  
                 />
+        
                 <span>-</span>
                 <DatePicker
+                className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
                   showTime
                   value={executionEndDateTime ? dayjs(executionEndDateTime) : null}
                   onChange={(date) => {
                     setexecutionEndDateTime(date ? date.toISOString() : null);
                     console.log("executionEndDateTime:", date ? date.format("YYYY-MM-DD HH:mm") : null);
                   }}
-                  format="YYYY-MM-DD HH:mm"
-                  locale="th"
+                  format="YYYY/MM/DD HH:mm"
                   disabledDate={(current) => {
                     return executionDateTime ? current && current.isBefore(dayjs(executionDateTime), "day") : false;
                   }}
-                  className="w-full bg-white p-2"
+                  
                 />
               </div>
               

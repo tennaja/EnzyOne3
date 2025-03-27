@@ -19,6 +19,9 @@ import SchedulePopup from "./Popupchedule";
 import BarChartComponent from "./Barchart";
 import ModalConfirm from "./Popupconfirm";
 import ModalDone from "./Popupcomplete";
+import { DatePicker,TimePicker } from 'antd';
+import moment from 'moment';
+import dayjs from "dayjs";
 import ModalFail from "./PopupFali";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -26,7 +29,7 @@ import Loading from "./Loading";
 const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   const dispatch = useDispatch();
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = dayjs(); // เก็บค่าของวันนี้ใน format ใหม่
   const [activeTab, setActiveTab] = useState("table");
   const [devcielist, setDevicelist] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState();
@@ -371,62 +374,36 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
     setopenModalsuccess(false)
     setopenModalfail(false)
   }
-  const handleStartDateChangeHistorical = (e) => {
-    const newStartDate = e.target.value;
-    console.log(newStartDate)
-    setStartDate(newStartDate);
-
-    const maxAllowedEndDate = new Date(newStartDate);
-    maxAllowedEndDate.setUTCDate(maxAllowedEndDate.getUTCDate() + 31);
-
-    // ถ้า endDate เกิน 31 วัน ให้อัปเดตเป็น maxAllowedEndDate
-    if (new Date(endDate) > maxAllowedEndDate) {
-      setEndDate(maxAllowedEndDate.toISOString().split("T")[0]);
-    }
+  const handleStartDateChange = (date, dateString) => {
+    setStartDate(dateString); // อัปเดต startDate
   };
 
-  const handleEndDateChangeHistorical = (e) => {
-    const newEndDate = e.target.value;
-    const maxAllowedEndDate = new Date(startDate);
-    maxAllowedEndDate.setDate(maxAllowedEndDate.getDate() + 31);
+  const maxEndDate1 = startDate
+    ? dayjs(startDate).add(31, "day").isBefore(today)
+      ? dayjs(startDate).add(31, "day") // 31 วันหลังจาก startDate
+      : today // ใช้วันนี้ถ้า maxEndDate1 เกินวันนี้
+    : today; // ถ้าไม่มี startDate, ใช้วันนี้เป็น max
 
-    const newEndDateObj = new Date(newEndDate);
-
-    // จำกัดให้ endDate ไม่เกิน 31 วันจาก startDate และไม่เกินวันที่ปัจจุบัน
-    if (newEndDateObj <= maxAllowedEndDate && newEndDateObj <= new Date(today)) {
-      setEndDate(newEndDate);
-
-      // เรียก GetHistoryGraph ถ้ามีอุปกรณ์ที่เลือก
-      if (selectedDevice?.id) {
-        GetHistoryGraph(selectedDevice.id);
-      }
-    }
+  // ฟังก์ชันสำหรับการเปลี่ยนแปลงของ endDate
+  const handleEndDateChange = (date, dateString) => {
+    setEndDate(dateString); // อัปเดต endDate
   };
-  const handleStartDateChangeHistorical2 = (e) => {
-    const newStartDate = e.target.value;
-    console.log(newStartDate);
+    // คำนวณ maxEndDate ที่ไม่เกิน 365 วันจาก startDate2 หรือวันนี้
+  const maxEndDate = startDate2
+  ? dayjs(startDate2).add(365, "day").isBefore(today)
+    ? dayjs(startDate2).add(365, "day") // 365 วันหลังจาก startDate2
+    : today // ใช้วันนี้ถ้า maxEndDate เกินวันนี้
+  : today; // ถ้าไม่มี startDate2, ใช้วันนี้เป็น max
 
-    setStartDate2(newStartDate);
+// ฟังก์ชันสำหรับการเปลี่ยนแปลงของ startDate
+const handleStartDateChangeHistorical2 = (date, dateString) => {
+  setStartDate2(dateString); // อัปเดต startDate2
+};
 
-    const maxEndDate = new Date(newStartDate);
-    maxEndDate.setUTCDate(maxEndDate.getUTCDate() + 31);
-    const formattedMaxEndDate = maxEndDate.toISOString().split("T")[0];
-
-    setEndDate2((prevEndDate) => (new Date(prevEndDate) > maxEndDate ? formattedMaxEndDate : prevEndDate));
-  };
-  const handleEndDateChangeHistorical2 = (e) => {
-    const newEndDate = e.target.value;
-    const startDateObj = new Date(startDate2);
-    const maxAllowedEndDate = new Date(startDateObj);
-    maxAllowedEndDate.setFullYear(startDateObj.getFullYear() + 1);
-
-    const todayDate = new Date(today);
-    const newEndDateObj = new Date(newEndDate);
-
-    if (newEndDateObj <= maxAllowedEndDate && newEndDateObj <= todayDate) {
-      setEndDate2(newEndDate);
-    }
-  };
+// ฟังก์ชันสำหรับการเปลี่ยนแปลงของ endDate
+const handleEndDateChangeHistorical2 = (date, dateString) => {
+  setEndDate2(dateString); // อัปเดต endDate2
+};
   const notifySuccess = (title, message) =>
     toast.success(
       <div className="px-2">
@@ -892,33 +869,29 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
             <div>
               <span className="text-lg font-bold block mb-2">Historical</span>
               <div className="flex gap-2 mt-5">
-                <input
-                  type="date"
-                  className="w-60 p-2 border rounded"
-                  value={startDate}
-                  onChange={handleStartDateChangeHistorical}
-                  max={today}
-                />
-                <input
-                  type="date"
-                  className="w-60 p-2 border rounded"
-                  value={endDate}
-                  min={startDate || ""} // ถ้า startDate เป็น null/"" จะไม่กำหนดค่า min
-                  max={
-                    startDate
-                      ? new Date(
-                        Math.min(
-                          new Date().getTime(), // วันที่ปัจจุบัน
-                          new Date(new Date(startDate).setDate(new Date(startDate).getDate() + 31)).getTime() // 31 วันหลัง startDate
-                        )
-                      )
-                        .toISOString()
-                        .split("T")[0] // แปลงเป็น YYYY-MM-DD
-                      : new Date().toISOString().split("T")[0] // ถ้า startDate ไม่มีค่า ใช้วันนี้เป็น max
-                  }
-                  onChange={handleEndDateChangeHistorical}
-                />
+              <DatePicker
+        className="w-60 p-2 bg-white border shadow-default 
+        dark:border-slate-300 dark:bg-dark-box dark:text-slate-200"
+        value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
+        onChange={handleStartDateChange}
+        disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
+        format="YYYY/MM/DD" // กำหนดให้แสดงผลเป็น YYYY/MM/DD
+      />
 
+      {/* DatePicker สำหรับ End Date */}
+      <DatePicker
+        className="w-60 p-2 bg-white border shadow-default 
+        dark:border-slate-300 dark:bg-dark-box dark:text-slate-200"
+        value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
+        onChange={handleEndDateChange}
+        format="YYYY/MM/DD"
+        min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null} // min = startDate
+        max={maxEndDate1} // max = 31 วันหลังจาก startDate หรือวันนี้
+        disabledDate={(current) =>
+          current &&
+          (current < dayjs(startDate, "YYYY/MM/DD") || current > maxEndDate1 || current > today) // ห้ามเลือกวันที่น้อยกว่า startDate หรือมากกว่า maxEndDate1 หรือวันนี้
+        }
+      />
 
               </div>
               <div className="mt-5">
@@ -934,33 +907,28 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
                   <option value="day">Daily</option>
                   <option value="month">Monthly</option>
                 </select>
-                <input
-                  type="date"
-                  className="w-60 p-2 border rounded"
-                  value={startDate2}
-                  onChange={handleStartDateChangeHistorical2}
-                  max={today}
-                />
+                <DatePicker
+        className="w-60 p-2 bg-white border shadow-default 
+        dark:border-slate-300 dark:bg-dark-box dark:text-slate-200"
+        value={startDate2 ? dayjs(startDate2, "YYYY/MM/DD") : null}
+        onChange={handleStartDateChangeHistorical2}
+        disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
+        format="YYYY/MM/DD" // กำหนดให้แสดงผลเป็น YYYY/MM/DD
+      />
 
-                <input
-                  type="date"
-                  className="w-60 p-2 border rounded"
-                  value={endDate2}
-                  min={startDate2 || ""} // ถ้า startDate2 เป็น null/"" จะไม่กำหนดค่า min
-                  max={
-                    startDate2
-                      ? new Date(
-                        Math.min(
-                          new Date().getTime(), // วันที่ปัจจุบัน
-                          new Date(new Date(startDate2).setDate(new Date(startDate2).getDate() + 365)).getTime() // 31 วันหลัง startDate2
-                        )
-                      )
-                        .toISOString()
-                        .split("T")[0] // แปลงเป็น YYYY-MM-DD
-                      : new Date().toISOString().split("T")[0] // ถ้า startDate2 ไม่มีค่า ใช้วันนี้เป็น max
-                  }
-                  onChange={handleEndDateChangeHistorical2}
-                />
+      {/* DatePicker สำหรับ End Date */}
+      <DatePicker
+        className="w-60 p-2 bg-white border shadow-default 
+        dark:border-slate-300 dark:bg-dark-box dark:text-slate-200"
+        value={endDate2 ? dayjs(endDate2, "YYYY/MM/DD") : null}
+        onChange={handleEndDateChangeHistorical2}
+        format="YYYY/MM/DD"
+        min={startDate2 ? dayjs(startDate2, "YYYY/MM/DD") : null} // min = startDate2
+        max={maxEndDate} // max = 365 วันหลังจาก startDate2 หรือวันนี้
+        disabledDate={(current) =>
+          current && (current < dayjs(startDate2, "YYYY/MM/DD") || current > maxEndDate) // ห้ามเลือกวันที่น้อยกว่า startDate2 หรือมากกว่า maxEndDate
+        }
+      />
 
 
 
