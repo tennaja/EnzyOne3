@@ -241,7 +241,14 @@ const DeviceDetail = forwardRef (
       value={dimming}
       step="1"
       list="tickmarks"
-      onChange={(e) => setDimming(e.target.value)}
+      onChange={(e) => {
+        const value = Number(e.target.value);
+        if (value >= 10 || dimming > 10) {
+          setDimming(value);
+        } else {
+          setDimming(10); // ถ้าเลื่อนต่ำกว่า 10 แล้วปล่อย จะเด้งกลับไป 10
+        }
+      }}
       disabled={device?.status === "offline"}
       className={`w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
     />

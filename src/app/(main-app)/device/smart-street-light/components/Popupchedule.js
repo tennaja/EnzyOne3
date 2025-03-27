@@ -607,7 +607,14 @@ const SchedulePopup = forwardRef(
         max="100"
         list="tickmarks"
         value={dimmingLevel}
-        onChange={(e) => setDimmingLevel(e.target.value)}
+        onChange={(e) => {
+          const value = Number(e.target.value);
+          if (value >= 10 || dimming > 10) {
+            setDimmingLevel(value);
+          } else {
+            setDimmingLevel(10); // ถ้าเลื่อนต่ำกว่า 10 แล้วปล่อย จะเด้งกลับไป 10
+          }
+        }}
         className="w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm cursor-pointer"
       />
       <datalist id="tickmarks" className="w-full flex justify-between text-xs text-gray-600">
