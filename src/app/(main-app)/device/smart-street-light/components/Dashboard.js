@@ -374,36 +374,95 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
     setopenModalsuccess(false)
     setopenModalfail(false)
   }
+  
+   // ฟังก์ชันสำหรับคำนวณ maxEndDate1 ตาม startDate หรือ endDate
+   const getMaxEndDate1 = (selectedStartDate) => {
+    return selectedStartDate
+      ? dayjs(selectedStartDate).add(31, "day").isBefore(today)
+        ? dayjs(selectedStartDate).add(31, "day") // 31 วันหลัง startDate
+        : today // ใช้วันนี้ถ้าเกิน
+      : today; // ถ้าไม่มี startDate, ใช้วันนี้
+  };
+
+  // ฟังก์ชันอัปเดต startDate
   const handleStartDateChange = (date, dateString) => {
-    setStartDate(dateString); // อัปเดต startDate
+    if (!date) {
+      setStartDate(null);
+      return;
+    }
+
+    setStartDate(dateString);
+
+    // ถ้า endDate มีอยู่แล้ว และเกิน 31 วันจาก startDate → อัปเดตใหม่
+    const newMaxEndDate1 = getMaxEndDate1(dateString);
+    if (endDate && dayjs(endDate).isAfter(newMaxEndDate1)) {
+      setEndDate(newMaxEndDate1.format("YYYY/MM/DD"));
+    }
   };
 
-  const maxEndDate1 = startDate
-    ? dayjs(startDate).add(31, "day").isBefore(today)
-      ? dayjs(startDate).add(31, "day") // 31 วันหลังจาก startDate
-      : today // ใช้วันนี้ถ้า maxEndDate1 เกินวันนี้
-    : today; // ถ้าไม่มี startDate, ใช้วันนี้เป็น max
-
-  // ฟังก์ชันสำหรับการเปลี่ยนแปลงของ endDate
+  // ฟังก์ชันอัปเดต endDate
   const handleEndDateChange = (date, dateString) => {
-    setEndDate(dateString); // อัปเดต endDate
+    if (!date) {
+      setEndDate(null);
+      return;
+    }
+
+    setEndDate(dateString);
+
+    // ถ้าเลือก endDate ก่อน startDate → อัปเดต startDate ให้เป็น 31 วันก่อนหน้า
+    if (!startDate) {
+      setStartDate(dayjs(date).subtract(31, "day").format("YYYY/MM/DD"));
+    }
   };
-    // คำนวณ maxEndDate ที่ไม่เกิน 365 วันจาก startDate2 หรือวันนี้
-  const maxEndDate = startDate2
+
+  // คำนวณ maxEndDate1 ตาม startDate
+  const maxEndDate1 = getMaxEndDate1(startDate);
+  
+  
+  const getMaxEndDate = (selectedStartDate) => {
+    return selectedStartDate
+      ? dayjs(selectedStartDate).add(365, "day").isBefore(today)
+        ? dayjs(selectedStartDate).add(365, "day")
+        : today
+      : today;
+  };
+  // คำนวณ maxEndDate ที่ไม่เกิน 365 วันจาก startDate2 หรือวันนี้
+  const maxEndDate2 = startDate2
   ? dayjs(startDate2).add(365, "day").isBefore(today)
     ? dayjs(startDate2).add(365, "day") // 365 วันหลังจาก startDate2
     : today // ใช้วันนี้ถ้า maxEndDate เกินวันนี้
   : today; // ถ้าไม่มี startDate2, ใช้วันนี้เป็น max
 
-// ฟังก์ชันสำหรับการเปลี่ยนแปลงของ startDate
+// ฟังก์ชันอัปเดต startDate2
 const handleStartDateChangeHistorical2 = (date, dateString) => {
-  setStartDate2(dateString); // อัปเดต startDate2
+  if (!date) return;
+
+  setStartDate2(dateString);
+
+  // ถ้า endDate2 มีอยู่แล้ว และเกิน 365 วันจาก startDate2 → อัปเดตใหม่
+  const newMaxEndDate = getMaxEndDate(dateString);
+  if (endDate2 && dayjs(endDate2).isAfter(newMaxEndDate)) {
+    setEndDate2(newMaxEndDate.format("YYYY/MM/DD"));
+  }
 };
 
-// ฟังก์ชันสำหรับการเปลี่ยนแปลงของ endDate
+// ฟังก์ชันอัปเดต endDate2
 const handleEndDateChangeHistorical2 = (date, dateString) => {
-  setEndDate2(dateString); // อัปเดต endDate2
+  if (!date) return;
+
+  setEndDate2(dateString);
+
+  // ถ้าเลือก endDate2 ก่อน startDate2 → จำกัด startDate2 ไม่ให้เกิน 365 วันก่อนหน้า
+  if (!startDate2) {
+    setStartDate2(dayjs(date).subtract(365, "day").format("YYYY/MM/DD"));
+  }
 };
+
+// คำนวณ maxEndDate ตาม startDate2
+const maxEndDate = getMaxEndDate(startDate2);
+
+
+
   const notifySuccess = (title, message) =>
     toast.success(
       <div className="px-2">
@@ -875,7 +934,8 @@ const handleEndDateChangeHistorical2 = (date, dateString) => {
         value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
         onChange={handleStartDateChange}
         disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
-        format="YYYY/MM/DD" // กำหนดให้แสดงผลเป็น YYYY/MM/DD
+        format="YYYY/MM/DD"
+        allowClear={false}
       />
 
       {/* DatePicker สำหรับ End Date */}
@@ -886,11 +946,12 @@ const handleEndDateChangeHistorical2 = (date, dateString) => {
         onChange={handleEndDateChange}
         format="YYYY/MM/DD"
         min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null} // min = startDate
-        max={maxEndDate1} // max = 31 วันหลังจาก startDate หรือวันนี้
+        max={maxEndDate1} // max = 31 วันหลัง startDate หรือวันนี้
         disabledDate={(current) =>
           current &&
-          (current < dayjs(startDate, "YYYY/MM/DD") || current > maxEndDate1 || current > today) // ห้ามเลือกวันที่น้อยกว่า startDate หรือมากกว่า maxEndDate1 หรือวันนี้
+          (current < dayjs(startDate, "YYYY/MM/DD") || current > maxEndDate1)
         }
+        allowClear={false}
       />
 
               </div>
@@ -913,7 +974,7 @@ const handleEndDateChangeHistorical2 = (date, dateString) => {
         value={startDate2 ? dayjs(startDate2, "YYYY/MM/DD") : null}
         onChange={handleStartDateChangeHistorical2}
         disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
-        format="YYYY/MM/DD" // กำหนดให้แสดงผลเป็น YYYY/MM/DD
+        format="YYYY/MM/DD"
       />
 
       {/* DatePicker สำหรับ End Date */}
@@ -924,9 +985,9 @@ const handleEndDateChangeHistorical2 = (date, dateString) => {
         onChange={handleEndDateChangeHistorical2}
         format="YYYY/MM/DD"
         min={startDate2 ? dayjs(startDate2, "YYYY/MM/DD") : null} // min = startDate2
-        max={maxEndDate} // max = 365 วันหลังจาก startDate2 หรือวันนี้
+        max={maxEndDate2} // max = 365 วันหลังจาก startDate2 หรือวันนี้
         disabledDate={(current) =>
-          current && (current < dayjs(startDate2, "YYYY/MM/DD") || current > maxEndDate) // ห้ามเลือกวันที่น้อยกว่า startDate2 หรือมากกว่า maxEndDate
+          current && (current < dayjs(startDate2, "YYYY/MM/DD") || current > maxEndDate)
         }
       />
 

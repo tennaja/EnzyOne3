@@ -368,7 +368,7 @@ const GetDeviceList = async (site, group) => {
   const getCurrentStatus = (id) => {
     // Replace this with your logic to find the current status of the schedule based on `id`
     const schedule = schedulelist.find(item => item.id === id); // Assuming `data` contains the schedules
-    return schedule ? schedule.status : "inactive"; // Return the current status
+    return schedule ? schedule?.status : "inactive"; // Return the current status
   };
   const handleCancel = () => setSelected([]);
   const handleChangePage = (page) => {
@@ -403,6 +403,19 @@ const GetDeviceList = async (site, group) => {
         theme: "light",
       }
     );
+
+    function toSuperscript(num) {
+      const superscripts = {
+          '0': '⁰', '1': '¹', '2': '²', '3': '³',
+          '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷',
+          '8': '⁸', '9': '⁹', '+': '⁺'
+      };
+      return num.split('').map(char => superscripts[char] || char).join('');
+  }
+  
+  function transformTimeFormat(input) {
+      return input.replace(/\((\+(\d+))\)/, (_, exp, num) => toSuperscript(exp));
+  }
   return (
     <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
       <div>
@@ -541,41 +554,47 @@ const GetDeviceList = async (site, group) => {
   ) : (
     currentData.map((schedule, index) => (
       <tr
-        key={schedule.id}
+        key={schedule?.id}
         className={`border-b ${index % 2 === 0 ? "bg-gray-100  dark:bg-gray-900" : "bg-white dark:bg-gray-800"} border-b border-gray-300 dark:border-gray-700`}
         style={{ borderBottom: '1px solid #e0e0e0' }}
       >
         <td className="p-3 w-10">
           <input
             type="checkbox"
-            checked={selected.includes(schedule.id)}
-            onChange={() => toggleSelect(schedule.id)}
-            disabled={schedule.status === "active"}
+            checked={selected.includes(schedule?.id)}
+            onChange={() => toggleSelect(schedule?.id)}
+            disabled={schedule?.status === "active"}
           />
         </td>
-        <td className="p-3 text-gray-900 dark:text-white">{schedule.name}</td>
-        <td className="p-3 text-gray-700 dark:text-gray-300 text-center">{schedule.repeat}</td>
+        <td className="p-3 text-gray-900 dark:text-white">{schedule?.name}</td>
+        <td className="p-3 text-gray-700 dark:text-gray-300 text-center">{schedule?.repeat}</td>
         <td className="p-3 text-gray-700 dark:text-gray-300 text-right">
-          {schedule.startTime && schedule.endTime
-            ? `${schedule.startTime} - ${schedule.endTime}`
-            : "ยังไม่ได้กำหนด"}
-        </td>
-        <td className="p-3 text-gray-700 dark:text-gray-300 text-right">{schedule.percentDimming}%</td>
+  <div className="flex flex-col items-end">
+    <span>{schedule?.customDate}</span>
+    <span>
+      {schedule?.startTime && schedule?.endTime
+        ? `${schedule?.startTime} - ${transformTimeFormat(schedule?.endTime)}`
+        : "ยังไม่ได้กำหนด"}
+    </span>
+  </div>
+</td>
+
+        <td className="p-3 text-gray-700 dark:text-gray-300 text-right">{schedule?.percentDimming}%</td>
         <td className="p-3 text-center">
           <Switch
-            checked={schedule.status === "active"}
-            onChange={() => handleToggleStatus(schedule.id)}
-            className={`${schedule.status === "active" ? "bg-teal-500 dark:bg-teal-400" : "bg-gray-300 dark:bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full`}
+            checked={schedule?.status === "active"}
+            onChange={() => handleToggleStatus(schedule?.id)}
+            className={`${schedule?.status === "active" ? "bg-teal-500 dark:bg-teal-400" : "bg-gray-300 dark:bg-gray-600"} relative inline-flex h-6 w-11 items-center rounded-full`}
           >
             <span
-              className={`${schedule.status === "active" ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform bg-white rounded-full`}
+              className={`${schedule?.status === "active" ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform bg-white rounded-full`}
             />
           </Switch>
         </td>
         <td className="p-3 text-center">
           <button
             onClick={() => {
-              getSchedulById(schedule.id);
+              getSchedulById(schedule?.id);
               setAction("update");
             }}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"

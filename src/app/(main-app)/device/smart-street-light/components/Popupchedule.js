@@ -27,7 +27,9 @@ const SchedulePopup = forwardRef(
   const [dimmingLevel, setDimmingLevel] = useState(scheduleData?.percentDimming || 10);
   const [repeatOption, setRepeatOption] = useState(scheduleData?.repeat || "once");
   const [startDatetime, setStartDatetime] = useState(scheduleData?.startTime || null);
-  const [endDatetime, setEndDatetime] = useState(scheduleData?.endTime || null);
+  const [endDatetime, setEndDatetime] = useState(
+    scheduleData?.endTime?.replace(/\s*\(\+\d+\)$/, "") || null
+  );  
   const [scheduleName, setScheduleName] = useState(scheduleData?.name || "");
  
   const [executionDateTime, setexecutionDateTime] = useState(() => {
@@ -81,7 +83,7 @@ const SchedulePopup = forwardRef(
       setexecutionEndDateTime(endDate ? `${endDate} ${endTime}` : ""); // รวมวันที่กับเวลา
   
       setStartDatetime(schedule?.startTime || null);
-      setEndDatetime(schedule?.endTime || null);
+      setEndDatetime(schedule?.endTime?.replace(/\s*\(\+\d+\)$/, "") || null);
       setRepeatOption(schedule?.repeat || "once");
       setDimmingLevel(schedule?.percentDimming || 10);
       setSelectedDevices(schedule?.scheduledDevices?.map(device => device.id) || []);
