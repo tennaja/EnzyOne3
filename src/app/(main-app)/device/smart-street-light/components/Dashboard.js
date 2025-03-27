@@ -871,7 +871,7 @@ const handleEndDateChangeHistorical2 = (date, dateString) => {
               <div className="flex gap-2 mt-5">
               <DatePicker
         className="w-60 p-2 bg-white border shadow-default 
-        dark:border-slate-300 dark:bg-dark-box dark:text-slate-200"
+        dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
         value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
         onChange={handleStartDateChange}
         disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
@@ -881,7 +881,7 @@ const handleEndDateChangeHistorical2 = (date, dateString) => {
       {/* DatePicker สำหรับ End Date */}
       <DatePicker
         className="w-60 p-2 bg-white border shadow-default 
-        dark:border-slate-300 dark:bg-dark-box dark:text-slate-200"
+        dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
         value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
         onChange={handleEndDateChange}
         format="YYYY/MM/DD"
@@ -909,7 +909,7 @@ const handleEndDateChangeHistorical2 = (date, dateString) => {
                 </select>
                 <DatePicker
         className="w-60 p-2 bg-white border shadow-default 
-        dark:border-slate-300 dark:bg-dark-box dark:text-slate-200"
+        dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
         value={startDate2 ? dayjs(startDate2, "YYYY/MM/DD") : null}
         onChange={handleStartDateChangeHistorical2}
         disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
@@ -919,7 +919,7 @@ const handleEndDateChangeHistorical2 = (date, dateString) => {
       {/* DatePicker สำหรับ End Date */}
       <DatePicker
         className="w-60 p-2 bg-white border shadow-default 
-        dark:border-slate-300 dark:bg-dark-box dark:text-slate-200"
+        dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
         value={endDate2 ? dayjs(endDate2, "YYYY/MM/DD") : null}
         onChange={handleEndDateChangeHistorical2}
         format="YYYY/MM/DD"

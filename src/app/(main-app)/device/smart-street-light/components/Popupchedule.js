@@ -498,7 +498,6 @@ const SchedulePopup = forwardRef(
                     }
                     console.log("executionDateTime:", date ? date.format("YYYY-MM-DD HH:mm") : null);
                   }}
-                  placeholder="sdsdfdsfdsf"
                   format="YYYY/MM/DD HH:mm"
                   
                   
@@ -544,7 +543,7 @@ const SchedulePopup = forwardRef(
         onChange={handleStartTimeChange}
         format="HH:mm"
         minuteStep={1}
-        className="w-full p-2 border rounded bg-white"
+        className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
       />
       <span>-</span>
       <TimePicker
@@ -552,7 +551,7 @@ const SchedulePopup = forwardRef(
         onChange={handleEndTimeChange}
         format="HH:mm"
         minuteStep={1}
-        className="w-full p-2 border rounded bg-white"
+        className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
       />
                   </div>
                 </div>
@@ -579,7 +578,7 @@ const SchedulePopup = forwardRef(
         onChange={handleStartTimeChange}
         format="HH:mm"
         minuteStep={1}
-        className="w-full p-2 border rounded bg-white"
+        className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
       />
       <span>-</span>
       <TimePicker
@@ -587,7 +586,7 @@ const SchedulePopup = forwardRef(
         onChange={handleEndTimeChange}
         format="HH:mm"
         minuteStep={1}
-        className="w-full p-2 border rounded bg-white"
+        className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
       />
                   </div>
                 </div>
