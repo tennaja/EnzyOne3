@@ -35,28 +35,20 @@ const ModalFail = (props) => {
         withCloseButton={false}
         closeOnClickOutside={false}
         centered
-        style={{
-          zIndex: 9999, // Ensure the modal is always on top
-          position: "fixed", // Fixed position so it stays on top of the page
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
-        overlayStyle={{
-          zIndex: 9998, // Overlay just below the modal
-        }}
+        style={{ zIndex: 9999, padding: 0 }}
+        styles={{ body: { padding: 0, borderRadius: "12px" } }}
       >
+         <div className="p-4 dark:bg-gray-800 border dark:text-white border-gray-600 rounded-md">
         <div className="pt-4 pb-5">
           <div className="sm:mt-4">
             <h6
-              className="text-2xl leading-6 font-bold text-[#071437] text-center"
+              className="text-2xl leading-6 font-bold text-[#071437] text-center dark:text-white"
               id="modal-headline"
             >
               {title}
             </h6>
             <div className="mt-4">
-              <p className="text-md text-gray-600 text-center" dangerouslySetInnerHTML={{ __html: content }}/>
+              <p className="text-md text-gray-600 text-center dark:text-white" dangerouslySetInnerHTML={{ __html: content }}/>
             </div>
           </div>
         </div>
@@ -67,6 +59,7 @@ const ModalFail = (props) => {
           >
             Close
           </button>
+        </div>
         </div>
       </Modal>
     </>

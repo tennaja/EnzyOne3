@@ -123,18 +123,7 @@ const Header1 = () => {
     
 
 
-      const handleSearch = () => {
-        console.log(selectedSiteName)
-        console.log(selectedGroupName)
-        // กดปุ่มค้นหาจะทำการเรียกทั้ง GetDeviceList และ GetScheduleList
-        setSiteName(selectedSiteName);
-        setGroupName(selectedGroupName);
-        setSiteid(selectedSiteId)
-        setGroupid(selectedGroupId)
-        dispatch(setSiteId(selectedSiteId));
-        dispatch(setGroupId(selectedGroupId));
-       
-    };
+      
       
 
     const renderContent = () => {
@@ -164,76 +153,100 @@ const Header1 = () => {
 
     
     
-    useEffect(() => {
-      if (activeTab === "schedule" && sitelist?.length > 0) {
-        console.log("Entered site effect: activeTab === 'schedule' && sitelist.length > 0");
-    
-        const filteredSiteList = sitelist.filter((item) => item.name !== "All sites");
-    
-        if (filteredSiteList.length > 0 && (!siteid || siteid === "0")) {
-          console.log("Filtered sitelist has items and siteid is empty or '0'");
-    
-          const newSiteId = filteredSiteList[0]?.id;
-          console.log("Setting new site ID:", newSiteId);
-    
-          setSiteId(newSiteId);
-          setSelectedSiteId(newSiteId);
-          dispatch(setSiteId(newSiteId));
-          setSiteName(filteredSiteList[0]?.name || "");
-          setSelectedSiteName(filteredSiteList[0]?.name || "");
-    
-          if (siteid !== newSiteId) {
-            console.log("Site ID has changed, fetching group list...");
-            getGroupList(newSiteId);
-          }
-    
-          hasFetchedSchedule.current = false;
-        }
+const hasDispatchedSite = useRef(false);
+const hasDispatchedGroup = useRef(false);
+
+// กำหนด prevSiteId และ prevGroupId เพื่อเก็บค่าที่เคยเลือกไว้ก่อนหน้า
+const prevSiteId = useRef(null);
+const prevGroupId = useRef(null);
+
+useEffect(() => {
+  if (activeTab === "schedule" && sitelist?.length > 0) {
+    console.log("Checking site list...");
+
+    const filteredSiteList = sitelist.filter((item) => item.id !== "0" && item.id !== null);
+    const firstValidSiteId = filteredSiteList[0]?.id;
+
+    if (filteredSiteList.length > 0 && (!siteid || siteid === "0")) {
+      console.log("Replacing '0' with new site ID:", firstValidSiteId);
+      dispatch(setSiteId(firstValidSiteId)); 
+      
+      setSiteName(filteredSiteList[0]?.name || "");
+      setSiteId(firstValidSiteId);
+      setSelectedSiteId(firstValidSiteId);
+      setSelectedSiteName(filteredSiteList[0]?.name || "");
+
+      console.log("Fetching group list for new site ID:", firstValidSiteId);
+      getGroupList(firstValidSiteId);
+
+      hasFetchedSchedule.current = false;
+
+      if (!hasDispatchedSite.current) {
+        console.log("SITEID is 000000");
+        hasDispatchedSite.current = true;
       }
-    }, [activeTab, sitelist, siteid]);
-    
-    useEffect(() => {
-      if (activeTab === "schedule" && grouplist?.length > 0) {
-        console.log("Entered group effect: activeTab === 'schedule' && grouplist.length > 0");
-    
-        const filteredGroupList = grouplist.filter((item) => item.name !== "All groups");
-    
-        if (filteredGroupList.length > 0 && (!groupid || groupid === "0")) {
-          console.log("Filtered grouplist has items and groupid is empty or '0'");
-    
-          const newGroupId = filteredGroupList[0]?.id;
-          console.log("Setting new group ID:", newGroupId);
-    
-          setSelectedGroupId(newGroupId);
-          dispatch(setGroupId(newGroupId));
-          setGroupName(filteredGroupList[0]?.name || "");
-          setSelectedGroupName(filteredGroupList[0]?.name || "");
-    
-          if (groupid !== newGroupId) {
-            console.log("Group ID has changed, calling Groupchange...");
-            Groupchange(newGroupId);
-          }
-    
-          hasFetchedSchedule.current = false;
-        }
+    } else if (siteid && siteid !== "0" && siteid !== prevSiteId.current) {
+      console.log("User manually selected site ID:", siteid);
+      prevSiteId.current = siteid;
+      hasDispatchedSite.current = true;
+    }
+  }
+}, [activeTab, sitelist, siteid]);
+
+
+useEffect(() => {
+  if (activeTab === "schedule" && grouplist?.length > 0) {
+    console.log("Checking group list...");
+
+    const filteredGroupList = grouplist.filter((item) => item.id !== "0" && item.id !== null);
+    const firstValidGroupId = filteredGroupList[0]?.id;
+
+    if (filteredGroupList.length > 0 && (!groupid || groupid === "0")) {
+      console.log("Replacing '0' with new group ID:", firstValidGroupId);
+      dispatch(setGroupId(firstValidGroupId));
+      setGroupName(filteredGroupList[0]?.name || "");
+      setSelectedGroupId(firstValidGroupId);
+      setSelectedGroupName(filteredGroupList[0]?.name || "");
+
+      console.log("Calling Groupchange for new group ID:", firstValidGroupId);
+      Groupchange(firstValidGroupId);
+
+      hasFetchedSchedule.current = false;
+
+      if (!hasDispatchedGroup.current) {
+        console.log("GROUPID is 000000000000")
+        hasDispatchedGroup.current = true;
       }
-    }, [activeTab, grouplist, groupid]);
+    } 
+    else if (groupid && groupid !== "0" && groupid !== prevGroupId.current) {
+      console.log("User manually selected group ID:", groupid);
+      prevGroupId.current = groupid;
+      hasDispatchedGroup.current = true;
+    }
+  }
+}, [activeTab, grouplist, groupid]);
+
+
+const handleSearch = () => {
+  console.log("Searching with:", selectedSiteName, selectedGroupName);
+
+  setSiteName(selectedSiteName);
+  setGroupName(selectedGroupName);
+
+  setSiteid(selectedSiteId);
+  dispatch(setSiteId(selectedSiteId));
+
+  setGroupid(selectedGroupId);
+  dispatch(setGroupId(selectedGroupId));
+
+  // รีเซ็ตให้ useEffect สามารถ dispatch ได้อีกถ้ารายการถูกตัดอีกรอบ
+  hasDispatchedSite.current = false;
+  hasDispatchedGroup.current = false;
+  prevSiteId.current = selectedSiteId; // รีเซ็ต prevSiteId เมื่อค้นหา
+  prevGroupId.current = selectedGroupId; // รีเซ็ต prevGroupId เมื่อค้นหา
+};
+
     
-    useEffect(() => {
-      if (activeTab === "schedule" && siteid && groupid) {
-        if (!hasFetchedSchedule.current) {
-          console.log("Fetching schedule list for the first time...");
-          hasFetchedSchedule.current = true;
-        }
-      }
-    }, [activeTab, siteid, groupid]);
-    
-    useEffect(() => {
-      if (activeTab === "schedule") {
-        console.log("Resetting fetch flag due to site or group list change...");
-        hasFetchedSchedule.current = false;
-      }
-    }, [sitelist, grouplist]);
     
     return (
         <>

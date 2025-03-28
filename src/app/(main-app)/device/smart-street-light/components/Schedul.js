@@ -570,12 +570,22 @@ const GetDeviceList = async (site, group) => {
         <td className="p-3 text-gray-700 dark:text-gray-300 text-center">{schedule?.repeat}</td>
         <td className="p-3 text-gray-700 dark:text-gray-300 text-right">
   <div className="flex flex-col items-end">
+  {schedule?.repeat === "once" ? (
+  <>
+    <span>Start: {schedule?.executionDateTime}</span>
+    <span>Stop: {schedule?.executionEndDateTime}</span>
+  </>
+) : (
+  <>
     <span>{schedule?.customDate}</span>
     <span>
       {schedule?.startTime && schedule?.endTime
-        ? `${schedule?.startTime} - ${transformTimeFormat(schedule?.endTime)}`
+        ? `${schedule.startTime} - ${transformTimeFormat(schedule.endTime)}`
         : "ยังไม่ได้กำหนด"}
     </span>
+  </>
+)}
+
   </div>
 </td>
 

@@ -618,7 +618,7 @@ const SchedulePopup = forwardRef(
         }}
         className="w-full h-1 accent-[#33BFBF] bg-gray-300 range-sm cursor-pointer"
       />
-      <datalist id="tickmarks" className="w-full flex justify-between text-xs text-gray-600">
+      <datalist id="tickmarks" className="w-full flex justify-between text-xs text-gray-600 dark:text-white">
         <option value="0" label="0"></option>
         <option value="25" label="25"></option>
         <option value="50" label="50"></option>
