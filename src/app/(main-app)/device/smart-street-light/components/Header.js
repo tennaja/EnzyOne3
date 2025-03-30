@@ -88,26 +88,33 @@ const Header1 = () => {
         setSiteid(siteid ?? 0);
         const result = await getGroupListData(siteid);
         console.log("Group List Result:", result);
-    
+
         if (result.length > 0) {
-            setGrouplist(result);
-            const firstGroupId = result[0].id ?? 0;
+            // กรองค่า "0" เฉพาะเมื่ออยู่ในแท็บ "schedule"
+            const filteredGroupList = activeTab === "schedule"
+                ? result.filter((item) => item.id !== "0" && item.id !== null)
+                : result;
+
+            setGrouplist(filteredGroupList);
+
+            const firstGroupId = filteredGroupList[0]?.id ?? 0;
             console.log("First Group ID:", firstGroupId);
-            if (isfirst ) { // ใช้ isfirst จาก useState
-                setGroupName(result[0].name);
+
+            if (isfirst) { // ใช้ isfirst จาก useState
+                setGroupName(filteredGroupList[0]?.name || "");
                 setGroupid(firstGroupId);
-                setSelectedGroupId(firstGroupId)
-                setSelectedGroupName(result[0].name);
+                setSelectedGroupId(firstGroupId);
+                setSelectedGroupName(filteredGroupList[0]?.name || "");
                 setIsfirst(false); // เซ็ตให้เป็น false หลังจากใช้งานครั้งแรก
-            }else{
+            } else if (firstGroupId !== "0") { // ป้องกันการตั้งค่า groupid เป็น "0"
                 setGroupid(firstGroupId);
-                setSelectedGroupId(firstGroupId)
-                setSelectedGroupName(result[0].name);
-                console.log(result[0].name);
+                setSelectedGroupId(firstGroupId);
+                setSelectedGroupName(filteredGroupList[0]?.name || "");
+                console.log(filteredGroupList[0]?.name || "");
             }
-            
         } else {
             console.log("No groups found!");
+            setGrouplist([]); // ตั้งค่า grouplist เป็นว่างถ้าไม่มีข้อมูล
         }
     };
     
@@ -169,61 +176,67 @@ useEffect(() => {
 
     if (filteredSiteList.length > 0 && (!siteid || siteid === "0")) {
       console.log("Replacing '0' with new site ID:", firstValidSiteId);
-      dispatch(setSiteId(firstValidSiteId)); 
-      
-      setSiteName(filteredSiteList[0]?.name || "");
-      setSiteId(firstValidSiteId);
-      setSelectedSiteId(firstValidSiteId);
-      setSelectedSiteName(filteredSiteList[0]?.name || "");
 
-      console.log("Fetching group list for new site ID:", firstValidSiteId);
-      getGroupList(firstValidSiteId);
+      // Only dispatch if the current siteid is not equal to the first valid site ID
+      if (siteid !== firstValidSiteId) {
+        dispatch(setSiteId(firstValidSiteId)); // Dispatch only when the siteid is not the first valid site ID
+        setSiteName(filteredSiteList[0]?.name || "")
+        setSiteId(firstValidSiteId);
+        setSelectedSiteId(firstValidSiteId);
+        setSelectedSiteName(filteredSiteList[0]?.name || "");
 
-      hasFetchedSchedule.current = false;
+        console.log("Fetching group list for new site ID:", firstValidSiteId);
+        getGroupList(firstValidSiteId);
+        
+        hasFetchedSchedule.current = false;
+      }
 
       if (!hasDispatchedSite.current) {
-        console.log("SITEID is 000000");
+        console.log("SITEID is 000000")
         hasDispatchedSite.current = true;
       }
-    } else if (siteid && siteid !== "0" && siteid !== prevSiteId.current) {
+    } else if (siteid && siteid !== "0" && siteid !== firstValidSiteId && siteid !== prevSiteId.current) {
       console.log("User manually selected site ID:", siteid);
-      prevSiteId.current = siteid;
-      hasDispatchedSite.current = true;
+      prevSiteId.current = siteid; // Update prevSiteId when manually selected
+      hasDispatchedSite.current = true; // Prevent dispatch when the user manually selects a site ID
     }
   }
 }, [activeTab, sitelist, siteid]);
 
 
 useEffect(() => {
-  if (activeTab === "schedule" && grouplist?.length > 0) {
-    console.log("Checking group list...");
+    if (activeTab === "schedule" && grouplist?.length > 0) {
+        console.log("Checking group list...");
 
-    const filteredGroupList = grouplist.filter((item) => item.id !== "0" && item.id !== null);
-    const firstValidGroupId = filteredGroupList[0]?.id;
+        const filteredGroupList = grouplist.filter((item) => item.id !== "0" && item.id !== null);
+        const firstValidGroupId = filteredGroupList[0]?.id;
 
-    if (filteredGroupList.length > 0 && (!groupid || groupid === "0")) {
-      console.log("Replacing '0' with new group ID:", firstValidGroupId);
-      dispatch(setGroupId(firstValidGroupId));
-      setGroupName(filteredGroupList[0]?.name || "");
-      setSelectedGroupId(firstValidGroupId);
-      setSelectedGroupName(filteredGroupList[0]?.name || "");
+        if (filteredGroupList.length > 0 && (!groupid || groupid === "0")) {
+            console.log("Replacing '0' with new group ID:", firstValidGroupId);
 
-      console.log("Calling Groupchange for new group ID:", firstValidGroupId);
-      Groupchange(firstValidGroupId);
+            // เพิ่มเงื่อนไขเพื่อป้องกัน dispatch เมื่อ groupid เท่ากับ "0"
+            if (firstValidGroupId && firstValidGroupId !== "0") {
+                dispatch(setGroupId(firstValidGroupId));
+                setGroupName(filteredGroupList[0]?.name || "");
+                setSelectedGroupId(firstValidGroupId);
+                setSelectedGroupName(filteredGroupList[0]?.name || "");
 
-      hasFetchedSchedule.current = false;
+                console.log("Calling Groupchange for new group ID:", firstValidGroupId);
+                Groupchange(firstValidGroupId);
 
-      if (!hasDispatchedGroup.current) {
-        console.log("GROUPID is 000000000000")
-        hasDispatchedGroup.current = true;
-      }
-    } 
-    else if (groupid && groupid !== "0" && groupid !== prevGroupId.current) {
-      console.log("User manually selected group ID:", groupid);
-      prevGroupId.current = groupid;
-      hasDispatchedGroup.current = true;
+                hasFetchedSchedule.current = false;
+
+                if (!hasDispatchedGroup.current) {
+                    console.log("GROUPID is 000000000000");
+                    hasDispatchedGroup.current = true;
+                }
+            }
+        } else if (groupid && groupid !== "0" && groupid !== prevGroupId.current) {
+            console.log("User manually selected group ID:", groupid);
+            prevGroupId.current = groupid;
+            hasDispatchedGroup.current = true;
+        }
     }
-  }
 }, [activeTab, grouplist, groupid]);
 
 
