@@ -246,8 +246,8 @@ const SchedulePopup = forwardRef(
         startTime: repeatOption === "once" ? executionTime : startDatetime,
         endTime: repeatOption === "once" ? executionEndTime : endDatetime,
         repeat: repeatOption,
-        executionDateTime: executionDate,
-        executionEndDateTime: executionEndDate,
+        executionDateTime: executionDateTime,
+        executionEndDateTime: executionEndDateTime,
         percentDimming: Number(dimmingLevel),
         dayOfWeek: repeatOption === "once"
           ? []
@@ -289,8 +289,8 @@ const SchedulePopup = forwardRef(
         startTime: repeatOption === "once" ? executionTime : startDatetime,
         endTime: repeatOption === "once" ? executionEndTime : endDatetime,
         repeat: repeatOption,
-        executionDateTime: executionDate,
-        executionEndDateTime: executionEndDate,
+        executionDateTime: executionDateTime,
+        executionEndDateTime: executionEndDateTime,
         percentDimming: Number(dimmingLevel),
         dayOfWeek: repeatOption === "once"
           ? []

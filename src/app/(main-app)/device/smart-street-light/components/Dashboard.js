@@ -4,7 +4,7 @@ import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import DeviceDetail from "./DeviceDetail";
-import MapTH from "./MapLeaflet";
+import MapTH from "./MapSmSt";
 import CreateIcon from '@mui/icons-material/Create';
 import {
   getDeviceListData, getDevicebyId, getHistoryGraphDataa, getEnergyHistoryGraphDataa, getSchedulebyid, putUpdateSchedule, DeviceControl
