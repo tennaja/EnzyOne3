@@ -416,6 +416,14 @@ const GetDeviceList = async (site, group) => {
   function transformTimeFormat(input) {
       return input.replace(/\((\+(\d+))\)/, (_, exp, num) => toSuperscript(exp));
   }
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+  
+    const date = new Date(dateString);
+    if (isNaN(date)) return '';
+  
+    return date.toISOString().replace(/-/g, '/').replace('T', ' ').slice(0, 19);
+  };
   return (
     <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
       <div>
@@ -572,8 +580,8 @@ const GetDeviceList = async (site, group) => {
   <div className="flex flex-col items-end">
   {schedule?.repeat === "once" ? (
   <>
-    <span>Start: {schedule?.executionDateTime}</span>
-    <span>Stop: {schedule?.executionEndDateTime}</span>
+    <span>Start: {formatDate(schedule?.executionDateTime)}</span>
+    <span>Stop: {formatDate(schedule?.executionEndDateTime)}</span>
   </>
 ) : (
   <>

@@ -549,9 +549,30 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   }, [endDate, startDate]);
 
   useEffect(() => {
-    // Reset all keys in the sortConfig when deviceData changes
-    setSortConfig({}); // Clear the sortConfig object completely
-  }, [deviceData]); // This will trigger when deviceData changes
+    setSortConfig({}); 
+  }, [deviceData]); 
+
+  function toSuperscript(num) {
+    const superscripts = {
+        '0': '⁰', '1': '¹', '2': '²', '3': '³',
+        '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷',
+        '8': '⁸', '9': '⁹', '+': '⁺'
+    };
+    return num.split('').map(char => superscripts[char] || char).join('');
+}
+
+function transformTimeFormat(input) {
+    return input.replace(/\((\+(\d+))\)/, (_, exp, num) => toSuperscript(exp));
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date)) return '';
+
+  return date.toISOString().replace(/-/g, '/').replace('T', ' ').slice(0, 19);
+};
   return (
     <>
 
@@ -607,7 +628,26 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
                           <td className="py-2 px-4">
                             <div className="font-bold text-gray-900 dark:text-white">{schedule.name}</div>
                             <div className="font-bold text-gray-900 dark:text-white">{schedule.percentDimming}% Dimming</div>
-                            <div className="font-bold text-gray-900 dark:text-white">{schedule.startTime} - {schedule.endTime}</div>
+                            <div className="font-bold text-gray-900 dark:text-white">
+                            <div className="flex flex-col">
+  {schedule?.repeat === "once" ? (
+  <>
+    <span>Start: {formatDate(schedule?.executionDateTime)}</span>
+    <span>Stop: {formatDate(schedule?.executionEndDateTime)}</span>
+  </>
+) : (
+  <>
+    <span>{schedule?.customDate}</span>
+    <span>
+      {schedule?.startTime && schedule?.endTime
+        ? `${schedule.startTime} - ${transformTimeFormat(schedule.endTime)}`
+        : "ยังไม่ได้กำหนด"}
+    </span>
+  </>
+)}
+
+  </div>
+                            </div>
                             <div className="text-xs text-gray-600 dark:text-gray-400">{schedule.repeat}</div>
                           </td>
 
@@ -856,7 +896,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
                                 </span>
                               </td>
                               <td className="px-2 py-1 text-right dark:text-white">{highlightText(record.percentDimming)}</td>
-                              <td className="px-2 py-2 text-right text-balance dark:text-white">{highlightText(record.lastUpdated)}</td>
+                              <td className="px-2 py-2 text-right text-balance dark:text-white">{highlightText(formatDate(record.lastUpdated))}</td>
                             </tr>
                           );
                         })

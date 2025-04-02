@@ -264,6 +264,18 @@ const sortedData = useMemo(() => {
     // Reset all keys in the sortConfig when deviceData changes
     setSortConfig({}); // Clear the sortConfig object completely
   }, [devcielist]); // This will trigger when deviceData changes
+  
+  // utils/formatDate.js
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+  
+    const date = new Date(dateString);
+    if (isNaN(date)) return '';
+  
+    return date.toISOString().replace(/-/g, '/').replace('T', ' ').slice(0, 19);
+  };
+
   return (
     
     <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
@@ -435,7 +447,7 @@ const sortedData = useMemo(() => {
           {device.status}
         </button>
       </td>
-      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white text-right">{device.lastUpdated}</td>
+      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white text-right">{formatDate(device.lastUpdated)}</td>
     </tr>
   ))}
 </tbody>
