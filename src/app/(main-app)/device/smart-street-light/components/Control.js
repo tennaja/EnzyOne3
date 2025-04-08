@@ -277,6 +277,7 @@ const toggleDevice = (id) => {
   useEffect(() => {
     // Reset all keys in the sortConfig when deviceData changes
     setSortConfig({}); // Clear the sortConfig object completely
+    setSelecteddeviceData([]); // Clear selected deviceData
   }, [devcielist]); // This will trigger when deviceData changes
   
 

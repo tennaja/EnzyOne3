@@ -26,9 +26,9 @@ const aggregateData = (data, key) => {
   return data.reduce((acc, cur) => {
     const existing = acc.find((item) => item[key] === cur[key]);
     if (existing) {
-      existing.kw += cur.kw;
+      existing.kwh += cur.kwh;
     } else {
-      acc.push({ [key]: cur[key], kw: cur.kw });
+      acc.push({ [key]: cur[key], kwh: cur.kwh });
     }
     return acc;
   }, []);
@@ -36,9 +36,10 @@ const aggregateData = (data, key) => {
 
 const BarChartComponent = ({ data, type = "hour" }) => {
   const [barProps, setBarProps] = useState({
-    kw: true,
+    kwh: true,
     hover: null,
   });
+  console.log("BarChartComponent", data);
 
   const [zoomDomain, setZoomDomain] = useState(null);
   const [refAreaLeft, setRefAreaLeft] = useState(null);
@@ -50,18 +51,19 @@ const BarChartComponent = ({ data, type = "hour" }) => {
     setChartKey((prevKey) => prevKey + 1); // บังคับให้ BarChart วาดใหม่
   }, [data]);
 
-  if (!data?.timestamp || !data?.kw || data.timestamp.length !== data.kw.length) {
+  if (!data?.timestamp || !data?.kwh || data.timestamp.length !== data.kwh.length) {
     return <p>ไม่มีข้อมูลสำหรับแสดงผล</p>;
   }
 
   const rawData = data.timestamp.map((time, index) => {
+    console.log("rawData", time, index);
     const date = new Date(time);
     return {
       fullTime: `${String(date.getDate()).padStart(2, "0")}-${getMonthAbbreviation(date)}-${date.getFullYear()} ${String(date.getHours()).padStart(2, "0")}:00`,
       day: `${getDayAbbreviation(date)} ${String(date.getDate()).padStart(2, "0")}-${getMonthAbbreviation(date)}-${date.getFullYear()}`,
       month: `${getMonthAbbreviation(date)} ${date.getFullYear()}`,
       hour: `${String(date.getHours()).padStart(2, "0")}:00`,
-      kw: data.kw[index],
+      kwh: data.kwh[index],
     };
   });
 
@@ -150,8 +152,8 @@ const BarChartComponent = ({ data, type = "hour" }) => {
             onMouseOver={handleLegendMouseEnter}
             onMouseOut={handleLegendMouseLeave}
           />
-          {barProps.kw !== undefined && (
-            <Bar dataKey="kw" fill="#4bc0c0" name="kWh" opacity={barProps.hover === "kw" || !barProps.hover ? 1 : 0.6} hide={barProps.kw === false} />
+          {barProps.kwh !== undefined && (
+            <Bar dataKey="kwh" fill="#4bc0c0" name="kwhh" opacity={barProps.hover === "kwh" || !barProps.hover ? 1 : 0.6} hide={barProps.kwh === false} />
           )}
           {refAreaLeft && refAreaRight ? <ReferenceArea x1={refAreaLeft} x2={refAreaRight} strokeOpacity={0.3} fill="gray" /> : null}
         </BarChart>

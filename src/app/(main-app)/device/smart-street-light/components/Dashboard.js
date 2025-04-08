@@ -47,10 +47,10 @@ const todayFormatted = today.format('YYYY/MM/DD');
   const [sortConfig, setSortConfig] = useState({ key: "device", direction: "asc" });
   const [mapCenter, setMapCenter] = useState({ lat: 15.8700, lng: 100.9925 }); // เก็บค่าตำแหน่ง
   const [mapZoomLevel, setMapZoomLevel] = useState(15); // กำหนดค่า zoom เริ่มต้น
-  const [startDate, setStartDate] = useState(today);
-  const [endDate, setEndDate] = useState(today);
-  const [startDate2, setStartDate2] = useState(today);
-  const [endDate2, setEndDate2] = useState(today);
+  const [startDate, setStartDate] = useState(todayFormatted);
+  const [endDate, setEndDate] = useState(todayFormatted);
+  const [startDate2, setStartDate2] = useState(todayFormatted);
+  const [endDate2, setEndDate2] = useState(todayFormatted);
   const [timeUnit, setTimeUnit] = useState("hour");
   const [loading, setLoading] = useState(false);
   const [scheduleData, setScheduleData] = useState();
@@ -232,10 +232,10 @@ const filteredData = devcielist.filter((item) => {
   useEffect(() => {
     // Check if the active tab is 'dashboard'
     if (activeTab === "table") {
-      setStartDate(today)
-      setEndDate(today)
-      setStartDate2(today)
-      setEndDate2(today)
+      setStartDate(todayFormatted)
+      setEndDate(todayFormatted)
+      setStartDate2(todayFormatted)
+      setEndDate2(todayFormatted)
       setTimeUnit("hour")
       // FetchDevice();
       setSearchQuery("")
@@ -522,7 +522,7 @@ const maxEndDate = startDate2 ? getMaxEndDate(startDate2) : dayjs(); // ถ้�
     if (selectedDevice?.id) {
       GetEnergyHistoryGraph(selectedDevice.id);
     }
-  }, [endDate2, startDate2]);
+  }, [endDate2, startDate2,timeUnit]);
 
   const handleTimeUnitChange = (e) => {
 
@@ -562,6 +562,8 @@ const maxEndDate = startDate2 ? getMaxEndDate(startDate2) : dayjs(); // ถ้�
                   kW: loca.kW,
                   kWh: loca.kWh,
                   runningHour: loca.runningHour,
+                  groupName: loca.groupName,
+                  siteName: loca.siteName,
                   status: loca.status,
                   connection: loca.connection || "",
                   percentDimming: loca.percentDimming,
@@ -971,7 +973,7 @@ const maxEndDate = startDate2 ? getMaxEndDate(startDate2) : dayjs(); // ถ้�
   dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
   value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
   onChange={handleEndDateChange}
-  format="YYYY/MM/DD"
+  format="YYYY/MM/DD" // ใช้รูปแบบ YYYY/MM/DD
   min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null} // กำหนดวันที่เริ่มต้น
   max={maxEndDate1} // กำหนดวันที่สิ้นสุด
   disabledDate={(current) => {
@@ -979,7 +981,7 @@ const maxEndDate = startDate2 ? getMaxEndDate(startDate2) : dayjs(); // ถ้�
     return (
       current &&
       (current.isBefore(dayjs(startDate, "YYYY/MM/DD"), "day") || // น้อยกว่า startDate
-       current.isAfter(maxEndDate1, "day")) // มากกว่า maxEndDate1
+       current.isAfter(dayjs(maxEndDate1, "YYYY/MM/DD"), "day")) // มากกว่า maxEndDate1
     );
   }}
   allowClear={false}

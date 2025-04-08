@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -34,6 +34,7 @@ const MapTH = ({
   const prevSiteIdRef = useRef(SiteId);
   const prevGroupIdRef = useRef(GroupId);
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const [hoveredMarker, setHoveredMarker] = useState(null); // สถานะสำหรับ hover
 console.log(selectedLocation)
   useEffect(() => {
     if (!mapRef.current) return;
@@ -47,7 +48,7 @@ console.log(selectedLocation)
       const validLocations = locationList.filter(loca => loca.lat && loca.lng);
       if (validLocations.length > 0) {
         const bounds = L.latLngBounds(validLocations.map(loca => [loca.lat, loca.lng]));
-        mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 15, animate: true });
+        mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 16, animate: true });
       }
       setSelectedMarker(null);
     }
@@ -65,13 +66,18 @@ console.log(selectedLocation)
       const validLocations = locationList.filter((loca) => loca.lat && loca.lng);
       if (validLocations.length > 0) {
         const bounds = L.latLngBounds(validLocations.map((loca) => [loca.lat, loca.lng]));
-        mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 15, animate: true });
+        mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 16, animate: true });
       }
     }
   
     prevSiteIdRef.current = SiteId;
     prevGroupIdRef.current = GroupId;
   }, [SiteId, GroupId, locationList, setActiveTab]);
+
+  // รีเซ็ต hoveredMarker เมื่อ locationList หรือ selectedMarker เปลี่ยน
+  useEffect(() => {
+    setHoveredMarker(null);
+  }, [locationList, selectedMarker]);
 
   const getStatusColor = useCallback((status) => {
     switch (status) {
@@ -84,7 +90,7 @@ console.log(selectedLocation)
 
   const getMuiIcon = useMemo(() => (isSelected, status) => {
     const color = getStatusColor(status);
-    const size = isSelected ? 50 : 30;
+    const size = isSelected ? 50 : 30; // ขนาดหมุดจะเปลี่ยนเฉพาะเมื่อ selected เท่านั้น
     const anchor = isSelected ? [25, 50] : [15, 30];
 
     const iconHTML = ReactDOMServer.renderToString(
@@ -108,6 +114,17 @@ console.log(selectedLocation)
     },
     [setSelectedLocation, setActiveTab, onDeviceClick]
   );
+
+  const handleMarkerHover = useCallback(
+    (loca) => {
+      setHoveredMarker(loca); // ตั้งค่า marker ที่ hover
+    },
+    []
+  );
+
+  const handleMarkerOut = useCallback(() => {
+    setHoveredMarker(null); // ล้างค่า marker ที่ hover
+  }, []);
 
   const statusCount = useMemo(
     () =>
@@ -173,15 +190,31 @@ console.log(selectedLocation)
 
         {locationList.map((loca, index) => {
           const isSelected = selectedMarker?.lat === loca.lat && selectedMarker?.lng === loca.lng;
+          const isHovered = hoveredMarker?.lat === loca.lat && hoveredMarker?.lng === loca.lng;
 
           return (
             <Marker
               key={index}
               position={[loca.lat, loca.lng]}
               icon={getMuiIcon(isSelected, loca.status)}
-              eventHandlers={{ click: () => handleMarkerClick(loca) }}
+              zIndexOffset={isHovered ? 1000 : 0} // เพิ่ม zIndexOffset เมื่อ hover
+              eventHandlers={{
+                click: () => handleMarkerClick(loca),
+                mouseover: () => handleMarkerHover(loca), // เมื่อ hover
+                mouseout: handleMarkerOut, // เมื่อออกจาก hover
+              }}
               keepInView={false}
-            />
+            >
+              {/* เพิ่ม Tooltip เพื่อแสดงชื่อ */}
+              <Tooltip direction="top" offset={[0, -30]} opacity={1} permanent={false}>
+  <div>
+    <span className="font-bold">{loca.name}</span> {/* ชื่อจะแสดงในบรรทัดแรก */}
+  </div>
+  <div>
+    <span>{loca.siteName}</span> - <span>{loca.groupName}</span> {/* siteName และ groupName จะแสดงในบรรทัดที่สอง */}
+  </div>
+</Tooltip>
+            </Marker>
           );
         })}
       </MapContainer>

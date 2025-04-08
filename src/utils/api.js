@@ -1775,7 +1775,7 @@ export async function getEnergyHistoryGraphDataa(req) {
   
   try {
     const url =
-      `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/device/${deviceId}/history?groupBy=${groupBy}&endDate=${endDate}&startDate=${startDate}`;
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/smart-street-lights/device/${deviceId}/energy-history?groupBy=${groupBy}&endDate=${endDate}&startDate=${startDate}`;
     const res = await axios.get(url, {
       withCredentials: true,
       headers: { "Content-Type": "application/json" },
