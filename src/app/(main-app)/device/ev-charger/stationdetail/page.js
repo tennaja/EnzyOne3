@@ -2,31 +2,25 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import  MapTH  from "../MapSmSt";
+import  MapTH  from "../component/MapSmSt";
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import { getStationbyId } from "@/utils/api";
 
 
 const StationDetail = () => {
+ const router = useRouter();
   const [siteName, setSiteName] = useState('');
   const [station, setStation] = useState({});
   const [stationId, setStationId] = useState('');
   const [stationName, setStationName] = useState('');
-  const [breadcrumb, setBreadcrumb] = useState([]);
   const [mapZoomLevel, setMapZoomLevel] = useState(15);
   const [selectedLocation, setSelectedLocation] = useState(null); 
-  const [stationDropdwonlist, setStationDropdwonlist] = useState([]);
-  const router = useRouter();
 
-//   // Mock data for chargers
-//   const chargers = [
-//     { id: 'charger-1', name: 'Charger 1', status: 'Active' },
-//     { id: 'charger-2', name: 'Charger 2', status: 'Inactive' },
-//     { id: 'charger-3', name: 'Charger 3', status: 'Active' },
-//   ];
-
+  
   useEffect(() => {
     // ดึงข้อมูลจาก Local Storage
+    if (typeof window !== "undefined") {
+
     const storedSiteName = localStorage.getItem('siteName');
     const storedStationId = localStorage.getItem('stationId');
     const storedStationName = localStorage.getItem('stationName');
@@ -34,9 +28,12 @@ const StationDetail = () => {
     if (storedSiteName) setSiteName(storedSiteName);
     if (storedStationId) setStationId(storedStationId);
     if (storedStationName)setStationName(storedStationName)
-    GetStationbyId(storedStationId);
+    if (storedStationId) {
+        GetStationbyId(storedStationId);
+    }}
   }, []);
  
+
   const GetStationbyId = async (id) => {
     console.log("station Id:", id);
     try {

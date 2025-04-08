@@ -9,7 +9,7 @@ import { getDropdownSite, getDropdownStation,getStationList } from "@/utils/api"
 import { FaChargingStation } from "react-icons/fa";
 import { RiBatteryChargeLine } from "react-icons/ri";
 import { FaTriangleExclamation } from "react-icons/fa6";
-import MapTH  from "../MapSmSt";
+import MapTH  from "../component/MapSmSt";
 
 const Dashboard = () => {
   const pathname = usePathname(); // ดึง Path ปัจจุบันจาก Next.js App Router
@@ -111,44 +111,6 @@ const Dashboard = () => {
     }
   };
 
-  const sites = [
-    { id: "site-1", name: "All sites" },
-    { id: "site-2", name: "แม่ริม" },
-    { id: "site-3", name: "เวียงบัว" },
-  ];
-
-  const stations = [
-    {
-      id: "station-1",
-      name: "สถานีบริการน้ำมัน PT-1",
-      location: "Bangkok",
-      status: "Active",
-    },
-    {
-      id: "station-2",
-      name: "สถานีบริการน้ำมัน PT-2",
-      location: "Chiang Mai",
-      status: "Inactive",
-    },
-    {
-      id: "station-3",
-      name: "สถานีบริการน้ำมัน PT-3",
-      location: "Phuket",
-      status: "Active",
-    },
-    {
-      id: "station-4",
-      name: "สถานีบริการน้ำมัน PT-4",
-      location: "Bangkok",
-      status: "Active",
-    },
-    {
-      id: "station-5",
-      name: "สถานีบริการน้ำมัน PT-5",
-      location: "Chiang Mai",
-      status: "Inactive",
-    },
-  ];
   const data = [
     {
       title: "In-Use",
@@ -170,8 +132,9 @@ const Dashboard = () => {
     },
   ];
 
-  // โหลดค่าที่เก็บไว้ใน localStorage เมื่อหน้าโหลด
+  // // โหลดค่าที่เก็บไว้ใน localStorage เมื่อหน้าโหลด
   useEffect(() => {
+    if (typeof window !== "undefined") {
     const storedSite = localStorage.getItem("selectedSite"); // ดึงค่าจาก localStorage
 
     if (storedSite && siteDropdwonlist?.length > 0) {
@@ -187,7 +150,7 @@ const Dashboard = () => {
         getStationDropdown(matchedSite.id); // โหลด Station Dropdown ตาม Site ที่เลือกไว้
         console.log('DDDDDDDDDDD')
       }
-    }
+    }}
   }, [siteDropdwonlist]); // ทำงานเมื่อ siteDropdwonlist ถูกอัปเดต
 
   const handleSiteChange = (event) => {
