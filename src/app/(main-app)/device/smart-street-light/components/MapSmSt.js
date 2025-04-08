@@ -197,7 +197,7 @@ console.log(selectedLocation)
               key={index}
               position={[loca.lat, loca.lng]}
               icon={getMuiIcon(isSelected, loca.status)}
-              zIndexOffset={isHovered ? 1000 : 0} // เพิ่ม zIndexOffset เมื่อ hover
+              zIndexOffset={isSelected ? 2000 : isHovered ? 1000 : 0} // เพิ่ม zIndexOffset ให้หมุดที่ถูกเลือกอยู่ด้านหน้า
               eventHandlers={{
                 click: () => handleMarkerClick(loca),
                 mouseover: () => handleMarkerHover(loca), // เมื่อ hover
