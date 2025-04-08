@@ -9,7 +9,8 @@ import { getDropdownSite, getDropdownStation,getStationList } from "@/utils/api"
 import { FaChargingStation } from "react-icons/fa";
 import { RiBatteryChargeLine } from "react-icons/ri";
 import { FaTriangleExclamation } from "react-icons/fa6";
-import MapTH  from "../component/MapSmSt";
+import dynamic from "next/dynamic";
+const MapTH = dynamic(() => import("../component/MapSmSt"), { ssr: false })
 
 const Dashboard = () => {
   const pathname = usePathname(); // ดึง Path ปัจจุบันจาก Next.js App Router
@@ -152,6 +153,23 @@ const Dashboard = () => {
       }
     }}
   }, [siteDropdwonlist]); // ทำงานเมื่อ siteDropdwonlist ถูกอัปเดต
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedSite = localStorage.getItem("selectedSite");
+      if (storedSite && siteDropdwonlist?.length > 0) {
+        const matchedSite = siteDropdwonlist.find(
+          (site) => site.name === storedSite
+        );
+        if (matchedSite) {
+          setSiteid(matchedSite.id);
+          setSelectedSite(matchedSite.name);
+          setSiteName(matchedSite.name);
+          getStationDropdown(matchedSite.id);
+        }
+      }
+    }
+  }, [siteDropdwonlist]);
 
   const handleSiteChange = (event) => {
     const site = event.target.value;
@@ -352,24 +370,22 @@ const Dashboard = () => {
       <div className="flex flex-col lg:flex-row gap-3">
       <div className="w-full lg:w-[450px]">
         <div className="flex justify-center w-full h-[500px] justify-items-center overflow-hidden mt-10 mb-7">
-          <MapTH
-            locationList={stationList?.map((loca, index) => ({
-              id: loca.id,
-              name: loca.name,
-              status: loca.status,
-              lat: loca.latitude, // แปลงเป็นตัวเลข
-              lng: loca.longitude, // แปลงเป็นตัวเลข
-            }))}
-            className={"w-full h-[500px] justify-items-center"}
-            zoom={mapZoomLevel}
-            selectedLocation={selectedLocation} // ใช้ selectedLocation เพื่อแสดงตำแหน่งที่เลือก
-            // setSelectedLocation={setSelectedLocation}
-            // onDeviceClick={handleDeviceClick} // คลิกที่อุปกรณ์จะทำการ fetch ข้อมูลอุปกรณ์
-            // setActiveTab={setActiveTab}
-            // selectedStatus={selectedStatus} // ส่ง selectedStatus เข้าไปที่ MapTH
-            // SiteId={siteIdRef.current}
-            // GroupId={groupIdRef.current}
-          />
+        <MapTH
+  locationList={
+    Array.isArray(stationList)
+      ? stationList.map((loca) => ({
+          id: loca.id,
+          name: loca.name,
+          status: loca.status,
+          lat: loca.latitude,
+          lng: loca.longitude,
+        }))
+      : []
+  }
+  className={"w-full h-[500px] justify-items-center"}
+  zoom={mapZoomLevel}
+  selectedLocation={selectedLocation}
+/>
         </div>
       </div>
 

@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import  MapTH  from "../component/MapSmSt";
+import dynamic from "next/dynamic";
+const MapTH = dynamic(() => import("../component/MapSmSt"), { ssr: false })
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import { getStationbyId } from "@/utils/api";
 
