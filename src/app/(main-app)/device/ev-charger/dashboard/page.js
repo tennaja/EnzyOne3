@@ -133,43 +133,43 @@ const Dashboard = () => {
     },
   ];
 
-  // // โหลดค่าที่เก็บไว้ใน localStorage เมื่อหน้าโหลด
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-    const storedSite = localStorage.getItem("selectedSite"); // ดึงค่าจาก localStorage
+  // // // โหลดค่าที่เก็บไว้ใน localStorage เมื่อหน้าโหลด
+  // useEffect(() => {
+  //   if (typeof window !== "undefined") {
+  //   const storedSite = localStorage.getItem("selectedSite"); // ดึงค่าจาก localStorage
 
-    if (storedSite && siteDropdwonlist?.length > 0) {
-      // ตรวจสอบว่า storedSite มีอยู่ใน siteDropdwonlist หรือไม่
-      const matchedSite = siteDropdwonlist.find(
-        (site) => site.name === storedSite
-      );
-      if (matchedSite) {
-        // ถ้าตรงกัน ให้ตั้งค่า siteid และ selectedSite
-        setSiteid(matchedSite.id);
-        setSelectedSite(matchedSite.name);
-        setSiteName(matchedSite.name);
-        getStationDropdown(matchedSite.id); // โหลด Station Dropdown ตาม Site ที่เลือกไว้
-        console.log('DDDDDDDDDDD')
-      }
-    }}
-  }, [siteDropdwonlist]); // ทำงานเมื่อ siteDropdwonlist ถูกอัปเดต
+  //   if (storedSite && siteDropdwonlist?.length > 0) {
+  //     // ตรวจสอบว่า storedSite มีอยู่ใน siteDropdwonlist หรือไม่
+  //     const matchedSite = siteDropdwonlist.find(
+  //       (site) => site.name === storedSite
+  //     );
+  //     if (matchedSite) {
+  //       // ถ้าตรงกัน ให้ตั้งค่า siteid และ selectedSite
+  //       setSiteid(matchedSite.id);
+  //       setSelectedSite(matchedSite.name);
+  //       setSiteName(matchedSite.name);
+  //       getStationDropdown(matchedSite.id); // โหลด Station Dropdown ตาม Site ที่เลือกไว้
+  //       console.log('DDDDDDDDDDD')
+  //     }
+  //   }}
+  // }, [siteDropdwonlist]); // ทำงานเมื่อ siteDropdwonlist ถูกอัปเดต
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedSite = localStorage.getItem("selectedSite");
-      if (storedSite && siteDropdwonlist?.length > 0) {
-        const matchedSite = siteDropdwonlist.find(
-          (site) => site.name === storedSite
-        );
-        if (matchedSite) {
-          setSiteid(matchedSite.id);
-          setSelectedSite(matchedSite.name);
-          setSiteName(matchedSite.name);
-          getStationDropdown(matchedSite.id);
-        }
-      }
-    }
-  }, [siteDropdwonlist]);
+  // useEffect(() => {
+  //   if (typeof window !== "undefined") {
+  //     const storedSite = localStorage.getItem("selectedSite");
+  //     if (storedSite && siteDropdwonlist?.length > 0) {
+  //       const matchedSite = siteDropdwonlist.find(
+  //         (site) => site.name === storedSite
+  //       );
+  //       if (matchedSite) {
+  //         setSiteid(matchedSite.id);
+  //         setSelectedSite(matchedSite.name);
+  //         setSiteName(matchedSite.name);
+  //         getStationDropdown(matchedSite.id);
+  //       }
+  //     }
+  //   }
+  // }, [siteDropdwonlist]);
 
   const handleSiteChange = (event) => {
     const site = event.target.value;

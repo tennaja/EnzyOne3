@@ -278,11 +278,13 @@ const SchedulePopup = forwardRef(
 
       try {
         await onSaveSchedule(param); // เรียก CreateSchedul() จากภายนอก
+        setSearchQuery('')
         console.log("✅ Schedule ถูกบันทึกสำเร็จ!");
       } catch (error) {
         console.error("❌ เกิดข้อผิดพลาดในการบันทึก Schedule:", error);
       }
     },
+    
     triggerUpdate: async () => {
       if (!scheduleData?.id) {
         console.error("❌ ไม่มี ID ของ Schedule ที่ต้องอัปเดต!");
@@ -321,6 +323,7 @@ const SchedulePopup = forwardRef(
   
       try {
         await onUpdateSchedule(scheduleData?.id,param);
+        setSearchQuery('')
         console.log("✅ Schedule ถูกอัปเดตสำเร็จ!");
       } catch (error) {
         console.error("❌ เกิดข้อผิดพลาดในการอัปเดต Schedule:", error);
@@ -701,7 +704,8 @@ const SchedulePopup = forwardRef(
               <button
   type="button"
   className="px-6 py-2 w-40 rounded-md border border-[#33BFBF] text-[#33BFBF]"
-  onClick={onClose}
+  onClick={() => (onClose(), setSearchQuery(''))}
+
 >
   Cancel
 </button>

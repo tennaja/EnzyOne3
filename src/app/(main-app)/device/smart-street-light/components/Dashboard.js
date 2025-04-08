@@ -29,7 +29,8 @@ import Loading from "./Loading";
 const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   const dispatch = useDispatch();
 
-  const today = dayjs().format('YYYY/MM/DD'); // จะได้ค่าเป็น string ในรูปแบบที่ต้องการ
+  const today = dayjs(); // ใช้สำหรับคำนวณและเปรียบเทียบ
+const todayFormatted = today.format('YYYY/MM/DD');
 
   const [activeTab, setActiveTab] = useState("table");
   const [devcielist, setDevicelist] = useState([]);
@@ -146,7 +147,7 @@ const filteredData = devcielist.filter((item) => {
   const query = searchQuery.toLowerCase();
   
   // รวม groupName และ siteName เพื่อค้นหาคำที่มีเครื่องหมาย '-'
-  const combinedName = `${groupName} - ${siteName}`.toLowerCase();
+  const combinedName = `${siteName} - ${groupName}`.toLowerCase();
 
   return (
     name?.includes(query) ||
@@ -367,93 +368,90 @@ const filteredData = devcielist.filter((item) => {
     setopenModalfail(false)
   }
 
-  // ฟังก์ชันสำหรับคำนวณ maxEndDate1 ตาม startDate หรือ endDate
   const getMaxEndDate1 = (selectedStartDate) => {
-    return selectedStartDate
-      ? dayjs(selectedStartDate).add(31, "day").isBefore(today)
-        ? dayjs(selectedStartDate).add(31, "day") // 31 วันหลัง startDate
-        : today // ใช้วันนี้ถ้าเกิน
-      : today; // ถ้าไม่มี startDate, ใช้วันนี้
+    if (!selectedStartDate) return dayjs(); // ถ้าไม่มี startDate, ใช้วันนี้
+  
+    const maxByStartDate = dayjs(selectedStartDate).add(31, "day");
+    return dayjs(Math.min(maxByStartDate.valueOf(), dayjs().valueOf())); // ใช้ valueOf() เพื่อแปลงเป็น timestamp แล้วใช้ Math.min
   };
+  
+ // ฟังก์ชันอัปเดต startDate
+const handleStartDateChange = (date, dateString) => {
+  if (!date) {
+    setStartDate(null);
+    return;
+  }
 
-  // ฟังก์ชันอัปเดต startDate
-  const handleStartDateChange = (date, dateString) => {
-    if (!date) {
-      setStartDate(null);
-      return;
-    }
+  setStartDate(dateString);
 
-    setStartDate(dateString);
+  // คำนวณ maxEndDate1 ใหม่ตาม startDate
+  const newMaxEndDate1 = getMaxEndDate1(dateString);
 
-    // ถ้า endDate มีอยู่แล้ว และเกิน 31 วันจาก startDate → อัปเดตใหม่
-    const newMaxEndDate1 = getMaxEndDate1(dateString);
-    if (endDate && dayjs(endDate).isAfter(newMaxEndDate1)) {
-      setEndDate(newMaxEndDate1.format("YYYY/MM/DD"));
-    }
-  };
+  // ถ้า endDate มีอยู่แล้ว และเกิน maxEndDate1 → อัปเดต endDate ใหม่
+  if (endDate && dayjs(endDate).isAfter(newMaxEndDate1)) {
+    setEndDate(newMaxEndDate1.format("YYYY/MM/DD"));
+  }
+};
 
-  // ฟังก์ชันอัปเดต endDate
-  const handleEndDateChange = (date, dateString) => {
-    if (!date) {
-      setEndDate(null);
-      return;
-    }
+// ฟังก์ชันอัปเดต endDate
+const handleEndDateChange = (date, dateString) => {
+  if (!date) {
+    setEndDate(null);
+    return;
+  }
 
-    setEndDate(dateString);
+  setEndDate(dateString);
 
-    // ถ้าเลือก endDate ก่อน startDate → อัปเดต startDate ให้เป็น 31 วันก่อนหน้า
-    if (!startDate) {
-      setStartDate(dayjs(date).subtract(31, "day").format("YYYY/MM/DD"));
-    }
-  };
+  // ถ้าเลือก endDate ก่อน startDate → อัปเดต startDate ให้เป็น 31 วันก่อนหน้า
+  if (!startDate) {
+    setStartDate(dayjs(date).subtract(31, "day").format("YYYY/MM/DD"));
+  }
+};
 
-  // คำนวณ maxEndDate1 ตาม startDate
-  const maxEndDate1 = getMaxEndDate1(startDate);
-
-
-  const getMaxEndDate = (selectedStartDate) => {
-    return selectedStartDate
-      ? dayjs(selectedStartDate).add(365, "day").isBefore(today)
-        ? dayjs(selectedStartDate).add(365, "day")
-        : today
-      : today;
-  };
-  // คำนวณ maxEndDate ที่ไม่เกิน 365 วันจาก startDate2 หรือวันนี้
-  const maxEndDate2 = startDate2
-    ? dayjs(startDate2).add(365, "day").isBefore(today)
-      ? dayjs(startDate2).add(365, "day") // 365 วันหลังจาก startDate2
-      : today // ใช้วันนี้ถ้า maxEndDate เกินวันนี้
-    : today; // ถ้าไม่มี startDate2, ใช้วันนี้เป็น max
-
-  // ฟังก์ชันอัปเดต startDate2
-  const handleStartDateChangeHistorical2 = (date, dateString) => {
-    if (!date) return;
-
-    setStartDate2(dateString);
-
-    // ถ้า endDate2 มีอยู่แล้ว และเกิน 365 วันจาก startDate2 → อัปเดตใหม่
-    const newMaxEndDate = getMaxEndDate(dateString);
-    if (endDate2 && dayjs(endDate2).isAfter(newMaxEndDate)) {
-      setEndDate2(newMaxEndDate.format("YYYY/MM/DD"));
-    }
-  };
-
-  // ฟังก์ชันอัปเดต endDate2
-  const handleEndDateChangeHistorical2 = (date, dateString) => {
-    if (!date) return;
-
-    setEndDate2(dateString);
-
-    // ถ้าเลือก endDate2 ก่อน startDate2 → จำกัด startDate2 ไม่ให้เกิน 365 วันก่อนหน้า
-    if (!startDate2) {
-      setStartDate2(dayjs(date).subtract(365, "day").format("YYYY/MM/DD"));
-    }
-  };
-
-  // คำนวณ maxEndDate ตาม startDate2
-  const maxEndDate = getMaxEndDate(startDate2);
+// คำนวณ maxEndDate1 ตาม startDate
+const maxEndDate1 = getMaxEndDate1(startDate);
 
 
+
+// ฟังก์ชันคำนวณ maxEndDate ที่ไม่เกิน 365 วันจาก startDate2 หรือวันนี้
+const getMaxEndDate = (startDate2) => {
+  const today = dayjs(); // วันปัจจุบัน
+  const maxByStartDate2 = dayjs(startDate2).add(365, "day"); // 365 วันหลังจาก startDate2
+
+  // ใช้ Math.min เพื่อเลือกค่าน้อยที่สุดระหว่าง maxByStartDate2 หรือวันนี้
+  const maxDate = Math.min(maxByStartDate2.valueOf(), today.valueOf()); // ใช้ valueOf() เพื่อแปลงเป็น timestamp
+  return dayjs(maxDate); // แปลง timestamp กลับเป็น dayjs object
+};
+
+// ฟังก์ชันอัปเดต startDate2
+const handleStartDateChangeHistorical2 = (date, dateString) => {
+  if (!date) return;
+
+  setStartDate2(dateString);
+
+  // คำนวณ maxEndDate ใหม่จาก startDate2
+  const newMaxEndDate = getMaxEndDate(dateString);
+
+  // ถ้า endDate2 มีอยู่แล้ว และเกิน maxEndDate → อัปเดตใหม่
+  if (endDate2 && dayjs(endDate2).isAfter(newMaxEndDate)) {
+    setEndDate2(newMaxEndDate.format("YYYY/MM/DD"));
+  }
+};
+
+// ฟังก์ชันอัปเดต endDate2
+const handleEndDateChangeHistorical2 = (date, dateString) => {
+  if (!date) return;
+
+  setEndDate2(dateString);
+
+  // ถ้าเลือก endDate2 ก่อน startDate2 → จำกัด startDate2 ไม่ให้เกิน 365 วันก่อนหน้า
+  if (!startDate2) {
+    setStartDate2(dayjs(date).subtract(365, "day").format("YYYY/MM/DD"));
+  }
+};
+
+// คำนวณ maxEndDate ตาม startDate2
+const maxEndDate = getMaxEndDate(startDate2); // ใช้ฟังก์ชัน getMaxEndDate เพื่อคำนวณ maxEndDate
 
   const notifySuccess = (title, message) =>
     toast.success(
@@ -863,7 +861,7 @@ const filteredData = devcielist.filter((item) => {
                                   {highlightText(record.name)} {/* Highlight the search term */}
                                 </div>
                                 <div className="flex dark:text-white space-x-2">
-  <div>{highlightText(`${record.groupName} - ${record.siteName}`)}</div>
+  <div>{highlightText(`${record.siteName} - ${record.groupName}`)}</div>
 </div>
 
 
@@ -970,19 +968,23 @@ const filteredData = devcielist.filter((item) => {
 
                 {/* DatePicker สำหรับ End Date */}
                 <DatePicker
-                  className="w-60 p-2 bg-white border shadow-default 
+                className="w-60 p-2 bg-white border shadow-default 
         dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
-                  value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
-                  onChange={handleEndDateChange}
-                  format="YYYY/MM/DD"
-                  min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null} // min = startDate
-                  max={maxEndDate1} // max = 31 วันหลัง startDate หรือวันนี้
-                  disabledDate={(current) =>
-                    current &&
-                    (current < dayjs(startDate, "YYYY/MM/DD") || current > maxEndDate1)
-                  }
-                  allowClear={false}
-                />
+  value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
+  onChange={handleEndDateChange}
+  format="YYYY/MM/DD"
+  min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
+  max={maxEndDate1}
+  disabledDate={(current) =>
+    current &&
+    (
+      current < dayjs(startDate, "YYYY/MM/DD") || // น้อยกว่า startDate
+      current > maxEndDate1 // มากกว่า 31 วันหลัง startDate หรือวันนี้
+    )
+  }
+  allowClear={false}
+/>
+
 
               </div>
               <div className="mt-5">
@@ -1016,7 +1018,7 @@ const filteredData = devcielist.filter((item) => {
                   onChange={handleEndDateChangeHistorical2}
                   format="YYYY/MM/DD"
                   min={startDate2 ? dayjs(startDate2, "YYYY/MM/DD") : null} // min = startDate2
-                  max={maxEndDate2} // max = 365 วันหลังจาก startDate2 หรือวันนี้
+                  max={maxEndDate} // max = 365 วันหลังจาก startDate2 หรือวันนี้
                   disabledDate={(current) =>
                     current && (current < dayjs(startDate2, "YYYY/MM/DD") || current > maxEndDate)
                   }

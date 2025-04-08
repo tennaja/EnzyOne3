@@ -42,14 +42,6 @@ console.log(selectedLocation)
 
     mapRef.current.invalidateSize();
 
-    if (
-      selectedLocation &&
-      typeof selectedLocation.lat === 'number' &&
-      typeof selectedLocation.lng === 'number'
-    ) {
-      setSelectedMarker(selectedLocation);
-      mapRef.current.setView([selectedLocation.lat, selectedLocation.lng], 18, { animate: true });
-    }
     if (selectedLocation) {
       setSelectedMarker(selectedLocation);
       mapRef.current.setView([selectedLocation.lat, selectedLocation.lng], 18, { animate: true });
