@@ -21,6 +21,7 @@ import {
   setGroupId,
   clearAll,
 } from "@/redux/slicer/smartstreetlightSlice";
+import Select from 'react-select';
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -127,6 +128,28 @@ const Header = () => {
     console.log(groupid);
     setGroupid(groupid);
   };
+
+  const optionsSite = Array.isArray(sitelist) ? sitelist
+    .filter(
+      (item) => !(activeTab === "schedule" && item.name === "All sites")
+    )
+    .map((item) => ({
+      value: item.id ?? "0",
+      label: item.name
+    })) : [];
+
+    const optionsGroup = Array.isArray(grouplist) ? grouplist
+  .filter(
+    (item) => !(activeTab === "schedule" && item.name === "All groups")
+  )
+  .map((item) => ({
+    value: item.id ?? "0",
+    label: item.siteName ? `${item.siteName} - ${item.name}` : item.name,
+
+    // หรือถ้าต้องการรวมใน value ก็สามารถทำได้:
+    // value: `${item.id}-${selectsitename}`,
+  })) : [];
+
 
   const renderContent = () => {
     switch (activeTab) {
@@ -306,68 +329,79 @@ const Header = () => {
       </div>
 
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
-        <div className="flex gap-5">
-          <div>
-            <span className="text-sm">Site: </span>
-            <select
-              className="w-44 border border-slate-300 mx-2 rounded-md h-9"
-              onChange={(event) => {
-                const selectedValue = event.target.value || "0"; // ถ้าเป็น null หรือ undefined ให้ใช้ "0"
-                setSelectedSiteId(selectedValue); // เก็บค่า siteId ใน Redux
-                getGroupList(selectedValue);
-                setSelectedSiteName(
-                  event.target.selectedOptions[0]?.text || ""
-                ); // ป้องกัน undefined
-              }}
-              value={siteid ?? "0"} // ถ้า siteid เป็น null ให้ใช้ "0"
-            >
-              {sitelist
-                ?.filter(
-                  (item) =>
-                    !(activeTab === "schedule" && item.name === "All sites")
-                )
-                .map((item) => (
-                  <option key={item.id} value={item.id ?? "0"}>
-                    {item.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-          <div>
-            <span className="text-sm">Groups: </span>
-            <select
-              className="w-44 border border-slate-300 mx-2 rounded-md h-9"
-              onChange={(event) => {
-                const selectedValue = event.target.value || "0"; // ถ้าเป็น null หรือ undefined ให้ใช้ "0"
-                setSelectedGroupId(selectedValue); // เก็บค่า groupId ใน Redux
-                Groupchange(selectedValue);
-                setSelectedGroupName(
-                  event.target.selectedOptions[0]?.text || ""
-                ); // ป้องกัน undefined
-              }}
-              value={groupid ?? "0"} // ถ้า groupid เป็น null ให้ใช้ "0"
-            >
-              {grouplist
-                ?.filter(
-                  (item) =>
-                    !(activeTab === "schedule" && item.name === "All groups")
-                )
-                .map((item) => (
-                  <option key={item.id} value={item.id ?? "0"}>
-                    {item.name}
-                  </option>
-                ))}
-            </select>
-          </div>
+      <div className="flex gap-5 items-center">
+  <div className="flex items-center gap-2">
+    <span className="text-sm">Site:</span>
+    <Select
+    className="w-44"
+      options={optionsSite}
+      isSearchable={true}
+      value={optionsSite.find(option => option.value === siteid) || optionsSite[0] || null}
+      onChange={(selectedOption) => {
+        const selectedValue = selectedOption?.value || "0";
+        setSelectedSiteId(selectedValue);
+        getGroupList(selectedValue);
+        setSelectedSiteName(selectedOption?.label || "");
+      }}
+      styles={{
+        control: (provided) => ({
+          ...provided,
+          height: '2.25rem',
+          borderColor: 'rgb(203 213 225)',
+          borderRadius: '0.375rem',
+          zIndex: 10,  // เพิ่ม z-index ที่ control
+        }),
+        menu: (provided) => ({
+          ...provided,
+          zIndex: 9999,  // เพิ่ม z-index ที่เมนูเลือก
+          position: 'absolute',  // ตั้ง position เป็น absolute
+        }),
+      }}
+    />
+  </div>
 
-          <button
-            type="button"
-            className="text-white bg-[#33BFBF] rounded-md text-lg px-10 h-9"
-            onClick={handleSearch}
-          >
-            Search
-          </button>
-        </div>
+  <div className="flex items-center gap-2">
+    <span className="text-sm">Groups:</span>
+    <Select
+      className="w-60"
+      options={optionsGroup}
+      isSearchable={true}
+      value={optionsGroup.find(option => option.value === groupid) || optionsGroup[0] || null}
+      onChange={(selectedOption) => {
+        const selectedValue = selectedOption?.value || "0";
+        setSelectedGroupId(selectedValue);
+        Groupchange(selectedValue);
+        setSelectedGroupName(
+          selectedOption?.label?.includes(" - ") ? selectedOption.label.split(" - ")[1] : selectedOption?.label || ""
+        );
+        
+      }}
+      styles={{
+        control: (provided) => ({
+          ...provided,
+          height: '2.25rem',
+          borderColor: 'rgb(203 213 225)',
+          borderRadius: '0.375rem',
+          zIndex: 10,  // เพิ่ม z-index ที่ control
+        }),
+        menu: (provided) => ({
+          ...provided,
+          zIndex: 9999,  // เพิ่ม z-index ที่เมนูเลือก
+          position: 'absolute',  // ตั้ง position เป็น absolute
+        }),
+      }}
+    />
+  </div>
+
+  <button
+    type="button"
+    className="text-white bg-[#33BFBF] rounded-md text-lg px-10 h-9"
+    onClick={handleSearch}
+  >
+    Search
+  </button>
+</div>
+
       </div>
 
       {renderContent()}
@@ -376,3 +410,4 @@ const Header = () => {
 };
 
 export default Header;
+

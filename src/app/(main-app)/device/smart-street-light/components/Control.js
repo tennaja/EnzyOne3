@@ -162,17 +162,30 @@ export default function DeviceControlPage({FetchDevice,Sitename,Groupname}) {
           setopenModalsuccess(false)
           setopenModalfail(false)
         }
-  const filtereddeviceData = devcielist.filter(item =>
-    item.name?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.kW?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.kWh?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.percentDimming?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.runningHour?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.status?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.lastUpdated?.toString().toLowerCase().includes(searchTerm.toLowerCase()) || 
-    item.groupName?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-  );
+        
+      
+        const filtereddeviceData = devcielist.filter(item => {
+         
+          
+          const search = searchTerm.toLowerCase();
+          const isNumberSearch = !isNaN(searchTerm); // ตรวจสอบว่าคำค้นหาเป็นตัวเลขหรือไม่
+      
+          return (
+              item.name?.toString().toLowerCase().includes(search) ||
+              (isNumberSearch ? item.kW === Number(searchTerm) : item.kW?.toString().toLowerCase().includes(search)) ||
+              (isNumberSearch ? item.kWh === Number(searchTerm) : item.kWh?.toString().toLowerCase().includes(search)) ||
+              (isNumberSearch ? item.percentDimming === Number(searchTerm) : item.percentDimming?.toString().toLowerCase().includes(search)) ||
+              (isNumberSearch ? item.runningHour === Number(searchTerm) : item.runningHour?.toString().toLowerCase().includes(search)) ||
+              item.status?.toString().toLowerCase().includes(search) ||
+              item.lastUpdated?.toString().toLowerCase().includes(search) ||
+              item.groupName?.toString().toLowerCase().includes(search) ||
+              item.description?.toString().toLowerCase().includes(search) ||
+              item.siteName?.toString().toLowerCase().includes(search)
+          );
+      });
+      
+      
+      
 
     useEffect(() => {
       // รีเซ็ต sortConfig เมื่อ devcielist เปลี่ยนแปลง
@@ -201,16 +214,17 @@ const toggleSelectAll = () => {
 };
 
 
-const sortedData = useMemo(() => {
-  if (isSortingDisabled.current) return filtereddeviceData; // ถ้า isSortingDisabled เป็น true ให้ข้ามการ sort
-
-  return [...filtereddeviceData].sort((a, b) => {
-    if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === "asc" ? -1 : 1;
-    if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === "asc" ? 1 : -1;
-    return 0;
-  });
-}, [filtereddeviceData, sortConfig]);
-  const toggleDevice = (id) => {
+ const sortedData = useMemo(() => {
+    const sorted = [...filtereddeviceData];
+    sorted.sort((a, b) => {
+      if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === "asc" ? -1 : 1;
+      if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }, [filtereddeviceData, sortConfig]);
+  
+const toggleDevice = (id) => {
     setSelecteddeviceData((prev) => {
       const updateddeviceData = prev.includes(id)
         ? prev.filter((deviceId) => deviceId !== id)
@@ -265,17 +279,9 @@ const sortedData = useMemo(() => {
     setSortConfig({}); // Clear the sortConfig object completely
   }, [devcielist]); // This will trigger when deviceData changes
   
-  // utils/formatDate.js
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-  
-    const date = new Date(dateString);
-    if (isNaN(date)) return '';
-  
-    return date.toISOString().replace(/-/g, '/').replace('T', ' ').slice(0, 19);
-  };
 
+ 
   return (
     
     <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
@@ -286,7 +292,7 @@ const sortedData = useMemo(() => {
       
     </div>
     <div className="max-w-full flex flex-col lg:flex-row">
-      <div className="lg:w-1/2 w-full  border-r p-2">
+      <div className="lg:w-3/4 w-full  border-r p-2">
       
       <div className="flex items-center justify-between mb-3">
   <h2 className="text-sm font-semibold">{devcielist?.length} Devices</h2>
@@ -354,6 +360,24 @@ const sortedData = useMemo(() => {
           />
         </div>
       </th>
+      <th className="py-2 px-4 text-left" onClick={() => handleSort("siteName")}>Site
+        <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
+          <ArrowDropUpIcon
+            style={{
+              fontSize: "14px",
+              opacity: sortConfig.key === "siteName" && sortConfig.direction === "asc" ? 1 : 0.3,
+              marginBottom: "-2px",
+            }}
+          />
+          <ArrowDropDownIcon
+            style={{
+              fontSize: "14px",
+              opacity: sortConfig.key === "siteName" && sortConfig.direction === "desc" ? 1 : 0.3,
+              marginTop: "-2px",
+            }}
+          />
+        </div>
+      </th>
       <th className="py-2 px-4 text-left" onClick={() => handleSort("groupName")}>Group
         <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
           <ArrowDropUpIcon
@@ -372,7 +396,7 @@ const sortedData = useMemo(() => {
           />
         </div>
       </th>
-      <th className="py-2 px-4 text-left" onClick={() => handleSort("status")}>Status
+      <th className="py-2 px-4 text-center" onClick={() => handleSort("status")}>Status
         <div style={{ display: "inline-flex", flexDirection: "column", marginLeft: "4px" }}>
           <ArrowDropUpIcon
             style={{
@@ -416,7 +440,19 @@ const sortedData = useMemo(() => {
     <tr>
       <td colSpan="7" className="px-2 py-4 text-center text-gray-500 dark:text-gray-400">Device not found</td>
     </tr>
-  ) : currentdeviceData.map((device, index) => (
+  ) : currentdeviceData.map((device, index) => {
+     // Function to highlight the search query
+     const highlightText = (text) => {
+      if (!text || !searchTerm) return text;
+      const textString = String(text); // Convert to string if it's not already a string
+      const parts = textString.split(new RegExp(`(${searchTerm})`, 'gi')); // Split by search query, keeping it in the result
+      return parts.map((part, i) =>
+        part.toLowerCase() === searchTerm.toLowerCase() ?
+          <span key={i} className="bg-yellow-300 dark:bg-yellow-300">{part}</span> :
+          part
+      );
+    }; 
+    return (
     <tr
       key={device.id}
       className={`border-b ${index % 2 === 0 ? 'bg-gray-100 dark:bg-gray-900' : 'bg-white dark:bg-gray-800'} ${device.status === 'offline' ? 'pointer-events-none opacity-50' : ''}`}
@@ -429,10 +465,11 @@ const sortedData = useMemo(() => {
           disabled={device.status === 'offline'}
         />
       </td>
-      <td className="py-2 px-4 dark:text-white">{device.name}</td>
-      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white">{device.description}</td>
-      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white">{device.groupName}</td>
-      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white">
+      <td className="py-2 px-4 dark:text-white">{highlightText(device.name)}</td>
+      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white">{highlightText(device.description)}</td>
+      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white">{highlightText(device.siteName)}</td>
+      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white">{highlightText(device.groupName)}</td>
+      <td className="py-2 px-4 text-sm text-center text-gray-600 dark:text-white">
         <button
           onClick={() => toggleStatus(device.id)}
           className={`px-3 py-1 text-sm font-bold ${
@@ -444,12 +481,12 @@ const sortedData = useMemo(() => {
           }`}
           disabled={device.status === "offline"}
         >
-          {device.status}
+          {highlightText(device.status)}
         </button>
       </td>
-      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white text-right">{formatDate(device.lastUpdated)}</td>
-    </tr>
-  ))}
+      <td className="py-2 px-4 text-sm text-gray-600 dark:text-white text-right">{highlightText(device.lastUpdated)}</td>
+    </tr> );
+})}
 </tbody>
 
 

@@ -130,14 +130,7 @@ const DeviceDetail = forwardRef (
         setopenModalsuccess(false)
         setopenModalfail(false)
       }
-      const formatDate = (dateString) => {
-        if (!dateString) return '';
       
-        const date = new Date(dateString);
-        if (isNaN(date)) return '';
-      
-        return date.toISOString().replace(/-/g, '/').replace('T', ' ').slice(0, 19);
-      };
   return (
     <div>
       <div className="flex items-center justify-start gap-4 w-full">
@@ -206,7 +199,7 @@ const DeviceDetail = forwardRef (
           </tr>
           <tr className="text-xs  border-b border-gray-200">
             <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white"><strong>Last Updated</strong></td>
-            <td className="px-4 py-2 font-bold">{formatDate(device?.lastUpdated)}</td>
+            <td className="px-4 py-2 font-bold">{device?.lastUpdated}</td>
           </tr>
         </tbody>
       </table>

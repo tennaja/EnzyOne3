@@ -29,7 +29,8 @@ import Loading from "./Loading";
 const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   const dispatch = useDispatch();
 
-  const today = dayjs(); // เก็บค่าของวันนี้ใน format ใหม่
+  const today = dayjs().format('YYYY/MM/DD'); // จะได้ค่าเป็น string ในรูปแบบที่ต้องการ
+
   const [activeTab, setActiveTab] = useState("table");
   const [devcielist, setDevicelist] = useState([]);
   const [selectedDevice, setSelectedDevice] = useState();
@@ -100,6 +101,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
     try {
       const result = await getDeviceListData(paramsNav);
       if (result?.data?.length > 0) {
+        console.log("Device List Result:", result.data);
         setDevicelist(result.data);
       } else {
         setDevicelist([]);
@@ -112,52 +114,54 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
       }
     }
   };
-
-
-  // const GetDeviceList = async () => {
-  //   const paramsNav = {
-  //     siteId: siteIdRef.current,
-  //     groupId: groupIdRef.current,
-  //   };
-
-  //   setLoading(true); // เริ่มโหลด
-  //   try {
-  //     const result = await getDeviceListData(paramsNav);
-  //     if (result?.data?.length > 0) {
-  //       setDevicelist(result.data); // อัปเดต state ด้วยข้อมูล
-  //     } else {
-  //       setDevicelist([]); // ตั้งค่าเป็น array ว่างหากไม่มีข้อมูล
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching device list:", error);
-  //   } finally {
-  //     setTimeout(() => setLoading(false), 3000); // หยุดโหลดหลังจาก 4 วินาที
-  //   }
-  // };
-
-  // ดึงค่าพิกัดจาก deviceData และสร้าง locationDataList
-  // const locationDataList = useMemo(() => {
-  //   return deviceData
-  //     .filter(device => device.lat && device.lng) // กรองเฉพาะที่มี lat, lng
-  //     .map(device => ({
-  //       lat: device.lat,
-  //       lng: device.lng
-  //     }));
-  // }, [deviceData]);
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
   };
 
-  const filteredData = devcielist.filter((item) =>
-    item.name?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.kW?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.kWh?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.percentDimming?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.runningHour?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.status?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.lastUpdated?.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.groupName?.toString().toLowerCase().includes(searchQuery.toLowerCase())
+  function toSuperscript(num) {
+    const superscripts = {
+        '0': '⁰', '1': '¹', '2': '²', '3': '³',
+        '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷',
+        '8': '⁸', '9': '⁹', '+': '⁺'
+    };
+    return num.split('').map(char => superscripts[char] || char).join('');
+}
+
+function transformTimeFormat(input) {
+    return input.replace(/\((\+(\d+))\)/, (_, exp, num) => toSuperscript(exp));
+}
+
+
+const filteredData = devcielist.filter((item) => {
+  const name = item.name?.toString().toLowerCase();
+  const kW = item.kW?.toString().toLowerCase();
+  const kWh = item.kWh?.toString().toLowerCase();
+  const percentDimming = item.percentDimming?.toString().toLowerCase();
+  const runningHour = item.runningHour?.toString().toLowerCase();
+  const status = item.status?.toString().toLowerCase();
+  const lastUpdated = item.lastUpdated?.toLowerCase();
+  const groupName = item.groupName?.toString().toLowerCase();
+  const siteName = item.siteName?.toString().toLowerCase();
+  
+  const query = searchQuery.toLowerCase();
+  
+  // รวม groupName และ siteName เพื่อค้นหาคำที่มีเครื่องหมาย '-'
+  const combinedName = `${groupName} - ${siteName}`.toLowerCase();
+
+  return (
+    name?.includes(query) ||
+    kW?.includes(query) ||
+    kWh?.includes(query) ||
+    percentDimming?.includes(query) ||
+    runningHour?.includes(query) ||
+    status?.includes(query) ||
+    lastUpdated?.includes(query) ||
+    combinedName.includes(query) // ค้นหาใน combinedName ที่รวมเครื่องหมาย '-'
   );
+});
+
+
+
 
 
   useEffect(() => {
@@ -236,18 +240,6 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
       setSearchQuery("")
     }
   }, [activeTab]);  // This will run whenever `activeTab` changes.
-
-
-  //   useEffect(() => {
-  //     const intervalId = setInterval(() => {
-  //         // ทำงานถ้ามีป๊อบอัพอันใดอันหนึ่งเปิดอยู่
-  //         if (!openModalSchedule &&  !openModalconfirm) {
-  //             FetchDevice();
-  //         }
-  //     }, 15000);
-
-  //     return () => clearInterval(intervalId);
-  // }, [openModalSchedule, openModalconfirm]);
 
   const GetHistoryGraph = async (id) => {
     const Param = {
@@ -552,27 +544,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
     setSortConfig({}); 
   }, [deviceData]); 
 
-  function toSuperscript(num) {
-    const superscripts = {
-        '0': '⁰', '1': '¹', '2': '²', '3': '³',
-        '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷',
-        '8': '⁸', '9': '⁹', '+': '⁺'
-    };
-    return num.split('').map(char => superscripts[char] || char).join('');
-}
-
-function transformTimeFormat(input) {
-    return input.replace(/\((\+(\d+))\)/, (_, exp, num) => toSuperscript(exp));
-}
-
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-
-  const date = new Date(dateString);
-  if (isNaN(date)) return '';
-
-  return date.toISOString().replace(/-/g, '/').replace('T', ' ').slice(0, 19);
-};
+ 
   return (
     <>
 
@@ -580,6 +552,7 @@ const formatDate = (dateString) => {
         <div>
           <span className="text-lg font-bold block mb-2">Device List</span>
           <p className="text-base mb-4">{Sitename} | {Groupname}</p>
+        
         </div>
 
         <div className="flex flex-col lg:flex-row gap-3">
@@ -600,13 +573,13 @@ const formatDate = (dateString) => {
                 }))}
                 className={"w-full h-[500px] justify-items-center"}
                 zoom={mapZoomLevel}
-                selectedLocation={selectedLocation} // ใช้ selectedLocation เพื่อแสดงตำแหน่งที่เลือก
-                setSelectedLocation={setSelectedLocation}
-                onDeviceClick={handleDeviceClick} // คลิกที่อุปกรณ์จะทำการ fetch ข้อมูลอุปกรณ์
-                setActiveTab={setActiveTab}
-                selectedStatus={selectedStatus} // ส่ง selectedStatus เข้าไปที่ MapTH
-                SiteId={siteIdRef.current}
-                GroupId={groupIdRef.current}
+            selectedLocation={selectedLocation} // ใช้ selectedLocation เพื่อแสดงตำแหน่งที่เลือก
+            setSelectedLocation={setSelectedLocation}
+            onDeviceClick={handleDeviceClick} // คลิกที่อุปกรณ์จะทำการ fetch ข้อมูลอุปกรณ์
+            setActiveTab={setActiveTab}
+            selectedStatus={selectedStatus} // ส่ง selectedStatus เข้าไปที่ MapTH
+            SiteId={siteIdRef.current}
+            GroupId={groupIdRef.current}
               />
 
 
@@ -632,8 +605,8 @@ const formatDate = (dateString) => {
                             <div className="flex flex-col">
   {schedule?.repeat === "once" ? (
   <>
-    <span>Start: {formatDate(schedule?.executionDateTime)}</span>
-    <span>Stop: {formatDate(schedule?.executionEndDateTime)}</span>
+    <span>Start: {schedule?.executionDateTime}</span>
+    <span>Stop: {schedule?.executionEndDateTime}</span>
   </>
 ) : (
   <>
@@ -710,7 +683,7 @@ const formatDate = (dateString) => {
                         </th>
 
                         <th
-                          className="px-2 py-1 text-center cursor-pointer"
+                          className="px-2 py-1 text-right cursor-pointer"
                           onClick={() => handleSort("kW")}
                         >
                           kW
@@ -733,7 +706,7 @@ const formatDate = (dateString) => {
                         </th>
 
                         <th
-                          className="px-2 py-1 text-center cursor-pointer"
+                          className="px-2 py-1 text-right cursor-pointer"
                           onClick={() => handleSort("kWh")}
                         >
                           kWh
@@ -756,7 +729,7 @@ const formatDate = (dateString) => {
                         </th>
 
                         <th
-                          className="px-2 py-1 text-center cursor-pointer"
+                          className="px-2 py-1 text-right cursor-pointer"
                           onClick={() => handleSort("runningHour")}
                         >
                           Running Hours
@@ -846,18 +819,29 @@ const formatDate = (dateString) => {
                         </tr>
                       ) : (
                         currentData.map((record, index) => {
-                          // Function to highlight the search query
                           const highlightText = (text) => {
-                            if (!text || !searchQuery) return text;
-                            const textString = String(text); // Convert to string if it's not already a string
-                            const parts = textString.split(new RegExp(`(${searchQuery})`, 'gi')); // Split by search query, keeping it in the result
-                            return parts.map((part, i) =>
-                              part.toLowerCase() === searchQuery.toLowerCase() ?
-                                <span key={i} className="bg-yellow-300 dark:bg-yellow-300">{part}</span> :
-                                part
-                            );
+                            if (!text || !searchQuery) return text; // ถ้าไม่มี searchQuery หรือไม่มีข้อความจะไม่ไฮไลต์
+                          
+                            const textString = String(text); // แปลงข้อความเป็น string หากยังไม่ใช่ string
+                          
+                            // ตรวจสอบว่า searchQuery มีอยู่ในข้อความหรือไม่
+                            if (!textString.toLowerCase().includes(searchQuery.toLowerCase())) {
+                              return textString; // ถ้าไม่มี searchQuery ในข้อความ ให้คืนค่าข้อความเดิม
+                            }
+                          
+                            // แยกข้อความด้วย searchQuery
+                            const parts = textString.split(new RegExp(`(${searchQuery})`, 'gi'));
+                          
+                            // วนลูปส่วนที่แยกออกมาและไฮไลต์เฉพาะ searchQuery
+                            return parts.map((part, i) => {
+                              if (part.toLowerCase() === searchQuery.toLowerCase()) {
+                                // ไฮไลต์เฉพาะส่วนที่ตรงกับ searchQuery
+                                return <span key={i} className="bg-yellow-300 dark:bg-yellow-300">{part}</span>;
+                              }
+                              return part; // คืนค่าข้อความส่วนที่เหลือโดยไม่ไฮไลต์
+                            });
                           };
-
+                          
                           return (
                             <tr
                               key={record.id}
@@ -878,11 +862,17 @@ const formatDate = (dateString) => {
                                 >
                                   {highlightText(record.name)} {/* Highlight the search term */}
                                 </div>
-                                <div className="dark:text-white">{highlightText(record.groupName)}</div>
+                                <div className="flex dark:text-white space-x-2">
+  <div>{highlightText(`${record.groupName} - ${record.siteName}`)}</div>
+</div>
+
+
+
+
                               </td>
-                              <td className="px-2 py-1 text-center dark:text-white">{highlightText(record.kW)}</td>
-                              <td className="px-2 py-1 text-center dark:text-white">{highlightText(record.kWh)}</td>
-                              <td className="px-2 py-1 text-center dark:text-white">{highlightText(record.runningHour)}</td>
+                              <td className="px-2 py-1 text-right dark:text-white">{highlightText(record.kW)}</td>
+                              <td className="px-2 py-1 text-right dark:text-white">{highlightText(record.kWh)}</td>
+                              <td className="px-2 py-1 text-right dark:text-white">{highlightText(record.runningHour)}</td>
                               <td className="px-2 py-1 text-center">
                                 <span
                                   className={`inline-block px-2 py-1 text-sm font-bold ${record.status === "on"
@@ -896,7 +886,7 @@ const formatDate = (dateString) => {
                                 </span>
                               </td>
                               <td className="px-2 py-1 text-right dark:text-white">{highlightText(record.percentDimming)}</td>
-                              <td className="px-2 py-2 text-right text-balance dark:text-white">{highlightText(formatDate(record.lastUpdated))}</td>
+                              <td className="px-2 py-2 text-right text-balance dark:text-white">{highlightText(record.lastUpdated)}</td>
                             </tr>
                           );
                         })
@@ -1015,6 +1005,7 @@ const formatDate = (dateString) => {
                   onChange={handleStartDateChangeHistorical2}
                   disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
                   format="YYYY/MM/DD"
+                  allowClear={false}
                 />
 
                 {/* DatePicker สำหรับ End Date */}
@@ -1029,6 +1020,7 @@ const formatDate = (dateString) => {
                   disabledDate={(current) =>
                     current && (current < dayjs(startDate2, "YYYY/MM/DD") || current > maxEndDate)
                   }
+                  allowClear={false}
                 />
 
 

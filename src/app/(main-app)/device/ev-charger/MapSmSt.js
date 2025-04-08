@@ -26,6 +26,7 @@ const MapTH = ({
   isCanZoom = true,
   onDeviceClick,
   setActiveTab,
+  selectedStatus,
   SiteId,
   GroupId,
   className = "w-[auto] h-500px] rounded-lg shadow-md overflow-hidden",
@@ -75,15 +76,14 @@ console.log(selectedLocation)
 
   const getStatusColor = useCallback((status) => {
     switch (status) {
-      case "on": return "#12B981";
-      case "offline": return "#FF3D4B";
-      case "off": return "#9DA8B9";
+      case "open": return "#12B981";
+      case "close": return "#FF3D4B";
       default: return "#000";
     }
   }, []);
 
   const getMuiIcon = useMemo(() => (isSelected, status) => {
-    const color = getStatusColor(status);
+    const color = isSelected && selectedStatus ? getStatusColor(selectedStatus) : getStatusColor(status);
     const size = isSelected ? 50 : 30;
     const anchor = isSelected ? [25, 50] : [15, 30];
 
@@ -97,7 +97,7 @@ console.log(selectedLocation)
       iconSize: [size, size],
       iconAnchor: anchor,
     });
-  }, [getStatusColor]);
+  }, [selectedStatus, getStatusColor]);
 
   const handleMarkerClick = useCallback(
     (loca) => {
@@ -116,7 +116,7 @@ console.log(selectedLocation)
           acc[loca.status] = (acc[loca.status] || 0) + 1;
           return acc;
         },
-        { on: 0, offline: 0, off: 0 }
+        { open: 0, close: 0 }
       ),
     [locationList]
   );
@@ -126,9 +126,8 @@ console.log(selectedLocation)
       {!selectedMarker && (
        <div className="absolute bottom-2 right-2 bg-white/90 p-2 rounded-md shadow-md z-[1000] flex flex-col gap-1">
        {[
-         { label: "on", labelColor: "bg-[#12B981]", countColor: "bg-[#c9e9dd]", count: statusCount.on },
-         { label: "off", labelColor: "bg-[#9DA8B9]", countColor: "bg-[#e1e5e9]", count: statusCount.off },
-         { label: "offline", labelColor: "bg-[#FF3D4B]", countColor: "bg-[#f8d1d4]", count: statusCount.offline },
+         { label: "open", labelColor: "bg-[#12B981]", countColor: "bg-[#c9e9dd]", count: statusCount.open },
+         { label: "close", labelColor: "bg-[#FF3D4B]", countColor: "bg-[#f8d1d4]", count: statusCount.close },
        ].map(({ label, labelColor, countColor, count }) => (
          <div key={label} className="flex items-center justify-between w-24">
            <div className="flex items-center gap-1">

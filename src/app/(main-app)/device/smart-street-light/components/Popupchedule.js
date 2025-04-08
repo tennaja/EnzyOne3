@@ -22,13 +22,19 @@ const SchedulePopup = forwardRef(
     },
     ref
   ) => {
-    const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
+
+  const now = new Date();
+
+  const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
   const [selectedDevices, setSelectedDevices] = useState([]);
   const [dimmingLevel, setDimmingLevel] = useState(scheduleData?.percentDimming || 10);
-  const [repeatOption, setRepeatOption] = useState(scheduleData?.repeat || "once");
-  const [startDatetime, setStartDatetime] = useState(scheduleData?.startTime || null);
+  const [repeatOption, setRepeatOption] = useState(scheduleData?.repeat || "please select");
+  
+  const [startDatetime, setStartDatetime] = useState(
+  scheduleData?.startTime || `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+ );
   const [endDatetime, setEndDatetime] = useState(
-    scheduleData?.endTime?.replace(/\s*\(\+\d+\)$/, "") || null
+    scheduleData?.endTime?.replace(/\s*\(\+\d+\)$/, "") || `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
   );  
   const [scheduleName, setScheduleName] = useState(scheduleData?.name || "");
  
@@ -75,16 +81,16 @@ const SchedulePopup = forwardRef(
       // แปลง executionDateTime และ startDatetime รวมกันใน setExecutionDateTime
       const executionDate = schedule?.executionDateTime?.split(" ")[0] || ""; // ดึงวันที่จาก executionDateTime และตัดเวลาออก
       const executionTime = schedule?.startTime || ""; // เวลาเริ่มต้น
-      setexecutionDateTime(executionDate ? `${executionDate} ${executionTime}` : ""); // รวมวันที่กับเวลา
+      setexecutionDateTime(executionDate ? `${executionDate} ${executionTime}` : `${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`); // รวมวันที่กับเวลา
   
       // แปลง executionEndDateTime และ startDatetime รวมกันใน setExecutionEndDateTime
       const endDate = schedule?.executionEndDateTime?.split(" ")[0] || ""; // ดึงวันที่จาก executionEndDateTime และตัดเวลาออก
       const endTime = schedule?.endTime || ""; // เวลาเริ่มต้น
-      setexecutionEndDateTime(endDate ? `${endDate} ${endTime}` : ""); // รวมวันที่กับเวลา
+      setexecutionEndDateTime(endDate ? `${endDate} ${endTime}` : `${now.getFullYear()}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`); // รวมวันที่กับเวลา
   
-      setStartDatetime(schedule?.startTime || null);
-      setEndDatetime(schedule?.endTime?.replace(/\s*\(\+\d+\)$/, "") || null);
-      setRepeatOption(schedule?.repeat || "once");
+      setStartDatetime(schedule?.startTime || `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
+      setEndDatetime(schedule?.endTime?.replace(/\s*\(\+\d+\)$/, "") || `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`);
+      setRepeatOption(schedule?.repeat || "please select");
       setDimmingLevel(schedule?.percentDimming || 10);
       setSelectedDevices(schedule?.scheduledDevices?.map(device => device.id) || []);
     
@@ -249,7 +255,7 @@ const SchedulePopup = forwardRef(
         executionDateTime: executionDateTime,
         executionEndDateTime: executionEndDateTime,
         percentDimming: Number(dimmingLevel),
-        dayOfWeek: repeatOption === "once"
+        dayOfWeek: repeatOption === "once" || repeatOption === "please select"
           ? []
           : Object.keys(selectedDays)
             .filter(day => selectedDays[day])
@@ -292,7 +298,7 @@ const SchedulePopup = forwardRef(
         executionDateTime: executionDateTime,
         executionEndDateTime: executionEndDateTime,
         percentDimming: Number(dimmingLevel),
-        dayOfWeek: repeatOption === "once"
+        dayOfWeek: repeatOption === "once" || repeatOption === "please select"
           ? []
           : Object.keys(selectedDays)
             .filter(day => selectedDays[day])
@@ -433,7 +439,18 @@ const SchedulePopup = forwardRef(
                 <div className="overflow-auto h-full">
                   <table className="w-full text-sm border-collapse">
                     <tbody>
-                      {sortedDevices?.map((device, index) => (
+                      {sortedDevices?.map((device, index) => {
+                        const highlightText = (text) => {
+                          if (!text || !searchQuery) return text;
+                          const textString = String(text); // Convert to string if it's not already a string
+                          const parts = textString.split(new RegExp(`(${searchQuery})`, 'gi')); // Split by search query, keeping it in the result
+                          return parts.map((part, i) =>
+                            part.toLowerCase() === searchQuery.toLowerCase() ?
+                              <span key={i} className="bg-yellow-300 dark:bg-yellow-300">{part}</span> :
+                              part
+                          );
+                        }; 
+                        return (
                         <tr key={device.id} className={`${index % 2 === 0 ? 'bg-gray-100 dark:bg-gray-900' : 'bg-white dark:bg-gray-800'} border-b`}>
                           <td className="p-2 text-center w-10">
                             <input
@@ -442,10 +459,10 @@ const SchedulePopup = forwardRef(
                               onChange={() => toggleSelectOne(device.id)}
                             />
                           </td>
-                          <td className="p-2 w-48">{device.name}</td>
-                          <td className="p-2 text-left">{device.description}</td>
+                          <td className="p-2 w-48">{highlightText(device.name)}</td>
+                          <td className="p-2 text-left">{highlightText(device.description)}</td>
                         </tr>
-                      ))}
+)})}
                     </tbody>
                   </table>
                 </div>
@@ -472,6 +489,7 @@ const SchedulePopup = forwardRef(
                   }
                 }}
               >
+                <option value="please select">Please Select</option>
                 <option value="once">Once</option>
                 <option value="everyday">Everyday</option>
                 <option value="weekday">Weekday</option>
@@ -486,7 +504,7 @@ const SchedulePopup = forwardRef(
             {/* Start - Stop Time */}
             <div className="grid grid-cols-[0.5fr_2fr] items-center gap-x-4">
               <label className="text-sm font-medium text-left">Start - Stop Time</label>
-              {repeatOption === "once" && (
+              {repeatOption === "please select" && (
                 <div className="flex gap-2 mt-2 w-full">
                 <DatePicker
                 
@@ -501,7 +519,7 @@ const SchedulePopup = forwardRef(
                     console.log("executionDateTime:", date ? date.format("YYYY-MM-DD HH:mm") : null);
                   }}
                   format="YYYY/MM/DD HH:mm"
-                  
+                  disabled
                   
                   
                 />
@@ -519,7 +537,45 @@ const SchedulePopup = forwardRef(
                   disabledDate={(current) => {
                     return executionDateTime ? current && current.isBefore(dayjs(executionDateTime), "day") : false;
                   }}
-                  
+                  disabled
+                />
+              </div>
+              
+              )}
+              {repeatOption === "once" && (
+                <div className="flex gap-2 mt-2 w-full">
+                <DatePicker
+  className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
+  showTime
+  value={executionDateTime ? dayjs(executionDateTime) : null}
+  onChange={(date) => {
+    setexecutionDateTime(date ? date.toISOString() : null);
+    if (executionEndDateTime && dayjs(date).isAfter(dayjs(executionEndDateTime))) {
+      setexecutionDateTime(null); // Reset end date if start date exceeds end date
+    }
+    console.log("executionDateTime:", date ? date.format("YYYY-MM-DD HH:mm") : null);
+  }}
+  format="YYYY/MM/DD HH:mm"
+  allowClear={false}
+  disabledDate={(current) => current && current.isBefore(dayjs(), 'day')} // ป้องกันไม่ให้เลือกวันที่ก่อนปัจจุบัน
+/>
+
+
+        
+                <span>-</span>
+                <DatePicker
+                className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
+                  showTime
+                  value={executionEndDateTime ? dayjs(executionEndDateTime) : null}
+                  onChange={(date) => {
+                    setexecutionEndDateTime(date ? date.toISOString() : null);
+                    console.log("executionEndDateTime:", date ? date.format("YYYY-MM-DD HH:mm") : null);
+                  }}
+                  format="YYYY/MM/DD HH:mm"
+                  disabledDate={(current) => {
+                    return executionDateTime ? current && current.isBefore(dayjs(executionDateTime), "day") : false;
+                  }}
+                  allowClear={false}
                 />
               </div>
               
@@ -546,6 +602,7 @@ const SchedulePopup = forwardRef(
         format="HH:mm"
         minuteStep={1}
         className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
+        allowClear={false}
       />
       <span>-</span>
       <TimePicker
@@ -554,6 +611,7 @@ const SchedulePopup = forwardRef(
         format="HH:mm"
         minuteStep={1}
         className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
+        allowClear={false}
       />
                   </div>
                 </div>
@@ -581,7 +639,8 @@ const SchedulePopup = forwardRef(
         format="HH:mm"
         minuteStep={1}
         className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
-      />
+      
+        allowClear={false}/>
       <span>-</span>
       <TimePicker
         value={endDatetime ? dayjs(endDatetime, "HH:mm") : null}
@@ -589,6 +648,7 @@ const SchedulePopup = forwardRef(
         format="HH:mm"
         minuteStep={1}
         className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
+        allowClear={false}
       />
                   </div>
                 </div>

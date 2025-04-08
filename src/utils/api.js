@@ -1888,3 +1888,64 @@ export async function changeStatuschedule(id,req) {
 }
 
 
+//EV Charger-----------------------------------------------
+export async function getDropdownSite() {
+  const res = await axios.get(
+    'https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/sites-list',
+    {
+      headers: {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+      },
+    }
+  );
+  let Data = res.data;
+  return Data;
+}
+
+export async function getDropdownStation(siteid) {
+  const res = await axios.get(
+    `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/stations-list?siteId=${siteid}`,
+    {
+      headers: {
+        ...authorizationHeader,
+      },
+    }
+  );
+
+  let Data = res.data;
+  return Data;
+}
+
+export async function getStationList(siteid) {
+  const res = await axios.get(
+    `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/stations?siteId=${siteid}`,
+    {
+      headers: {
+        ...authorizationHeader,
+      },
+    }
+  );
+
+  let Data = res.data;
+  return Data;
+}
+
+export async function getStationbyId(id) {
+  const res = await axios.get(
+    `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/stations/${id}`,
+    {
+      headers: {
+        ...authorizationHeader,
+      },
+    }
+  );
+
+  let staionIdData = res.data;
+  return staionIdData;
+}
+
+
+
+
+
