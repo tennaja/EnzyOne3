@@ -4,6 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import ReactDOMServer from "react-dom/server";
+import { debounce } from "lodash"; // นำเข้า debounce จาก lodash
 
 const defaultCenter = { lat: 15.8700, lng: 100.9925 };
 
@@ -35,7 +36,24 @@ const MapTH = ({
   const prevGroupIdRef = useRef(GroupId);
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [hoveredMarker, setHoveredMarker] = useState(null); // สถานะสำหรับ hover
-console.log(selectedLocation)
+  const hoveredMarkerRef = useRef(null); // ใช้ useRef แทน useState
+  console.log(selectedLocation);
+
+  // ฟังก์ชัน debounce สำหรับ handleMarkerHover
+  const debouncedHandleMarkerHover = useMemo(
+    () =>
+      debounce((loca) => {
+        if (
+          hoveredMarkerRef.current?.lat !== loca.lat ||
+          hoveredMarkerRef.current?.lng !== loca.lng
+        ) {
+          hoveredMarkerRef.current = loca; // อัปเดตค่าใน useRef
+          setHoveredMarker(loca); // อัปเดตสถานะ
+        }
+      }, 100), // หน่วงเวลา 100ms
+    []
+  );
+
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -48,7 +66,7 @@ console.log(selectedLocation)
       const validLocations = locationList.filter(loca => loca.lat && loca.lng);
       if (validLocations.length > 0) {
         const bounds = L.latLngBounds(validLocations.map(loca => [loca.lat, loca.lng]));
-        mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 16, animate: true });
+        mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 17, animate: true });
       }
       setSelectedMarker(null);
     }
@@ -66,7 +84,7 @@ console.log(selectedLocation)
       const validLocations = locationList.filter((loca) => loca.lat && loca.lng);
       if (validLocations.length > 0) {
         const bounds = L.latLngBounds(validLocations.map((loca) => [loca.lat, loca.lng]));
-        mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 16, animate: true });
+        mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 17, animate: true });
       }
     }
   
@@ -117,13 +135,14 @@ console.log(selectedLocation)
 
   const handleMarkerHover = useCallback(
     (loca) => {
-      setHoveredMarker(loca); // ตั้งค่า marker ที่ hover
+      debouncedHandleMarkerHover(loca); // เรียกใช้ debounce
     },
-    []
+    [debouncedHandleMarkerHover]
   );
 
   const handleMarkerOut = useCallback(() => {
-    setHoveredMarker(null); // ล้างค่า marker ที่ hover
+    hoveredMarkerRef.current = null; // ล้างค่าใน useRef
+    setHoveredMarker(null); // ล้างสถานะ
   }, []);
 
   const statusCount = useMemo(
@@ -189,31 +208,41 @@ console.log(selectedLocation)
         <ZoomToMarker selectedMarker={selectedMarker} />
 
         {locationList.map((loca, index) => {
-          const isSelected = selectedMarker?.lat === loca.lat && selectedMarker?.lng === loca.lng;
-          const isHovered = hoveredMarker?.lat === loca.lat && hoveredMarker?.lng === loca.lng;
+          const isSelected =
+            selectedLocation?.id === loca.id &&
+            selectedLocation?.lat === loca.lat &&
+            selectedLocation?.lng === loca.lng;
+
+          const isHovered =
+            hoveredMarker?.id === loca.id &&
+            hoveredMarker?.lat === loca.lat &&
+            hoveredMarker?.lng === loca.lng;
 
           return (
             <Marker
-              key={index}
+              key={`${loca.id}-${isSelected ? "selected" : "normal"}`}
               position={[loca.lat, loca.lng]}
               icon={getMuiIcon(isSelected, loca.status)}
-              zIndexOffset={isSelected ? 2000 : isHovered ? 1000 : 0} // เพิ่ม zIndexOffset ให้หมุดที่ถูกเลือกอยู่ด้านหน้า
+              zIndexOffset={isSelected ? 9999 : isHovered ? 2000 : 0}
               eventHandlers={{
                 click: () => handleMarkerClick(loca),
-                mouseover: () => handleMarkerHover(loca), // เมื่อ hover
-                mouseout: handleMarkerOut, // เมื่อออกจาก hover
+                mouseover: () => handleMarkerHover(loca),
+                mouseout: handleMarkerOut,
+                add: (e) => {
+                  if (isSelected) {
+                    e.target.getElement()?.parentNode?.bringToFront?.(); // บังคับให้ Marker ที่ถูกเลือกอยู่ด้านหน้าสุด
+                  }
+                },
               }}
-              keepInView={false}
             >
-              {/* เพิ่ม Tooltip เพื่อแสดงชื่อ */}
               <Tooltip direction="top" offset={[0, -30]} opacity={1} permanent={false}>
-  <div>
-    <span className="font-bold">{loca.name}</span> {/* ชื่อจะแสดงในบรรทัดแรก */}
-  </div>
-  <div>
-    <span>{loca.siteName}</span> - <span>{loca.groupName}</span> {/* siteName และ groupName จะแสดงในบรรทัดที่สอง */}
-  </div>
-</Tooltip>
+                <div>
+                  <span className="font-bold">{loca.name}</span>
+                </div>
+                <div>
+                  <span>{loca.siteName}</span> - <span>{loca.groupName}</span>
+                </div>
+              </Tooltip>
             </Marker>
           );
         })}

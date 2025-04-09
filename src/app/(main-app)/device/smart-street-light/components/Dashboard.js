@@ -46,7 +46,7 @@ const todayFormatted = today.format('YYYY/MM/DD');
   // const [locationDataList, setLocationDataList] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: "device", direction: "asc" });
   const [mapCenter, setMapCenter] = useState({ lat: 15.8700, lng: 100.9925 }); // เก็บค่าตำแหน่ง
-  const [mapZoomLevel, setMapZoomLevel] = useState(15); // กำหนดค่า zoom เริ่มต้น
+  const [mapZoomLevel, setMapZoomLevel] = useState(17); // กำหนดค่า zoom เริ่มต้น
   const [startDate, setStartDate] = useState(todayFormatted);
   const [endDate, setEndDate] = useState(todayFormatted);
   const [startDate2, setStartDate2] = useState(todayFormatted);
@@ -853,7 +853,7 @@ const maxEndDate = startDate2 ? getMaxEndDate(startDate2) : dayjs(); // ถ้�
                                   onClick={() => {
                                     getdevicebyId(record.id);
                                     setActiveTab("detail");
-                                    setSelectedLocation({ lat: record.latitude, lng: record.longitude });
+                                    setSelectedLocation({ lat: record.latitude, lng: record.longitude ,id : record.id });
                                     setMapZoomLevel(15);
                                     GetHistoryGraph(record.id);
                                     GetEnergyHistoryGraph(record.id);
