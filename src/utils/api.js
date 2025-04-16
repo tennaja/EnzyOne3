@@ -1944,6 +1944,183 @@ export async function getStationbyId(id) {
   let staionIdData = res.data;
   return staionIdData;
 }
+export async function getChargerbyId(id) {
+  const res = await axios.get(
+    `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/chargers/${id}`,
+    {
+      headers: {
+        ...authorizationHeader,
+      },
+    }
+  );
+
+  let chargerIdData = res.data;
+  return chargerIdData;
+}
+export async function getChargeHeadbyId(id) {
+  const res = await axios.get(
+    `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/charge-heads/${id}`,
+    {
+      headers: {
+        ...authorizationHeader,
+      },
+    }
+  );
+
+  let chargerIdData = res.data;
+  return chargerIdData;
+}
+
+export async function getChargeHeadsCountByStatus(req) {
+  const siteId = req.siteId;
+  const stationId = req.stationId;
+  
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/realtime/charge-heads/count-by-status?stationId=${stationId}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getChargingHistory(req) {
+  const siteId = req.siteId;
+  const stationId = req.stationId;
+  const startDate = req.startDate;
+  const endDate = req.endDate;
+  
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/charging-history?siteId=${siteId}&stationId=${stationId}&startDate=${startDate}&endDate=${endDate}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getStationsStatics(stationId) {
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/stations/${stationId}/statistics`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+export async function getChargersStatics(chargerId) {
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/chargers/${chargerId}/statistics`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+export async function getChargeHeadStatics(chargeHeadId) {
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/charge-heads/${chargeHeadId}/statistics`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getStationHistoryStatistics(req) {
+  const stationId = req.stationId;
+  const groupBy = req.groupBy
+  const endDate = req.endDate;
+  const startDate = req.startDate;
+  
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/stations/${stationId}/history-statistics?startDate=${startDate}&endDate=${endDate}&groupBy=${groupBy}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+export async function getChargerHistoryStatistics(req) {
+  const chargerId = req.chargerId;
+  const groupBy = req.groupBy
+  const endDate = req.endDate;
+  const startDate = req.startDate;
+  
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/chargers/${chargerId}/history-statistics?startDate=${startDate}&endDate=${endDate}&groupBy=${groupBy}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getChargeHeadHistoryStatistics(req) {
+  const chargeHeadId = req.chargeHeadId;
+  const groupBy = req.groupBy
+  const endDate = req.endDate;
+  const startDate = req.startDate;
+  
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/charge-heads/${chargeHeadId}/history-statistics?startDate=${startDate}&endDate=${endDate}&groupBy=${groupBy}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+// export async function getStationHistoryStatistics(req) {
+//   const stationId = req.stationId;
+//   const groupBy = req.groupBy
+//   const endDate = req.endDate;
+//   const startDate = req.startDate;
+  
+//   try {
+//     const url =
+//       `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/stations/${stationId}/history-statistics?startDate=${startDate}&endDate=${endDate}&groupBy=${groupBy}`;
+//     const res = await axios.get(url, {
+//       withCredentials: true,
+//       headers: { "Content-Type": "application/json" },
+//     });
+//     return res;
+//   } catch (error) {
+//     return error;
+//   }
+// }
+
 
 
 
