@@ -141,7 +141,16 @@ const BarChartComponent = ({ data, type = "hour" }) => {
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey={xAxisKey} angle={-45} textAnchor="end" fontSize={10} interval={0} height={80} allowDataOverflow={true} />
-          <YAxis />
+          <YAxis
+            label={{
+              value: "kWh", // ชื่อแกน Y
+              angle: 0, // ทำให้ข้อความเป็นแนวนอน
+              position: "top", // วางข้อความไว้ด้านบนของแกน
+              offset: 10, // ระยะห่างจากแกน
+              dx: -18,
+              dy:-2,
+            }}
+          />
           <Tooltip />
           <Legend
             layout="horizontal"
@@ -151,9 +160,18 @@ const BarChartComponent = ({ data, type = "hour" }) => {
             onClick={selectBar}
             onMouseOver={handleLegendMouseEnter}
             onMouseOut={handleLegendMouseLeave}
+            payload={[
+              { value: "Energy", type: "square", color: "#4bc0c0", dataKey: "kwh" }, // เปลี่ยนชื่อ Legend เป็น Energy
+            ]}
           />
           {barProps.kwh !== undefined && (
-            <Bar dataKey="kwh" fill="#4bc0c0" name="kwhh" opacity={barProps.hover === "kwh" || !barProps.hover ? 1 : 0.6} hide={barProps.kwh === false} />
+            <Bar
+              dataKey="kwh"
+              fill="#4bc0c0"
+              name="Energy" // ชื่อใน Tooltip
+              opacity={barProps.hover === "kwh" || !barProps.hover ? 1 : 0.6}
+              hide={barProps.kwh === false}
+            />
           )}
           {refAreaLeft && refAreaRight ? <ReferenceArea x1={refAreaLeft} x2={refAreaRight} strokeOpacity={0.3} fill="gray" /> : null}
         </BarChart>

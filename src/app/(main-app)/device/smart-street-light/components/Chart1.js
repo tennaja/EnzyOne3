@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
-import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer, ReferenceArea } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer, ReferenceArea } from "recharts";
 
 const MyChart = ({ graphdata }) => {
-  const [visibleBars, setVisibleBars] = useState({
+  const [visibleLines, setVisibleLines] = useState({
     kw: true,
     dimming: true,
     status: true,
@@ -17,7 +17,7 @@ const MyChart = ({ graphdata }) => {
   // Reset zoomDomain when graphdata changes & force re-render
   useEffect(() => {
     setZoomDomain(null);
-    setChartKey(prevKey => prevKey + 1); // บังคับให้ chart re-render
+    setChartKey((prevKey) => prevKey + 1); // บังคับให้ chart re-render
   }, [graphdata]);
 
   const data = useMemo(() => {
@@ -30,15 +30,15 @@ const MyChart = ({ graphdata }) => {
     }));
   }, [graphdata]);
 
-  const selectBar = (e) => {
-    setVisibleBars((prevState) => ({
+  const selectLine = (e) => {
+    setVisibleLines((prevState) => ({
       ...prevState,
       [e.dataKey]: !prevState[e.dataKey],
     }));
   };
 
   const getLegendStyle = (dataKey) => ({
-    color: visibleBars[dataKey] ? "black" : "gray",
+    color: visibleLines[dataKey] ? "black" : "gray",
     fontWeight: hoveredLegend === dataKey ? "bold" : "normal",
     cursor: "pointer",
   });
@@ -83,7 +83,7 @@ const MyChart = ({ graphdata }) => {
         Zoom Out
       </button>
       <ResponsiveContainer width="100%" height={400}>
-        <ComposedChart
+        <LineChart
           key={chartKey} // ใช้ key เพื่อบังคับให้ component re-render
           data={filteredData}
           margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
@@ -95,31 +95,40 @@ const MyChart = ({ graphdata }) => {
           <XAxis dataKey="timestamp" tick={{ fontSize: 12 }} domain={zoomDomain || ["dataMin", "dataMax"]} allowDataOverflow={true} />
           <YAxis yAxisId="left" orientation="left" label={{ value: "kw", position: "top", offset: 15, angle: 0 }} />
           <YAxis yAxisId="statusAxis" orientation="left" domain={[0, 1]} tickCount={2} label={{ value: "Status", position: "top", offset: 15, angle: 0 }} />
-          <YAxis yAxisId="right" orientation="right" label={{ value: "Dimming", position: "top", offset: 15, angle: 0 }} />
-          <Tooltip />
+          <YAxis yAxisId="right" orientation="right" label={{ value: "%", position: "top", offset: 15, angle: 0 }} />
+          <Tooltip
+            formatter={(value, name) => {
+              const nameMapping = {
+                "Power (kW)": "Power (kW)",
+                "Dimming (%)": "Dimming (%)",
+                "Status (On/Off)": "Status (On/Off)",
+              };
+              return [value, nameMapping[name] || name]; // เปลี่ยนชื่อใน Tooltip
+            }}
+          />
 
-          {visibleBars.dimming && <Bar dataKey="dimming" fill="#FFCC33" yAxisId="right" name="Dimming" />}
-          {visibleBars.status && <Line type="stepAfter" dataKey="status" stroke="green" strokeWidth={2} yAxisId="statusAxis" dot name="Status" />}
-          {visibleBars.kw && <Line type="monotone" dataKey="kw" stroke="blue" strokeWidth={2} yAxisId="left" dot name="Kilowatt (kw)" />}
+          {visibleLines.dimming && <Line type="monotone" dataKey="dimming" stroke="#FFCC33" strokeWidth={2} yAxisId="right" name="Dimming (%)" />}
+          {visibleLines.status && <Line type="stepAfter" dataKey="status" stroke="green" strokeWidth={2} yAxisId="statusAxis" dot name="Status (On/Off)" />}
+          {visibleLines.kw && <Line type="monotone" dataKey="kw" stroke="blue" strokeWidth={2} yAxisId="left" dot name="Power (kW)" />}
 
           <Legend
-            onClick={selectBar}
+            onClick={selectLine}
             onMouseEnter={(e) => setHoveredLegend(e.dataKey)}
             onMouseLeave={() => setHoveredLegend(null)}
             verticalAlign="top"
             align="center"
             wrapperStyle={{ paddingBottom: 20 }}
             payload={[
-              { value: "Kilowatt (kw)", type: "line", color: visibleBars.kw ? "blue" : "gray", dataKey: "kw", style: getLegendStyle("kw") },
-              { value: "Dimming", type: "bar", color: visibleBars.dimming ? "#FFCC33" : "gray", dataKey: "dimming", style: getLegendStyle("dimming") },
-              { value: "Status", type: "line", color: visibleBars.status ? "green" : "gray", dataKey: "status", style: getLegendStyle("status") },
+              { value: "Power (kW)", type: "line", color: visibleLines.kw ? "blue" : "gray", dataKey: "kw", style: getLegendStyle("kw") },
+              { value: "Dimming (%)", type: "line", color: visibleLines.dimming ? "#FFCC33" : "gray", dataKey: "dimming", style: getLegendStyle("dimming") },
+              { value: "Status (On/Off)", type: "line", color: visibleLines.status ? "green" : "gray", dataKey: "status", style: getLegendStyle("status") },
             ]}
           />
 
           {tempDomain && tempDomain.length === 2 && tempDomain[0] !== tempDomain[1] && (
             <ReferenceArea x1={tempDomain[0]} x2={tempDomain[1]} stroke="red" strokeOpacity={1} strokeWidth={2} fill="rgba(255, 0, 0, 0.3)" fillOpacity={0.6} ifOverflow="hidden" />
           )}
-        </ComposedChart>
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );
