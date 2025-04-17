@@ -56,13 +56,17 @@ const BarChartComponent = ({ data, type = "hour" }) => {
   }
 
   const rawData = data.timestamp.map((time, index) => {
-    console.log("rawData", time, index);
     const date = new Date(time);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hour = String(date.getHours()).padStart(2, "0");
+    const dayAbbreviation = getDayAbbreviation(date);
+
     return {
-      fullTime: `${String(date.getDate()).padStart(2, "0")}-${getMonthAbbreviation(date)}-${date.getFullYear()} ${String(date.getHours()).padStart(2, "0")}:00`,
-      day: `${getDayAbbreviation(date)} ${String(date.getDate()).padStart(2, "0")}-${getMonthAbbreviation(date)}-${date.getFullYear()}`,
-      month: `${getMonthAbbreviation(date)} ${date.getFullYear()}`,
-      hour: `${String(date.getHours()).padStart(2, "0")}:00`,
+      fullTime: `${year}/${month}/${day} ${hour}:00`, // รูปแบบสำหรับ hour
+      day: `${dayAbbreviation} ${year}/${month}/${day}`, // รูปแบบสำหรับ day
+      month: `${year}/${month}`, // รูปแบบสำหรับ month
       kwh: data.kwh[index],
     };
   });
@@ -140,7 +144,15 @@ const BarChartComponent = ({ data, type = "hour" }) => {
           onMouseUp={handleMouseUp}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey={xAxisKey} angle={-45} textAnchor="end" fontSize={10} interval={0} height={80} allowDataOverflow={true} />
+          <XAxis
+            dataKey={xAxisKey}
+            angle={-45}
+            textAnchor="end"
+            fontSize={10}
+            interval={0}
+            height={80}
+            allowDataOverflow={true}
+          />
           <YAxis
             label={{
               value: "kWh", // ชื่อแกน Y
