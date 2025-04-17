@@ -363,8 +363,13 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
         getdevicebyId(SelectDeviceById);
         setScheduleData(null);
       } else {
-        console.log("No groups found!");
-        setopenModalfail(true);
+        setModalErorProps({
+          onCloseModal: handleClosePopup,
+          title: result?.response?.data?.error,  // ใช้ title จาก error ถ้ามี
+          content: result?.response?.data?.message || error.message || "Something went wrong!",  // ใช้ message จาก error ถ้ามี
+          buttonTypeColor: "primary",
+      });
+        setopenModalfail(true)
       }
     } catch (error) {
       console.log("Error creating schedule:", error);
