@@ -151,7 +151,11 @@ const BarChartComponent = ({ data, type = "hour" }) => {
               dy:-2,
             }}
           />
-          <Tooltip />
+          <Tooltip
+            formatter={(value) => {
+              return parseFloat(value).toFixed(2); // แปลงค่าเป็นทศนิยม 2 ตำแหน่ง
+            }}
+          />
           <Legend
             layout="horizontal"
             align="center"

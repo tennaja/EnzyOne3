@@ -93,7 +93,7 @@ const MyChart = ({ graphdata }) => {
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="timestamp" tick={{ fontSize: 12 }} domain={zoomDomain || ["dataMin", "dataMax"]} allowDataOverflow={true} />
-          <YAxis yAxisId="left" orientation="left" label={{ value: "kw", position: "top", offset: 15, angle: 0 }} />
+          <YAxis yAxisId="left" orientation="left" label={{ value: "kW", position: "top", offset: 15, angle: 0 }} />
           <YAxis yAxisId="statusAxis" orientation="left" domain={[0, 1]} tickCount={2} label={{ value: "Status", position: "top", offset: 15, angle: 0 }} />
           <YAxis yAxisId="right" orientation="right" label={{ value: "%", position: "top", offset: 15, angle: 0 }} />
           <Tooltip
@@ -106,10 +106,10 @@ const MyChart = ({ graphdata }) => {
               return [value, nameMapping[name] || name]; // เปลี่ยนชื่อใน Tooltip
             }}
           />
-
+          {visibleLines.kw && <Line type="monotone" dataKey="kw" stroke="blue" strokeWidth={2} yAxisId="left" dot name="Power (kW)" />}
           {visibleLines.dimming && <Line type="monotone" dataKey="dimming" stroke="#FFCC33" strokeWidth={2} yAxisId="right" name="Dimming (%)" />}
           {visibleLines.status && <Line type="stepAfter" dataKey="status" stroke="green" strokeWidth={2} yAxisId="statusAxis" dot name="Status (On/Off)" />}
-          {visibleLines.kw && <Line type="monotone" dataKey="kw" stroke="blue" strokeWidth={2} yAxisId="left" dot name="Power (kW)" />}
+          
 
           <Legend
             onClick={selectLine}
