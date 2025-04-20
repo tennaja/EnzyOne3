@@ -48,7 +48,7 @@ const ChargerDetail = () => {
   const handleChargerHeadClick = (chargerHeadId, chargerHeadName) => {
     localStorage.setItem("chargerHeadId", chargerHeadId);
     localStorage.setItem("chargerHeadName", chargerHeadName);
-    router.push("page=chargeheaddetail"); // เปลี่ยนหน้าไปยัง ChargeHeadDetail
+    router.push("/device/ev-charger?page=chargeheaddetail"); // เปลี่ยนหน้าไปยัง ChargeHeadDetail
   };
 
     const GetStationbyId = async (id) => {
