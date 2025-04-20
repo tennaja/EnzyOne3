@@ -16,6 +16,7 @@ import { FaChargingStation } from "react-icons/fa";
 import { RiBatteryChargeLine } from "react-icons/ri";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { DatePicker, TimePicker } from "antd";
+import Select from 'react-select';
 import dayjs from "dayjs";
 import dynamic from "next/dynamic";
 const MapTH = dynamic(() => import("../component/MapSmSt"), { ssr: false });
@@ -202,26 +203,6 @@ const Dashboard = () => {
     icon: statusIcons[item.status] || null,
   }));
 
-  // // // โหลดค่าที่เก็บไว้ใน localStorage เมื่อหน้าโหลด
-  // useEffect(() => {
-  //   if (typeof window !== "undefined") {
-  //   const storedSite = localStorage.getItem("selectedSite"); // ดึงค่าจาก localStorage
-
-  //   if (storedSite && siteDropdwonlist?.length > 0) {
-  //     // ตรวจสอบว่า storedSite มีอยู่ใน siteDropdwonlist หรือไม่
-  //     const matchedSite = siteDropdwonlist.find(
-  //       (site) => site.name === storedSite
-  //     );
-  //     if (matchedSite) {
-  //       // ถ้าตรงกัน ให้ตั้งค่า siteid และ selectedSite
-  //       setSiteid(matchedSite.id);
-  //       setSelectedSite(matchedSite.name);
-  //       setSiteName(matchedSite.name);
-  //       getStationDropdown(matchedSite.id); // โหลด Station Dropdown ตาม Site ที่เลือกไว้
-  //       console.log('DDDDDDDDDDD')
-  //     }
-  //   }}
-  // }, [siteDropdwonlist]); // ทำงานเมื่อ siteDropdwonlist ถูกอัปเดต
 
   // useEffect(() => {
   //   if (typeof window !== "undefined") {
@@ -235,7 +216,17 @@ const Dashboard = () => {
   //         setSelectedSite(matchedSite.name);
   //         setSiteName(matchedSite.name);
   //         getStationDropdown(matchedSite.id);
+  //         GetStationList(matchedSite.id); // โหลด Station List ตาม Site ที่เลือกไว้
+  //         GetCountByStatusList();
+  //         GetChargingHistory();
+  //         console.log("Selected site from localStorage:", matchedSite.name);
+  //       } else {
+  //         console.warn("No matching site found for storedSite:", storedSite);
   //       }
+  //     } else if (!storedSite) {
+  //       console.warn("No selectedSite found in localStorage.");
+  //     } else if (!siteDropdwonlist?.length) {
+  //       console.warn("siteDropdwonlist is empty.");
   //     }
   //   }
   // }, [siteDropdwonlist]);
@@ -264,14 +255,9 @@ const Dashboard = () => {
     localStorage.setItem("stationId", stationId);
     localStorage.setItem("stationName", stationName);
 
-    // // อัปเดต Breadcrumb
-    // // const breadcrumb = [
-    // //   { label: selectedSite, path: "ev-charger/stationdetail" },
-    // // ];
-    // localStorage.setItem("breadcrumb", JSON.stringify(breadcrumb));
-
     // เปลี่ยนหน้าไปยัง StationDetail
-    router.push("ev-charger/stationdetail");
+    router.push("/device/ev-charger?page=stationdetail");
+
   };
 
   const handleSearchquery = (e) => {
@@ -500,56 +486,107 @@ const Dashboard = () => {
   // คำนวณ maxEndDate1 ตาม startDate
   const maxEndDate1 = getMaxEndDate1(startDate);
 
+
+  const siteOptions = (siteDropdwonlist ?? []).map((site) => ({
+    value: site.id ?? "0",
+    label: site.name,
+  }));
+  
+  const stationOptions = (stationDropdwonlist ?? []).map((station) => ({
+    value: station.id ?? "0",
+    label: station.name,
+  }));
+  
   return (
     <div>
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
         <div className="flex gap-5">
-          <div>
+          <div className="flex items-center gap-2">
             <span className="text-sm">Site: </span>
-            <select
-              className="w-44 border border-slate-300 mx-2 rounded-md h-9"
-              onChange={(event) => {
-                const selectedValue = event.target.value || "0"; // ถ้าเป็น null หรือ undefined ให้ใช้ "0"
-                setSelectedSiteId(selectedValue); // เก็บค่า siteId ใน Redux
-                getStationDropdown(selectedValue);
-                setSelectedSite(event.target.selectedOptions[0]?.text || "");
-                localStorage.setItem(
-                  "selectedSite",
-                  event.target.selectedOptions[0]?.text || ""
-                );
-                setSelectedSiteName(
-                  event.target.selectedOptions[0]?.text || ""
-                ); // ป้องกัน undefined
-              }}
-              value={siteid ?? "0"} // ถ้า siteid เป็น null ให้ใช้ "0"
-            >
-              {siteDropdwonlist?.map((site) => (
-                <option key={site.id} value={site.id ?? "0"}>
-                  {site.name}
-                </option>
-              ))}
-            </select>
+            <Select
+  className="w-60"
+  options={siteOptions}
+  value={siteid ? siteOptions.find((option) => option.value === siteid) : siteOptions[0]}
+  onChange={(selectedOption) => {
+    const selectedValue = selectedOption?.value ?? "0";
+    const selectedLabel = selectedOption?.label ?? "";
+
+    setSelectedSiteId(selectedValue);
+    getStationDropdown(selectedValue);
+    setSelectedSite(selectedLabel);
+    localStorage.setItem("selectedSite", selectedLabel);
+    setSelectedSiteName(selectedLabel);
+  }}
+  isSearchable
+  styles={{
+    control: (provided) => ({
+      ...provided,
+      borderColor: 'rgb(203 213 225)', // สีขอบปกติ
+      borderRadius: '0.375rem',
+      zIndex: 10,
+      height: '2.25rem',
+    }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 9999,
+      position: 'absolute',
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? '#33BFBF' : state.isFocused ? '#e0f7fa' : 'transparent', // ปรับสีพื้นหลัง
+      color: state.isSelected ? 'white' : 'black', // สีของข้อความ
+      cursor: 'pointer',
+      padding: '8px 16px',
+      '&:active': {
+        backgroundColor: '#33BFBF', // สีเมื่อคลิกเลือก
+      },
+    }),
+  }}
+/>
+
+
           </div>
-          <div>
+          <div className="flex items-center gap-2">
             <span className="text-sm">Station: </span>
-            <select
-              value={stationid ?? "0"}
-              className="w-44 border border-slate-300 mx-2 rounded-md h-9"
-              onChange={(event) => {
-                const value = event.target.value;
-                const label =
-                  event.target.options[event.target.selectedIndex].text;
-                setSelectedStationId(value);
-                setSelectedStationName(label);
-                handleStationChange(event); // ส่ง event เข้าตรง ๆ
-              }}
-            >
-              {stationDropdwonlist?.map((station) => (
-                <option key={station.id} value={station.id ?? "0"}>
-                  {station.name}
-                </option>
-              ))}
-            </select>
+            <Select
+  className="w-48"
+  options={stationOptions}
+  value={stationid ? stationOptions.find((option) => option.value === stationid) : stationOptions[0]}
+  onChange={(selectedOption) => {
+    const value = selectedOption?.value ?? "0";
+    const label = selectedOption?.label ?? "";
+
+    setSelectedStationId(value);
+    setSelectedStationName(label);
+    handleStationChange({ target: { value, label } });
+  }}
+  isSearchable
+  styles={{
+    control: (provided) => ({
+      ...provided,
+      borderColor: 'rgb(203 213 225)', // สีขอบปกติ
+      borderRadius: '0.375rem',
+      zIndex: 10,
+      height: '2.25rem',
+    }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 9999,
+      position: 'absolute',
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? '#33BFBF' : state.isFocused ? '#e0f7fa' : 'transparent', // ปรับสีพื้นหลัง
+      color: state.isSelected ? 'white' : 'black', // สีของข้อความ
+      cursor: 'pointer',
+      padding: '8px 16px',
+      '&:active': {
+        backgroundColor: '#33BFBF', // สีเมื่อคลิกเลือก
+      },
+    }),
+  }}
+/>
+
           </div>
 
           <button
@@ -614,7 +651,7 @@ const Dashboard = () => {
             Station List
           </span>
           <div className="flex justify-between">
-            <p className="text-sm ">SiteName | StationName</p>
+            <p className="text-sm ">{siteName} | {stationName}</p>
             {/* <p className="text-sm ">Lasted Updated 2025/04/03 08:00</p> */}
           </div>
         </div>
@@ -627,6 +664,7 @@ const Dashboard = () => {
                     ? stationList.map((loca) => ({
                         id: loca.id,
                         name: loca.name,
+                        address: loca.address,
                         status: loca.status,
                         lat: loca.latitude,
                         lng: loca.longitude,
@@ -635,7 +673,8 @@ const Dashboard = () => {
                 }
                 className={"w-full h-[500px] justify-items-center"}
                 zoom={mapZoomLevel}
-                selectedLocation={selectedLocation}
+                // selectedLocation={selectedLocation} // ใช้ selectedLocation เพื่อแสดงตำแหน่งที่เลือก
+                // setSelectedLocation={setSelectedLocation}
               />
             </div>
           </div>
@@ -696,7 +735,7 @@ const Dashboard = () => {
                       </th>
 
                       <th
-                        className="px-2 py-1 text-center cursor-pointer"
+                        className="px-2 py-1 text-left cursor-pointer"
                         onClick={() => handleSortStation("brand")}
                       >
                         Brand Name
@@ -733,7 +772,7 @@ const Dashboard = () => {
                       </th>
 
                       <th
-                        className="px-2 py-1 text-center cursor-pointer"
+                        className="px-2 py-1 text-left cursor-pointer"
                         onClick={() => handleSortStation("address")}
                       >
                         Address
@@ -905,10 +944,10 @@ const Dashboard = () => {
                                 {/* Highlight the search term */}
                               </div>
                             </td>
-                            <td className="px-2 py-1 text-center dark:text-white">
+                            <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.brand)}
                             </td>
-                            <td className="px-2 py-1 text-center dark:text-white">
+                            <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.address)}
                             </td>
                             <td className="px-2 py-1 text-center dark:text-white">
@@ -983,7 +1022,7 @@ const Dashboard = () => {
             Charging Session History
           </span>
           <div className="flex justify-between">
-            <p className="text-sm ">SiteName | StationName</p>
+            <p className="text-sm ">{siteName} | {stationName}</p>
             {/* <p className="text-sm ">Lasted Updated 2025/04/03 08:00</p> */}
           </div>
         </div>
@@ -1042,7 +1081,7 @@ const Dashboard = () => {
                   <thead>
                     <tr className="text-xs text-black border-b border-gray-300 dark:text-white">
                       <th
-                        className="px-2 py-1 text-left cursor-pointer"
+                        className="px-2 py-1 text-right cursor-pointer"
                         onClick={() => handleSortCharging("displayIndex")}
                       >
                         #
@@ -1079,7 +1118,7 @@ const Dashboard = () => {
                       </th>
 
                       <th
-                        className="px-2 py-1 text-center cursor-pointer"
+                        className="px-2 py-1 text-left cursor-pointer"
                         onClick={() => handleSortCharging("carBrand")}
                       >
                         Car Brand
@@ -1116,7 +1155,7 @@ const Dashboard = () => {
                       </th>
 
                       <th
-                        className="px-2 py-1 text-center cursor-pointer"
+                        className="px-2 py-1 text-left cursor-pointer"
                         onClick={() => handleSortCharging("carModel")}
                       >
                         Car Model
@@ -1153,7 +1192,7 @@ const Dashboard = () => {
                       </th>
 
                       <th
-                        className="px-2 py-1 text-center cursor-pointer"
+                        className="px-2 py-1 text-left cursor-pointer"
                         onClick={() => handleSortCharging("stationName")}
                       >
                         Station Name
@@ -1190,7 +1229,7 @@ const Dashboard = () => {
                       </th>
 
                       <th
-                        className="px-2 py-1 text-center"
+                        className="px-2 py-1 text-left"
                         onClick={() => handleSortCharging("chargerName")}
                       >
                         Charger Name
@@ -1226,7 +1265,7 @@ const Dashboard = () => {
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-center"
+                        className="px-2 py-1 text-left"
                         onClick={() => handleSortCharging("chargeHeadName")}
                       >
                         Charge Head Name
@@ -1262,7 +1301,7 @@ const Dashboard = () => {
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-center"
+                        className="px-2 py-1 text-right"
                         onClick={() => handleSortCharging("electricityAmount")}
                       >
                         Electricity Amount
@@ -1298,7 +1337,7 @@ const Dashboard = () => {
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-center"
+                        className="px-2 py-1 text-right"
                         onClick={() => handleSortCharging("price")}
                       >
                         Price
@@ -1334,7 +1373,7 @@ const Dashboard = () => {
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-center"
+                        className="px-2 py-1 text-left"
                         onClick={() => handleSortCharging("startTime")}
                       >
                         Start Time
@@ -1370,7 +1409,7 @@ const Dashboard = () => {
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-center"
+                        className="px-2 py-1 text-left"
                         onClick={() => handleSortCharging("endTime")}
                       >
                         End Time
@@ -1449,34 +1488,34 @@ const Dashboard = () => {
                             }`}
                             style={{ borderBottom: "1px solid #e0e0e0" }}
                           >
-                            <td className="px-2 py-1 text-center dark:text-white">
+                            <td className="px-2 py-1 text-right dark:text-white">
                               {highlightText(record.displayIndex)}
                             </td>
-                            <td className="px-2 py-1 text-center dark:text-white">
+                            <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.carBrand)}
                             </td>
-                            <td className="px-2 py-1 text-center dark:text-white">
+                            <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.carModel)}
                             </td>
-                            <td className="px-2 py-1 text-center dark:text-white">
+                            <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.stationName)}
                             </td>
-                            <td className="px-2 py-1 text-center dark:text-white">
+                            <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.chargerName)}
                             </td>
-                            <td className="px-2 py-1 text-center dark:text-white">
+                            <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.chargeHeadName)}
                             </td>
-                            <td className="px-2 py-1 text-center dark:text-white">
+                            <td className="px-2 py-1 text-right dark:text-white">
                               {highlightText(record.electricityAmount)}
                             </td>
-                            <td className="px-2 py-1 text-center dark:text-white">
+                            <td className="px-2 py-1 text-right dark:text-white">
                               {highlightText(record.price)}
                             </td>
-                            <td className="px-2 py-1 text-center dark:text-white">
+                            <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.startTime)}
                             </td>
-                            <td className="px-2 py-1 text-center dark:text-white">
+                            <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.endTime)}
                             </td>
                           </tr>

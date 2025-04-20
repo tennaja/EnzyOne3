@@ -2102,24 +2102,21 @@ export async function getChargeHeadHistoryStatistics(req) {
     return error;
   }
 }
-// export async function getStationHistoryStatistics(req) {
-//   const stationId = req.stationId;
-//   const groupBy = req.groupBy
-//   const endDate = req.endDate;
-//   const startDate = req.startDate;
-  
-//   try {
-//     const url =
-//       `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/stations/${stationId}/history-statistics?startDate=${startDate}&endDate=${endDate}&groupBy=${groupBy}`;
-//     const res = await axios.get(url, {
-//       withCredentials: true,
-//       headers: { "Content-Type": "application/json" },
-//     });
-//     return res;
-//   } catch (error) {
-//     return error;
-//   }
-// }
+
+export async function getChargeHeadList(chargerId) {
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/device-management/ev-chargers/chargers/${chargerId}/charge-heads`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
 
 
 

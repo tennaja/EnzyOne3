@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import StatisticsCard from "../component/StatisticsCard.js";
 import dynamic from "next/dynamic";
 const MapTH = dynamic(() => import("../component/MapSmSt"), { ssr: false });
@@ -10,21 +10,22 @@ import ArrowForwardIosOutlinedIcon from "@mui/icons-material/ArrowForwardIosOutl
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import { getStationbyId, getStationsStatics, getStationHistoryStatistics } from "@/utils/api";
+import { getChargerbyId, getChargersStatics, getChargerHistoryStatistics} from "@/utils/api";
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
 
-const StationDetail = () => {
+const ChargerDetail = () => {
   const router = useRouter();
   const today = dayjs(); // ใช้สำหรับคำนวณและเปรียบเทียบ
   const todayFormatted = today.format("YYYY/MM/DD");
-  const [siteName, setSiteName] = useState("");
+  const [chargerId, setChargerId] = useState('');
+  const [chargerName, setChargerName] = useState('');
+  const [siteName, setSiteName] = useState('');
+  const [stationName, setStationName] = useState('');
   const [station, setStation] = useState({});
   const [staticsToday, setStaticsToday] = useState({});
   const [staticsTotal, setStaticsTotal] = useState({});
-  const [chargers, setChargers] = useState([]);
-  const [stationId, setStationId] = useState("");
-  const [stationName, setStationName] = useState("");
+  const [chargersHead, setChargersHead] = useState([]);
   const [startDate, setStartDate] = useState(todayFormatted);
   const [endDate, setEndDate] = useState(todayFormatted);
   const [timeUnit, setTimeUnit] = useState("hour");
@@ -43,225 +44,261 @@ const StationDetail = () => {
     { label: "Day", value: "day" },
     { label: "Month", value: "month" },
   ];
-  const GetStationbyId = async (id) => {
-    console.log("station Id:", id);
-    try {
-      const result = await getStationbyId(id);
-      console.log("Station:", result);
-      console.log("Chargers:", result.chargers);
-      if (result) {
-        setStation(result);
-        setChargers(result.chargers);
-        // ตั้งค่า selectedLocation ด้วย latitude และ longitude
-        if (result.latitude && result.longitude) {
-          setSelectedLocation({
-            lat: result.latitude,
-            lng: result.longitude,
-          });
-        }
-      } else {
-        console.log("No Stations found!");
-      }
-    } catch (error) {
-      console.error("Error fetching station data:", error);
-    }
-  };
-  const GetStationStatic = async (id) => {
-    console.log("station Id:", id);
-    try {
-      const result = await getStationsStatics(id);
-      console.log("Today:", result?.data?.today);
-      console.log("Total:", result?.data?.total);
-      if (result) {
-        setStaticsToday(result?.data?.today);
-        setStaticsTotal(result?.data?.total);
-        // ตั้งค่า selectedLocation ด้วย latitude และ longitude
-        if (result.latitude && result.longitude) {
-          setSelectedLocation({
-            lat: result.latitude,
-            lng: result.longitude,
-          });
-        }
-      } else {
-        console.log("No Stations found!");
-      }
-    } catch (error) {
-      console.error("Error fetching station data:", error);
-    }
+
+  const handleChargerHeadClick = (chargerHeadId, chargerHeadName) => {
+    localStorage.setItem("chargerHeadId", chargerHeadId);
+    localStorage.setItem("chargerHeadName", chargerHeadName);
+    router.push("page=chargeheaddetail"); // เปลี่ยนหน้าไปยัง ChargeHeadDetail
   };
 
-  const GetStationHistoryStatistics = async (id) => {
-    const Param = {
-      stationId: id,
-      groupBy: timeUnit,
-      endDate: endDate,
-      startDate: startDate,
+    const GetStationbyId = async (id) => {
+      console.log("station Id:", id);
+      try {
+        const result = await getChargerbyId(id);
+        console.log("Station:", result);
+        console.log("Chargers:", result.chargers);
+        if (result) {
+          setStation(result);
+          setChargersHead(result.chargeHeads);
+          // ตั้งค่า selectedLocation ด้วย latitude และ longitude
+          if (result.latitude && result.longitude) {
+            setSelectedLocation({
+              lat: result.latitude,
+              lng: result.longitude,
+            });
+          }
+        } else {
+          console.log("No Stations found!");
+        }
+      } catch (error) {
+        console.error("Error fetching station data:", error);
+      }
     };
-    try {
-      const result = await getStationHistoryStatistics(Param)
-
-      if (result) {
-        setGraphData(result?.data);
-        console.log("Graph Data:", result?.data);
+    const GetStationStatic = async (id) => {
+      console.log("station Id:", id);
+      try {
+        const result = await getChargersStatics(id);
+        console.log("Today:", result?.data?.today);
+        console.log("Total:", result?.data?.total);
+        if (result) {
+          setStaticsToday(result?.data?.today);
+          setStaticsTotal(result?.data?.total);
+          // ตั้งค่า selectedLocation ด้วย latitude และ longitude
+          if (result.latitude && result.longitude) {
+            setSelectedLocation({
+              lat: result.latitude,
+              lng: result.longitude,
+            });
+          }
+        } else {
+          console.log("No Stations found!");
+        }
+      } catch (error) {
+        console.error("Error fetching station data:", error);
       }
-    } catch (error) {
-      console.error("Error fetching graph data:", error);
-    }
-  };
-
-  useEffect(() => {
-    // ดึงข้อมูลจาก Local Storage
-    if (typeof window !== "undefined") {
-      const storedSiteName = localStorage.getItem("siteName");
-      const storedStationId = localStorage.getItem("stationId");
-      const storedStationName = localStorage.getItem("stationName");
-
-      if (storedSiteName) setSiteName(storedSiteName);
-      if (storedStationId) setStationId(storedStationId);
-      if (storedStationName) setStationName(storedStationName);
-      if (storedStationId) {
-        GetStationbyId(storedStationId);
-        GetStationStatic(storedStationId);
+    };
+  
+    const GetChargerHistoryStatistics = async (id) => {
+      const Param = {
+        chargerId: id,
+        groupBy: timeUnit,
+        endDate: endDate,
+        startDate: startDate,
+      };
+      try {
+        const result = await getChargerHistoryStatistics(Param)
+        if (result) {
+          setGraphData(result?.data);
+          console.log("Graph Data:", result?.data);
+        }
+      } catch (error) {
+        console.error("Error fetching graph data:", error);
       }
-    }
-  }, []);
+    };
+  
+    useEffect(() => {
+      // ดึงข้อมูลจาก Local Storage
+      if (typeof window !== "undefined") {
+        const storedSiteName = localStorage.getItem("siteName");
+        const storedChargerId = localStorage.getItem("chargerId");
+        const storedChargerName = localStorage.getItem("chargerName");
+        const storedStationName = localStorage.getItem("stationName");
 
-  useEffect(() => {
-    const storedStationId = localStorage.getItem("stationId");
-      if (storedStationId) {
-        GetStationHistoryStatistics(storedStationId)
+        if (storedSiteName) setSiteName(storedSiteName);
+        if (storedChargerId) setChargerId(storedChargerId);
+        if (storedStationName) setStationName(storedStationName);
+        if (storedChargerName) setChargerName(storedChargerName);
+        if (storedChargerId) {
+          GetStationbyId(storedChargerId);
+          GetStationStatic(storedChargerId);
+        }
       }
-    }, [endDate, startDate, timeUnit]);
-
-  const handleChargerClick = (chargerId, chargerName) => {
-    localStorage.setItem("chargerId", chargerId);
-    localStorage.setItem("chargerName", chargerName);
-    router.push("chargerdetail");
-  };
-
-  const handleSearchChargingquery = (e) => {
-    setSearchChargingQuery(e.target.value);
-  };
-  const filteredChargingList = chargers
-    ?.map((item, index) => ({ ...item, displayIndex: index + 1 })) // เพิ่มลำดับเลขให้แต่ละ item
-    .filter(
-      (item) =>
-        item.name
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.brand
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.type
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.chargeHeadCount
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.displayIndex.toString().includes(searchChargingQuery)
+    }, []);
+  
+    useEffect(() => {
+      const storedChargerId = localStorage.getItem("chargerId");
+        if (storedChargerId) {
+          GetChargerHistoryStatistics(storedChargerId)
+        }
+      }, [endDate, startDate, timeUnit]);
+  
+    const handleChargerClick = (chargerId, chargerName) => {
+      localStorage.setItem("chargerId", chargerId);
+      localStorage.setItem("chargerName", chargerName);
+      router.push("chargerdetail");
+    };
+  
+    const handleSearchChargingquery = (e) => {
+      setSearchChargingQuery(e.target.value);
+    };
+    const filteredChargingList = chargersHead
+      ?.map((item, index) => ({ ...item, displayIndex: index + 1 })) // เพิ่มลำดับเลขให้แต่ละ item
+      .filter(
+        (item) =>
+          item.name
+            ?.toString()
+            .toLowerCase()
+            .includes(searchChargingQuery.toLowerCase()) ||
+          item.connectorType
+            ?.toString()
+            .toLowerCase()
+            .includes(searchChargingQuery.toLowerCase()) ||
+          item.powerRating
+            ?.toString()
+            .toLowerCase()
+            .includes(searchChargingQuery.toLowerCase()) ||
+          item.reservable
+            ?.toString()
+            .toLowerCase()
+            .includes(searchChargingQuery.toLowerCase()) ||
+          item.chargeBoxMapping
+            ?.toString()
+            .toLowerCase()
+            .includes(searchChargingQuery.toLowerCase()) ||
+          item.status
+            ?.toString()
+            .toLowerCase()
+            .includes(searchChargingQuery.toLowerCase()) ||
+          item.currentCharging
+            ?.toString()
+            .toLowerCase()
+            .includes(searchChargingQuery.toLowerCase()) ||
+          item.displayIndex.toString().includes(searchChargingQuery)
+      );
+  
+    const handleSortCharging = (column) => {
+      let direction = "asc";
+      if (
+        chargingSortConfig.key === column &&
+        chargingSortConfig.direction === "asc"
+      ) {
+        direction = "desc";
+      }
+      setChargingSortConfig({ key: column, direction });
+    };
+  
+    // ข้อมูล charging session ที่ sort แล้ว
+    const sortedChargingList = useMemo(() => {
+      const sorted = [...filteredChargingList];
+      sorted.sort((a, b) => {
+        const valueA = a[chargingSortConfig.key];
+        const valueB = b[chargingSortConfig.key];
+  
+        if (valueA < valueB)
+          return chargingSortConfig.direction === "asc" ? -1 : 1;
+        if (valueA > valueB)
+          return chargingSortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
+      return sorted;
+    }, [filteredChargingList, chargingSortConfig]);
+  
+    // Pagination สำหรับ charging
+    const chargingIndexOfLastItem = chargingCurrentPage * chargingRowsPerPage;
+    const chargingIndexOfFirstItem =
+      chargingIndexOfLastItem - chargingRowsPerPage;
+    const currentChargingData = sortedChargingList.slice(
+      chargingIndexOfFirstItem,
+      chargingIndexOfLastItem
     );
-
-  const handleSortCharging = (column) => {
-    let direction = "asc";
-    if (
-      chargingSortConfig.key === column &&
-      chargingSortConfig.direction === "asc"
-    ) {
-      direction = "desc";
-    }
-    setChargingSortConfig({ key: column, direction });
-  };
-
-  // ข้อมูล charging session ที่ sort แล้ว
-  const sortedChargingList = useMemo(() => {
-    const sorted = [...filteredChargingList];
-    sorted.sort((a, b) => {
-      const valueA = a[chargingSortConfig.key];
-      const valueB = b[chargingSortConfig.key];
-
-      if (valueA < valueB)
-        return chargingSortConfig.direction === "asc" ? -1 : 1;
-      if (valueA > valueB)
-        return chargingSortConfig.direction === "asc" ? 1 : -1;
-      return 0;
-    });
-    return sorted;
-  }, [filteredChargingList, chargingSortConfig]);
-
-  // Pagination สำหรับ charging
-  const chargingIndexOfLastItem = chargingCurrentPage * chargingRowsPerPage;
-  const chargingIndexOfFirstItem =
-    chargingIndexOfLastItem - chargingRowsPerPage;
-  const currentChargingData = sortedChargingList.slice(
-    chargingIndexOfFirstItem,
-    chargingIndexOfLastItem
-  );
-  const totalChargingPages = Math.ceil(
-    filteredChargingList.length / chargingRowsPerPage
-  );
-
-  const handleChangeChargingPage = (page) => {
-    setChargingCurrentPage(page);
-  };
-
-  const handleRowsPerChargingPageChange = (e) => {
-    setChargingRowsPerPage(Number(e.target.value));
-    setChargingCurrentPage(1);
-  };
-
-  const handleTimeUnitChange = (value) => {
-    setTimeUnit(value);
-  };
+    const totalChargingPages = Math.ceil(
+      filteredChargingList.length / chargingRowsPerPage
+    );
   
-
-  const getMaxEndDate1 = (selectedStartDate) => {
-    if (!selectedStartDate) return dayjs(); // ถ้าไม่มี startDate, ใช้วันนี้
-
-    const maxByStartDate = dayjs(selectedStartDate).add(31, "day");
-    return dayjs(Math.min(maxByStartDate.valueOf(), dayjs().valueOf())); // ใช้ valueOf() เพื่อแปลงเป็น timestamp แล้วใช้ Math.min
-  };
-
-  // ฟังก์ชันอัปเดต startDate
-  const handleStartDateChange = (date, dateString) => {
-    if (!date) {
-      setStartDate(null);
-      return;
-    }
-
-    setStartDate(dateString);
-
-    // คำนวณ maxEndDate1 ใหม่ตาม startDate
-    const newMaxEndDate1 = getMaxEndDate1(dateString);
-
-    // ถ้า endDate มีอยู่แล้ว และเกิน maxEndDate1 → อัปเดต endDate ใหม่
-    if (endDate && dayjs(endDate).isAfter(newMaxEndDate1)) {
-      setEndDate(newMaxEndDate1.format("YYYY/MM/DD"));
-    }
-  };
-
-  // ฟังก์ชันอัปเดต endDate
-  const handleEndDateChange = (date, dateString) => {
-    if (!date) {
-      setEndDate(null);
-      return;
-    }
-
-    setEndDate(dateString);
-
-    // ถ้าเลือก endDate ก่อน startDate → อัปเดต startDate ให้เป็น 31 วันก่อนหน้า
-    if (!startDate) {
-      setStartDate(dayjs(date).subtract(31, "day").format("YYYY/MM/DD"));
-    }
-  };
-
-  // คำนวณ maxEndDate1 ตาม startDate
-  const maxEndDate1 = getMaxEndDate1(startDate);
+    const handleChangeChargingPage = (page) => {
+      setChargingCurrentPage(page);
+    };
   
-
+    const handleRowsPerChargingPageChange = (e) => {
+      setChargingRowsPerPage(Number(e.target.value));
+      setChargingCurrentPage(1);
+    };
+  
+    const calculateDefaultDateRange = (groupBy) => {
+        const today = dayjs(); // วันปัจจุบัน
+        let startDate;
+      
+        switch (groupBy) {
+          case "hour":
+            startDate = today.subtract(7, "day"); // 7 วันก่อนหน้า
+            break;
+          case "day":
+            startDate = today.subtract(1, "month"); // 1 เดือนก่อนหน้า
+            break;
+          case "month":
+            startDate = today.subtract(1, "year"); // 1 ปีก่อนหน้า
+            break;
+          default:
+            startDate = today.subtract(7, "day"); // ค่าเริ่มต้นเป็น 7 วันก่อนหน้า
+        }
+      
+        return {
+          startDate: startDate.format("YYYY/MM/DD"),
+          endDate: today.format("YYYY/MM/DD"),
+        };
+      };
+      
+      const handleTimeUnitChange = (value) => {
+        setTimeUnit(value);
+      
+        // คำนวณ Default Date Range ตาม Group by
+        const { startDate, endDate } = calculateDefaultDateRange(value);
+        setStartDate(startDate);
+        setEndDate(endDate);
+      };
+      const handleStartDateChange = (date) => {
+        if (date) {
+          setStartDate(date.format("YYYY/MM/DD")); // อัปเดต startDate
+        }
+      };
+      
+      const handleEndDateChange = (date) => {
+        if (date) {
+          setEndDate(date.format("YYYY/MM/DD")); // อัปเดต endDate
+        }
+      };
+    
+      const maxEndDate1 = useMemo(() => {
+        switch (timeUnit) {
+          case "hour":
+            return dayjs(); // กรณี Hour: ใช้วันปัจจุบัน
+          case "day":
+            return dayjs(); // กรณี Day: ใช้วันปัจจุบัน
+          case "month":
+            return dayjs(); // กรณี Month: ใช้วันปัจจุบัน
+          default:
+            return dayjs(); // ค่าเริ่มต้นเป็นวันปัจจุบัน
+        }
+      }, [timeUnit]);
+      
+      useEffect(() => {
+        const { startDate, endDate } = calculateDefaultDateRange(timeUnit);
+        setStartDate(startDate);
+        setEndDate(endDate);
+      }, []);
+    
+   
+    
   return (
     <div>
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-5">
@@ -275,24 +312,29 @@ const StationDetail = () => {
                 color: "#2aa7a7",
               },
             }}
-            onClick={() => router.push("./")}
+            onClick={() => router.push("/device/ev-charger?page=stationdetail")}
           />
 
           <div className="flex flex-col">
-            <strong>{stationName}</strong>
-            <Link
-              href="./"
-              className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200"
-            >
-              {siteName}
-            </Link>
+            <strong>{chargerName}</strong>
+            <div className="flex items-center space-x-1 gap-1">
+  <Link href={'/device/ev-charger'} className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200">
+    {siteName}
+  </Link>
+  <span>/</span>
+  <Link href={'/device/ev-charger?page=stationdetail'} className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200">
+    {stationName}
+  </Link>
+</div>
+
           </div>
         </div>
       </div>
 
+      {/* Charger Head Table */}
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
         <span className="text-lg font-bold block mb-2">
-          Station Information
+        Charger Information
         </span>
 
         <div className="flex flex-col lg:flex-row gap-3">
@@ -304,10 +346,11 @@ const StationDetail = () => {
                     ? [
                         {
                           id: station.id,
-                          name: station.name,
+                          name: station.stationName,
                           status: station.status,
                           lat: station.latitude, // ใช้ latitude จาก station
                           lng: station.longitude, // ใช้ longitude จาก station
+                          siteName: station.siteName,
                         },
                       ]
                     : [] // ถ้าไม่มีข้อมูล ให้ส่งอาร์เรย์ว่าง
@@ -326,31 +369,31 @@ const StationDetail = () => {
                 <tbody>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Station Name</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.name}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Description</strong>
+                      <strong>Charger Name</strong>
                     </td>
                     <td className="px-4 py-2 font-bold">
-                      {station?.description}
+                      {station?.name}
                     </td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
                       <strong>Brand Name</strong>
                     </td>
-                    <td className="px-4 py-2 font-bold">{station?.brand}</td>
+                    <td className="px-4 py-2 font-bold">{station?.brandName}</td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Currency</strong>
+                      <strong>Charger Type</strong>
                     </td>
-                    <td className="px-4 py-2 font-bold">{station?.currency}</td>
+                    <td className="px-4 py-2 font-bold">{station?.type}</td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
+                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
+                      <strong>Power Type</strong>
+                    </td>
+                    <td className="px-4 py-2 font-bold">{station?.powerType}</td>
+                  </tr>
+                  {/* <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
                       <strong>Station Status</strong>
                     </td>
@@ -363,32 +406,24 @@ const StationDetail = () => {
                     >
                       {station?.status}
                     </td>
+                  </tr> */}
+                  <tr className="text-xs  border-b border-gray-200">
+                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
+                      <strong>Charger Price (per kWh)</strong>
+                    </td>
+                    <td className="px-4 py-2 font-bold">{station?.price}</td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Address</strong>
+                      <strong>SimultaneousCharging</strong>
                     </td>
-                    <td className="px-4 py-2 font-bold">{station?.address}</td>
+                    <td className="px-4 py-2 font-bold">{station?.simultaneousCharge}</td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Country</strong>
+                      <strong>StationName</strong>
                     </td>
-                    <td className="px-4 py-2 font-bold">{station?.country}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Province</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.province}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Postal Code</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {station?.postalCode}
-                    </td>
+                    <td className="px-4 py-2 font-bold">{station?.stationName}</td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
@@ -396,14 +431,6 @@ const StationDetail = () => {
                     </td>
                     <td className="px-4 py-2 font-bold">
                       {station?.latitude},{station?.longitude}
-                    </td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Opening Hours</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {station?.monOpeningTime}
                     </td>
                   </tr>
                 </tbody>
@@ -415,7 +442,7 @@ const StationDetail = () => {
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
         <div>
           <span className="text-lg font-bold block mb-2">
-            Charger Information
+            Charge Head Information
           </span>
         </div>
         <div className="flex flex-col lg:flex-row gap-3">
@@ -423,7 +450,7 @@ const StationDetail = () => {
             <div className="flex-1">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-semibold">
-                  {chargers.length} Chargers
+                  {chargersHead.length} Chargers
                 </span>
                 <input
                   type="text"
@@ -438,7 +465,7 @@ const StationDetail = () => {
                   <thead>
                     <tr className="text-xs text-black border-b border-gray-300 dark:text-white">
                       <th
-                        className="px-2 py-1 text-left cursor-pointer"
+                        className="px-2 py-1 text-right cursor-pointer"
                         onClick={() => handleSortCharging("displayIndex")}
                       >
                         #
@@ -474,7 +501,7 @@ const StationDetail = () => {
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-center"
+                        className="px-2 py-1 text-left"
                         onClick={() => handleSortCharging("name")}
                       >
                         Name
@@ -510,10 +537,10 @@ const StationDetail = () => {
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-center"
-                        onClick={() => handleSortCharging("brand")}
+                        className="px-2 py-1 text-left"
+                        onClick={() => handleSortCharging("connectorType")}
                       >
-                        Brand
+                        Connector Type
                         <div
                           style={{
                             display: "inline-flex",
@@ -525,7 +552,7 @@ const StationDetail = () => {
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "brand" &&
+                                chargingSortConfig.key === "connectorType" &&
                                 chargingSortConfig.direction === "asc"
                                   ? 1
                                   : 0.3,
@@ -536,7 +563,43 @@ const StationDetail = () => {
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "brand" &&
+                                chargingSortConfig.key === "connectorType" &&
+                                chargingSortConfig.direction === "desc"
+                                  ? 1
+                                  : 0.3,
+                              marginTop: "-2px",
+                            }}
+                          />
+                        </div>
+                      </th>
+                      <th
+                        className="px-2 py-1 text-left"
+                        onClick={() => handleSortCharging("powerRating")}
+                      >
+                        Power Rating
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            flexDirection: "column",
+                            marginLeft: "4px",
+                          }}
+                        >
+                          <ArrowDropUpIcon
+                            style={{
+                              fontSize: "14px",
+                              opacity:
+                                chargingSortConfig.key === "powerRating" &&
+                                chargingSortConfig.direction === "asc"
+                                  ? 1
+                                  : 0.3,
+                              marginBottom: "-2px",
+                            }}
+                          />
+                          <ArrowDropDownIcon
+                            style={{
+                              fontSize: "14px",
+                              opacity:
+                                chargingSortConfig.key === "powerRating" &&
                                 chargingSortConfig.direction === "desc"
                                   ? 1
                                   : 0.3,
@@ -547,9 +610,9 @@ const StationDetail = () => {
                       </th>
                       <th
                         className="px-2 py-1 text-center"
-                        onClick={() => handleSortCharging("type")}
+                        onClick={() => handleSortCharging("reservable")}
                       >
-                        Type
+                        Reservable
                         <div
                           style={{
                             display: "inline-flex",
@@ -561,7 +624,7 @@ const StationDetail = () => {
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "type" &&
+                                chargingSortConfig.key === "reservable" &&
                                 chargingSortConfig.direction === "asc"
                                   ? 1
                                   : 0.3,
@@ -572,7 +635,7 @@ const StationDetail = () => {
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "type" &&
+                                chargingSortConfig.key === "reservable" &&
                                 chargingSortConfig.direction === "desc"
                                   ? 1
                                   : 0.3,
@@ -583,9 +646,9 @@ const StationDetail = () => {
                       </th>
                       <th
                         className="px-2 py-1 text-center"
-                        onClick={() => handleSortCharging("chargeHeadCount")}
+                        onClick={() => handleSortCharging("chargeBoxMapping")}
                       >
-                        Count of Charge Head
+                        ChargeBox Mapping
                         <div
                           style={{
                             display: "inline-flex",
@@ -597,7 +660,7 @@ const StationDetail = () => {
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "chargeHeadCount" &&
+                                chargingSortConfig.key === "chargeBoxMapping" &&
                                 chargingSortConfig.direction === "asc"
                                   ? 1
                                   : 0.3,
@@ -608,7 +671,79 @@ const StationDetail = () => {
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "chargeHeadCount" &&
+                                chargingSortConfig.key === "chargeBoxMapping" &&
+                                chargingSortConfig.direction === "desc"
+                                  ? 1
+                                  : 0.3,
+                              marginTop: "-2px",
+                            }}
+                          />
+                        </div>
+                      </th>
+                      <th
+                        className="px-2 py-1 text-left"
+                        onClick={() => handleSortCharging("status")}
+                      >
+                        Status
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            flexDirection: "column",
+                            marginLeft: "4px",
+                          }}
+                        >
+                          <ArrowDropUpIcon
+                            style={{
+                              fontSize: "14px",
+                              opacity:
+                                chargingSortConfig.key === "status" &&
+                                chargingSortConfig.direction === "asc"
+                                  ? 1
+                                  : 0.3,
+                              marginBottom: "-2px",
+                            }}
+                          />
+                          <ArrowDropDownIcon
+                            style={{
+                              fontSize: "14px",
+                              opacity:
+                                chargingSortConfig.key === "status" &&
+                                chargingSortConfig.direction === "desc"
+                                  ? 1
+                                  : 0.3,
+                              marginTop: "-2px",
+                            }}
+                          />
+                        </div>
+                      </th>
+                      <th
+                        className="px-2 py-1 text-left"
+                        onClick={() => handleSortCharging("currentCharging")}
+                      >
+                        Current EV Charging
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            flexDirection: "column",
+                            marginLeft: "4px",
+                          }}
+                        >
+                          <ArrowDropUpIcon
+                            style={{
+                              fontSize: "14px",
+                              opacity:
+                                chargingSortConfig.key === "currentCharging" &&
+                                chargingSortConfig.direction === "asc"
+                                  ? 1
+                                  : 0.3,
+                              marginBottom: "-2px",
+                            }}
+                          />
+                          <ArrowDropDownIcon
+                            style={{
+                              fontSize: "14px",
+                              opacity:
+                                chargingSortConfig.key === "currentCharging" &&
                                 chargingSortConfig.direction === "desc"
                                   ? 1
                                   : 0.3,
@@ -661,23 +796,44 @@ const StationDetail = () => {
                             }`}
                             style={{ borderBottom: "1px solid #e0e0e0" }}
                           >
-                            <td className="px-2 py-1 text-left dark:text-white">
+                            <td className="px-2 py-1 text-right dark:text-white">
                               {highlightText(record.displayIndex)}
                             </td>
-                            <td className="px-2 py-1 text-center text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] dark:text-[#33BFBF] dark:hover:text-[#28A9A9]"
+                            <td className="px-2 py-1 text-left text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] dark:text-[#33BFBF] dark:hover:text-[#28A9A9]"
                             onClick={() => {
-                              handleChargerClick(record.id, record.name);
+                              handleChargerHeadClick(record.id, record.name);
                             }}>
                               {highlightText(record.name)}
                             </td>
-                            <td className="px-2 py-1 text-center dark:text-white">
-                              {highlightText(record.brand)}
+                            <td className="px-2 py-1 text-left dark:text-white">
+                              {highlightText(record.connectorType)}
+                            </td>
+                            <td className="px-2 py-1 text-left dark:text-white">
+                              {highlightText(record.powerRating)}
                             </td>
                             <td className="px-2 py-1 text-center dark:text-white">
-                              {highlightText(record.type)}
+                              {highlightText(record.reservable)}
                             </td>
                             <td className="px-2 py-1 text-center dark:text-white">
-                              {highlightText(record.chargeHeadCount)}
+                              {highlightText(record.chargeBoxMapping)}
+                            </td>
+                            <td
+  className="px-2 py-1 text-left font-bold"
+  style={{
+    color:
+      record?.status === 'Available' ? '#12B981' :
+      record?.status === 'Charging' ? '#259AE6' :
+      record?.status === 'Out of Order' ? '#DF4667' :
+      record?.status === 'Reserved' ? '#9747FF' :
+      record?.status === 'Maintenance' ? '#8A99AF' :
+      'black'
+  }}
+>
+  {highlightText(record?.status)}
+</td>
+
+                            <td className="px-2 py-1 text-left dark:text-white">
+                              {highlightText(record.currentCharging ?? "-")}
                             </td>
                           </tr>
                         );
@@ -756,65 +912,64 @@ const StationDetail = () => {
           <span className="text-lg font-bold block mb-2">Statistics</span>
 
           <div className="flex justify-between items-center mb-2 mt-5">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">Group by:</span>
-              <div className="inline-flex items-center bg-gray-100 rounded-md p-1">
-      {OptionsTimeUnit.map((option) => (
-        <button
-          key={option.value}
-          onClick={() => handleTimeUnitChange(option.value)}
-          className={`px-4 py-1 rounded-md text-sm font-medium ${
-            timeUnit === option.value
-              ? "bg-white shadow text-black"
-              : "text-gray-500 hover:text-black"
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">Group by:</span>
+                <div className="inline-flex items-center bg-gray-100 rounded-md p-1">
+                  {OptionsTimeUnit.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => handleTimeUnitChange(option.value)}
+                      className={`px-4 py-1 rounded-md text-sm font-medium ${
+                        timeUnit === option.value
+                          ? "bg-white shadow text-black"
+                          : "text-gray-500 hover:text-black"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2 mt-5 items-center">
+                <span className="text-sm">Date :</span>
+                <DatePicker
+                  className="w-48 p-2 bg-white border shadow-default 
+                    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
+                  value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
+                  onChange={handleStartDateChange}
+                  disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
+                  format="YYYY/MM/DD"
+                  allowClear={false}
+                />
+                <p>-</p>
+                <DatePicker
+                  className="w-48 p-2 bg-white border shadow-default 
+                    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
+                  value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
+                  onChange={handleEndDateChange}
+                  format="YYYY/MM/DD"
+                  min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null} // กำหนดวันที่เริ่มต้น
+                  max={maxEndDate1} // กำหนดวันที่สิ้นสุด
+                  disabledDate={(current) => {
+                    return (
+                      current &&
+                      (current.isBefore(dayjs(startDate, "YYYY/MM/DD"), "day") || // น้อยกว่า startDate
+                        current.isAfter(dayjs(maxEndDate1, "YYYY/MM/DD"), "day")) // มากกว่า maxEndDate1
+                    );
+                  }}
+                  allowClear={false}
+                />
+              </div>
             </div>
-            <div className="flex gap-2 mt-5 items-center">
-              <span className="text-sm">Date :</span>
-              <DatePicker
-                className="w-48 p-2 bg-white border shadow-default 
-        dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
-                value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
-                onChange={handleStartDateChange}
-                disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
-                format="YYYY/MM/DD"
-                allowClear={false}
-              />
-              <p>-</p>
+          
 
-              {/* DatePicker สำหรับ End Date */}
-              <DatePicker
-                className="w-48 p-2 bg-white border shadow-default 
-  dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
-                value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
-                onChange={handleEndDateChange}
-                format="YYYY/MM/DD" // ใช้รูปแบบ YYYY/MM/DD
-                min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null} // กำหนดวันที่เริ่มต้น
-                max={maxEndDate1} // กำหนดวันที่สิ้นสุด
-                disabledDate={(current) => {
-                  // ปิดการเลือกวันที่ที่น้อยกว่า startDate หรือมากกว่า maxEndDate1
-                  return (
-                    current &&
-                    (current.isBefore(dayjs(startDate, "YYYY/MM/DD"), "day") || // น้อยกว่า startDate
-                      current.isAfter(dayjs(maxEndDate1, "YYYY/MM/DD"), "day")) // มากกว่า maxEndDate1
-                  );
-                }}
-                allowClear={false}
-              />
-            </div>
-          </div>
-
-          <div className="mt-5">
+            <div className="mt-5">
             <BarChartComponent
               data={graphData}
               type="hour"
               timestampKey="timestamp"
               valueKeys={["session"]}
+              yAxisLabel="Sessions"
             />
           </div>
           <div className="mt-5">
@@ -823,6 +978,7 @@ const StationDetail = () => {
               type="hour"
               timestampKey="timestamp"
               valueKeys={["electricityAmount"]}
+              yAxisLabel="Energy (kWh)"
             />
           </div>
           <div className="mt-5">
@@ -831,6 +987,7 @@ const StationDetail = () => {
               type="hour"
               timestampKey="timestamp"
               valueKeys={["revenue"]}
+              yAxisLabel="Revenue"
             />
           </div>
         </div>
@@ -839,4 +996,4 @@ const StationDetail = () => {
   );
 };
 
-export default StationDetail;
+export default ChargerDetail;

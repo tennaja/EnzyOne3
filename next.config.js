@@ -24,6 +24,9 @@ const nextConfig = {
     ],
     // domains: ["images.unsplash.com", "img.freepik.com", "source.unsplash.com"],
   },
+  experimental: {
+    appDir: true, // เปิดใช้งาน App Router
+  },
 };
 
 module.exports = nextConfig;

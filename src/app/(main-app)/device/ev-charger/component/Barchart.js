@@ -45,6 +45,7 @@ const BarChartComponent = ({
   type = "hour",
   timestampKey = "timestamp",
   valueKeys = ["kwh"],
+  yAxisLabel = "kwh",
 }) => {
   const [barProps, setBarProps] = useState({});
   const [hover, setHover] = useState(null);
@@ -71,25 +72,48 @@ const BarChartComponent = ({
     return <p>ไม่มีข้อมูลสำหรับแสดงผล</p>;
   }
 
-  const rawData = data[timestampKey].map((time, index) => {
-    const date = new Date(time);
-    const item = {
-      fullTime: `${String(date.getDate()).padStart(2, "0")}-${getMonthAbbreviation(date)}-${date.getFullYear()} ${String(date.getHours()).padStart(2, "0")}:00`,
-      day: `${getDayAbbreviation(date)} ${String(date.getDate()).padStart(2, "0")}-${getMonthAbbreviation(date)}-${date.getFullYear()}`,
-      month: `${getMonthAbbreviation(date)} ${date.getFullYear()}`,
-      hour: `${String(date.getHours()).padStart(2, "0")}:00`,
+  const rawData = data.timestamp.map((time, index) => {
+    // ใช้ `new Date(time)` โดยตรงเพราะเวลามีรูปแบบที่รองรับอยู่แล้ว
+    const date = new Date(time); // time เป็น "2025/03/20 00:00:00"
+  
+    // ตรวจสอบการแปลงว่าเป็นวันที่ที่ถูกต้องหรือไม่
+    if (isNaN(date)) {
+      console.error(`Invalid Date format: ${time}`);
+      return {}; // ถ้าแปลงไม่สำเร็จ จะข้ามรายการนั้นไป
+    }
+  
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hour = String(date.getHours()).padStart(2, "0");
+    const dayAbbreviation = getDayAbbreviation(date); // เช่น Mon, Tue
+  
+    // สร้างผลลัพธ์เบื้องต้น
+    const result = {
+      fullTime: `${year}/${month}/${day} ${hour}:00`, // รูปแบบสำหรับ hour
+      day: `${dayAbbreviation} ${year}/${month}/${day}`, // รูปแบบสำหรับ day
+      month: `${year}/${month}`, // รูปแบบสำหรับ month
     };
-    valueKeys.forEach((k) => {
-      item[k] = data[k]?.[index] ?? 0;
+  
+    // ใช้ valueKeys เพื่อเพิ่มข้อมูลใน result
+    valueKeys.forEach((key) => {
+      result[key] = data[key]?.[index] ?? 0; // ใช้ค่าใน data หรือ 0 ถ้าไม่มี
     });
-    return item;
+  
+    return result;
   });
+  
+  
+  
+  
+  
 
   const xAxisKey = {
     hour: "fullTime",
     day: "day",
     month: "month",
   }[type] || "fullTime";
+  console.log("xAxisKey:", xAxisKey);
 
   let chartData = aggregateData(rawData, xAxisKey, valueKeys);
 
@@ -140,78 +164,91 @@ const BarChartComponent = ({
   };
 
   return (
-    <div style={{ textAlign: "left" }}>
-      <button onClick={zoomOut} className="border-2 border-gray-400 rounded-lg p-1 mb-6">
-        Zoom Out
-      </button>
-      <ResponsiveContainer width="100%" height={400} style={{ backgroundColor: '#f0f0f0', borderRadius: '10px' }}>
-        <BarChart
-          key={chartKey}
-          data={chartData}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          margin={{ top: 50 , left: 30}} // เพิ่ม margin ด้านบน, ขวา, ซ้าย, ล่าง
-        >
-          {/* strokeDasharray="3 3" */}
-          <CartesianGrid  horizontal={true} vertical={false} /> 
-          <XAxis
-            dataKey={xAxisKey}
-            angle={-45}
-            textAnchor="end"
-            fontSize={10}
-            interval={0}
-            height={80}
-            allowDataOverflow={true}
-          />
-          <YAxis
-  axisLine={false}
-  tickLine={false}
-  label={{
-    value: valueKeys[0],
-    position: 'top',
-    offset: 30,
-    angle: 0,
-    dx: -50,
-    dy: -20,
-    style: {
-      textAnchor: 'start',
-      fontSize: 17,
-      fontWeight: 'bold',
-    },
-  }}
-/>
+    <div style={{ position: "relative", textAlign: "left" }}>
+  <div
+    style={{
+      position: "absolute",
+      top: 10,
+      right: 10,
+      zIndex: 10,
+    }}
+  >
+    <button
+      onClick={zoomOut}
+      className="border-2 border-gray-400 rounded-lg px-3 py-1"
+    >
+      Zoom Out
+    </button>
+  </div>
+
+  <ResponsiveContainer
+    width="100%"
+    height={400}
+    style={{ backgroundColor: "#f0f0f0", borderRadius: "10px" }}
+  >
+    <BarChart
+      key={chartKey}
+      data={chartData}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      margin={{ top: 50, left: 30 }}
+    >
+      <CartesianGrid horizontal={true} vertical={false} />
+      <XAxis
+        dataKey={xAxisKey}
+        angle={-45}
+        textAnchor="end"
+        fontSize={10}
+        interval={0}
+        height={80}
+        allowDataOverflow={true}
+      />
+      <YAxis
+        axisLine={false}
+        tickLine={false}
+        label={{
+          value: yAxisLabel,
+          position: "top",
+          offset: 30,
+          angle: 0,
+          dx: -50,
+          dy: -20,
+          style: {
+            textAnchor: "start",
+            fontSize: 17,
+            fontWeight: "bold",
+          },
+        }}
+      />
+      <Tooltip />
+      <Legend
+        layout="horizontal"
+        align="center"
+        verticalAlign="top"
+        wrapperStyle={{ marginBottom: 20 }}
+        onClick={selectBar}
+        onMouseOver={handleLegendMouseEnter}
+        onMouseOut={handleLegendMouseLeave}
+      />
+      {valueKeys.map((key) => (
+        <Bar
+          key={key}
+          dataKey={key}
+          fill="#4bc0c0"
+          name={key}
+          opacity={hover === key || !hover ? 1 : 0.5}
+          hide={barProps[key] === false}
+        />
+      ))}
+      {refAreaLeft && refAreaRight ? (
+        <ReferenceArea x1={refAreaLeft} x2={refAreaRight} strokeOpacity={0.3} fill="gray" />
+      ) : null}
+    </BarChart>
+  </ResponsiveContainer>
+</div>
 
 
-
-
-
-          <Tooltip />
-          <Legend
-            layout="horizontal"
-            align="center"
-            verticalAlign="top"
-            wrapperStyle={{ marginBottom: 20 }}
-            onClick={selectBar}
-            onMouseOver={handleLegendMouseEnter}
-            onMouseOut={handleLegendMouseLeave}
-          />
-          {valueKeys.map((key) => (
-            <Bar
-              key={key}
-              dataKey={key}
-              fill="#4bc0c0"
-              name={key}
-              opacity={hover === key || !hover ? 1 : 0.5}
-              hide={barProps[key] === false}
-            />
-          ))}
-          {refAreaLeft && refAreaRight ? (
-            <ReferenceArea x1={refAreaLeft} x2={refAreaRight} strokeOpacity={0.3} fill="gray" />
-          ) : null}
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
   );
 };
 

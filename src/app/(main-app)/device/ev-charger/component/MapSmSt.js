@@ -1,10 +1,11 @@
 'use client';
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip,useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import ReactDOMServer from "react-dom/server";
+import { useRouter, usePathname } from "next/navigation";
 
 const defaultCenter = { lat: 15.8700, lng: 100.9925 };
 
@@ -33,6 +34,7 @@ const MapTH = ({
   className = "w-[auto] h-500px] rounded-lg shadow-md overflow-hidden",
 }) => {
   const mapRef = useRef(null);
+  const router = useRouter();
   const prevSiteIdRef = useRef(SiteId);
   const prevGroupIdRef = useRef(GroupId);
   const [selectedMarker, setSelectedMarker] = useState(null);
@@ -104,7 +106,7 @@ console.log(selectedLocation)
     (loca) => {
       setSelectedLocation(loca);
       setSelectedMarker(loca);
-      setActiveTab("detail");
+      router.push("ev-charger/stationdetail");
       if (onDeviceClick) onDeviceClick(loca);
     },
     [setSelectedLocation, setActiveTab, onDeviceClick]
@@ -181,7 +183,16 @@ console.log(selectedLocation)
               icon={getMuiIcon(isSelected, loca.status)}
               eventHandlers={{ click: () => handleMarkerClick(loca) }}
               keepInView={false}
-            />
+            >
+                          <Tooltip direction="top" offset={[0, -30]} opacity={1} permanent={false}>
+                            <div>
+                              <span className="font-bold">{loca.name}</span>
+                            </div>
+                            <div>
+                              <span>{loca.siteName}</span> 
+                            </div>
+                          </Tooltip>
+                        </Marker>
           );
         })}
       </MapContainer>

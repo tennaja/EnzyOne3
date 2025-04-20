@@ -259,53 +259,68 @@ const ChargerHeadDetail = () => {
         setChargingCurrentPage(1);
       };
     
-      const handleTimeUnitChange = (value) => {
-        setTimeUnit(value);
-      };
-      
-    
-      const getMaxEndDate1 = (selectedStartDate) => {
-        if (!selectedStartDate) return dayjs(); // ถ้าไม่มี startDate, ใช้วันนี้
-    
-        const maxByStartDate = dayjs(selectedStartDate).add(31, "day");
-        return dayjs(Math.min(maxByStartDate.valueOf(), dayjs().valueOf())); // ใช้ valueOf() เพื่อแปลงเป็น timestamp แล้วใช้ Math.min
-      };
-    
-      // ฟังก์ชันอัปเดต startDate
-      const handleStartDateChange = (date, dateString) => {
-        if (!date) {
-          setStartDate(null);
-          return;
-        }
-    
-        setStartDate(dateString);
-    
-        // คำนวณ maxEndDate1 ใหม่ตาม startDate
-        const newMaxEndDate1 = getMaxEndDate1(dateString);
-    
-        // ถ้า endDate มีอยู่แล้ว และเกิน maxEndDate1 → อัปเดต endDate ใหม่
-        if (endDate && dayjs(endDate).isAfter(newMaxEndDate1)) {
-          setEndDate(newMaxEndDate1.format("YYYY/MM/DD"));
-        }
-      };
-    
-      // ฟังก์ชันอัปเดต endDate
-      const handleEndDateChange = (date, dateString) => {
-        if (!date) {
-          setEndDate(null);
-          return;
-        }
-    
-        setEndDate(dateString);
-    
-        // ถ้าเลือก endDate ก่อน startDate → อัปเดต startDate ให้เป็น 31 วันก่อนหน้า
-        if (!startDate) {
-          setStartDate(dayjs(date).subtract(31, "day").format("YYYY/MM/DD"));
-        }
-      };
-    
-      // คำนวณ maxEndDate1 ตาม startDate
-      const maxEndDate1 = getMaxEndDate1(startDate);
+     const calculateDefaultDateRange = (groupBy) => {
+         const today = dayjs(); // วันปัจจุบัน
+         let startDate;
+       
+         switch (groupBy) {
+           case "hour":
+             startDate = today.subtract(7, "day"); // 7 วันก่อนหน้า
+             break;
+           case "day":
+             startDate = today.subtract(1, "month"); // 1 เดือนก่อนหน้า
+             break;
+           case "month":
+             startDate = today.subtract(1, "year"); // 1 ปีก่อนหน้า
+             break;
+           default:
+             startDate = today.subtract(7, "day"); // ค่าเริ่มต้นเป็น 7 วันก่อนหน้า
+         }
+       
+         return {
+           startDate: startDate.format("YYYY/MM/DD"),
+           endDate: today.format("YYYY/MM/DD"),
+         };
+       };
+       
+       const handleTimeUnitChange = (value) => {
+         setTimeUnit(value);
+       
+         // คำนวณ Default Date Range ตาม Group by
+         const { startDate, endDate } = calculateDefaultDateRange(value);
+         setStartDate(startDate);
+         setEndDate(endDate);
+       };
+       const handleStartDateChange = (date) => {
+         if (date) {
+           setStartDate(date.format("YYYY/MM/DD")); // อัปเดต startDate
+         }
+       };
+       
+       const handleEndDateChange = (date) => {
+         if (date) {
+           setEndDate(date.format("YYYY/MM/DD")); // อัปเดต endDate
+         }
+       };
+     
+       const maxEndDate1 = useMemo(() => {
+         switch (timeUnit) {
+           case "hour":
+             return dayjs(); // กรณี Hour: ใช้วันปัจจุบัน
+           case "day":
+             return dayjs(); // กรณี Day: ใช้วันปัจจุบัน
+           case "month":
+             return dayjs(); // กรณี Month: ใช้วันปัจจุบัน
+           default:
+             return dayjs(); // ค่าเริ่มต้นเป็นวันปัจจุบัน
+         }
+       }, [timeUnit]);
+       
+       useEffect(() => {
+         const { startDate, endDate } = calculateDefaultDateRange(timeUnit);
+         setStartDate(startDate);
+         setEndDate(endDate);
+       }, []);
       
   return (
     <div>
@@ -321,21 +336,21 @@ const ChargerHeadDetail = () => {
                 color: "#2aa7a7",
               },
             }}
-            onClick={() => router.push("chargerdetail")}
+            onClick={() => router.push("/device/ev-charger?page=chargerdetail")}
           />
 
           <div className="flex flex-col">
             <strong>{chargerHeadName}</strong>
             <div className="flex items-center space-x-1 gap-1">
-  <Link href={'./'} className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200">
+  <Link href={'/device/ev-charger'} className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200">
     {siteName}
   </Link>
   <span>/</span>
-  <Link href={'stationdetail'} className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200">
+  <Link href={'/device/ev-charger?page=stationdetail'} className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200">
     {stationName}
   </Link>
   <span>/</span>
-                <Link href={'chargerdetail'} className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200">
+                <Link href={'/device/ev-charger?page=chargerdetail'} className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200">
                   {chargerName}
                 </Link>
 </div>
@@ -358,10 +373,11 @@ const ChargerHeadDetail = () => {
                     ? [
                         {
                           id: station.id,
-                          name: station.name,
-                          status: station.status,
+                          name: station.stationName,
+                          status: station.stationStatus,
                           lat: station.latitude, // ใช้ latitude จาก station
                           lng: station.longitude, // ใช้ longitude จาก station
+                          siteName: station.siteName,
                         },
                       ]
                     : [] // ถ้าไม่มีข้อมูล ให้ส่งอาร์เรย์ว่าง
@@ -451,14 +467,20 @@ const ChargerHeadDetail = () => {
                       <strong>ChargeHead Status</strong>
                     </td>
                     <td
-                      className={`px-4 py-2 font-bold ${
-                        station?.status === "open"
-                          ? "text-[#12B981]"
-                          : "text-[#FF3D4B]"
-                      }`}
-                    >
-                      {station?.status}
-                    </td>
+  className="px-4 py-2 font-bold"
+  style={{
+    color:
+      station?.status === "Available" ? "#12B981" :
+      station?.status === "Charging" ? "#259AE6" :
+      station?.status === "Out of Order" ? "#DF4667" :
+      station?.status === "Reserved" ? "#9747FF" :
+      station?.status === "Maintenance" ? "#8A99AF" :
+      "black"
+  }}
+>
+  {station?.status}
+</td>
+
                   </tr>
                   
                 </tbody>
@@ -491,65 +513,63 @@ const ChargerHeadDetail = () => {
           <span className="text-lg font-bold block mb-2">Statistics</span>
 
           <div className="flex justify-between items-center mb-2 mt-5">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">Group by:</span>
-              <div className="inline-flex items-center bg-gray-100 rounded-md p-1">
-      {OptionsTimeUnit.map((option) => (
-        <button
-          key={option.value}
-          onClick={() => handleTimeUnitChange(option.value)}
-          className={`px-4 py-1 rounded-md text-sm font-medium ${
-            timeUnit === option.value
-              ? "bg-white shadow text-black"
-              : "text-gray-500 hover:text-black"
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">Group by:</span>
+                <div className="inline-flex items-center bg-gray-100 rounded-md p-1">
+                  {OptionsTimeUnit.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => handleTimeUnitChange(option.value)}
+                      className={`px-4 py-1 rounded-md text-sm font-medium ${
+                        timeUnit === option.value
+                          ? "bg-white shadow text-black"
+                          : "text-gray-500 hover:text-black"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2 mt-5 items-center">
+                <span className="text-sm">Date :</span>
+                <DatePicker
+                  className="w-48 p-2 bg-white border shadow-default 
+                    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
+                  value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
+                  onChange={handleStartDateChange}
+                  disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
+                  format="YYYY/MM/DD"
+                  allowClear={false}
+                />
+                <p>-</p>
+                <DatePicker
+                  className="w-48 p-2 bg-white border shadow-default 
+                    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
+                  value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
+                  onChange={handleEndDateChange}
+                  format="YYYY/MM/DD"
+                  min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null} // กำหนดวันที่เริ่มต้น
+                  max={maxEndDate1} // กำหนดวันที่สิ้นสุด
+                  disabledDate={(current) => {
+                    return (
+                      current &&
+                      (current.isBefore(dayjs(startDate, "YYYY/MM/DD"), "day") || // น้อยกว่า startDate
+                        current.isAfter(dayjs(maxEndDate1, "YYYY/MM/DD"), "day")) // มากกว่า maxEndDate1
+                    );
+                  }}
+                  allowClear={false}
+                />
+              </div>
             </div>
-            <div className="flex gap-2 mt-5 items-center">
-              <span className="text-sm">Date :</span>
-              <DatePicker
-                className="w-48 p-2 bg-white border shadow-default 
-        dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
-                value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
-                onChange={handleStartDateChange}
-                disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
-                format="YYYY/MM/DD"
-                allowClear={false}
-              />
-              <p>-</p>
 
-              {/* DatePicker สำหรับ End Date */}
-              <DatePicker
-                className="w-48 p-2 bg-white border shadow-default 
-  dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
-                value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
-                onChange={handleEndDateChange}
-                format="YYYY/MM/DD" // ใช้รูปแบบ YYYY/MM/DD
-                min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null} // กำหนดวันที่เริ่มต้น
-                max={maxEndDate1} // กำหนดวันที่สิ้นสุด
-                disabledDate={(current) => {
-                  // ปิดการเลือกวันที่ที่น้อยกว่า startDate หรือมากกว่า maxEndDate1
-                  return (
-                    current &&
-                    (current.isBefore(dayjs(startDate, "YYYY/MM/DD"), "day") || // น้อยกว่า startDate
-                      current.isAfter(dayjs(maxEndDate1, "YYYY/MM/DD"), "day")) // มากกว่า maxEndDate1
-                  );
-                }}
-                allowClear={false}
-              />
-            </div>
-          </div>
-
-          <div className="mt-5">
+            <div className="mt-5">
             <BarChartComponent
               data={graphData}
               type="hour"
               timestampKey="timestamp"
               valueKeys={["session"]}
+              yAxisLabel="Sessions"
             />
           </div>
           <div className="mt-5">
@@ -558,6 +578,7 @@ const ChargerHeadDetail = () => {
               type="hour"
               timestampKey="timestamp"
               valueKeys={["electricityAmount"]}
+              yAxisLabel="Energy (kWh)"
             />
           </div>
           <div className="mt-5">
@@ -566,6 +587,7 @@ const ChargerHeadDetail = () => {
               type="hour"
               timestampKey="timestamp"
               valueKeys={["revenue"]}
+              yAxisLabel="Revenue"
             />
           </div>
         </div>
