@@ -332,14 +332,21 @@ const SchedulePopup = forwardRef(
   }));
 
   const handleStartTimeChange = (time) => {
-    setStartDatetime(time ? time.format("HH:mm") : null);
-    console.log("Start Time:", time ? time.format("HH:mm") : null);
+    if (!time) return;
+    setStartDatetime(time);
+
+    // ถ้ายังไม่มี endDatetime หรือ endDatetime <= startDatetime ให้ auto-set เป็น start + 1 นาที
+    if (!endDatetime || !endDatetime.isAfter(time)) {
+      const autoEnd = time.add(1, "minute");
+      setEndDatetime(autoEnd);
+    }
   };
 
   const handleEndTimeChange = (time) => {
-    setEndDatetime(time ? time.format("HH:mm") : null);
-    console.log("End Time:", time ? time.format("HH:mm") : null);
+    if (!time) return;
+    setEndDatetime(time);
   };
+
  
   const days = updateSelectedDays();
 
@@ -552,34 +559,72 @@ const SchedulePopup = forwardRef(
   showTime
   value={executionDateTime ? dayjs(executionDateTime) : null}
   onChange={(date) => {
-    setexecutionDateTime(date ? date.toISOString() : null);
-    if (executionEndDateTime && dayjs(date).isAfter(dayjs(executionEndDateTime))) {
-      setexecutionDateTime(null); // Reset end date if start date exceeds end date
+    if (!date) return;
+
+    // ตั้งค่า Start Date
+    const startISO = date.toISOString();
+    setexecutionDateTime(startISO);
+    console.log("executionDateTime:", date.format("YYYY-MM-DD HH:mm"));
+
+    // Auto set End Date เมื่อเลือก Start Date
+    if (!executionEndDateTime || dayjs(date).add(1, "minute").isAfter(dayjs(executionEndDateTime))) {
+      const newEnd = dayjs(date).add(1, "minute").toISOString();
+      setexecutionEndDateTime(newEnd);
+      console.log("auto-set executionEndDateTime:", dayjs(newEnd).format("YYYY-MM-DD HH:mm"));
     }
-    console.log("executionDateTime:", date ? date.format("YYYY-MM-DD HH:mm") : null);
+  }}
+  onPanelChange={(value, mode) => {
+    console.log("panel change:", value?.format("YYYY-MM-DD HH:mm"), mode);
   }}
   format="YYYY/MM/DD HH:mm"
   allowClear={false}
-  disabledDate={(current) => current && current.isBefore(dayjs(), 'day')} // ป้องกันไม่ให้เลือกวันที่ก่อนปัจจุบัน
+  // ห้ามเลือกวันก่อนวันนี้
+  disabledDate={(current) => current && current.isBefore(dayjs(), 'day')} // กำหนดไม่ให้เลือกวันก่อนปัจจุบัน
 />
 
 
-        
-                <span>-</span>
-                <DatePicker
-                className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
-                  showTime
-                  value={executionEndDateTime ? dayjs(executionEndDateTime) : null}
-                  onChange={(date) => {
-                    setexecutionEndDateTime(date ? date.toISOString() : null);
-                    console.log("executionEndDateTime:", date ? date.format("YYYY-MM-DD HH:mm") : null);
-                  }}
-                  format="YYYY/MM/DD HH:mm"
-                  disabledDate={(current) => {
-                    return executionDateTime ? current && current.isBefore(dayjs(executionDateTime), "day") : false;
-                  }}
-                  allowClear={false}
-                />
+<span>-</span>
+
+<DatePicker
+  className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
+  showTime
+  disabled={!executionDateTime} 
+  value={executionEndDateTime ? dayjs(executionEndDateTime) : null}
+  onChange={(date) => {
+    if (!date) return;
+    // ตั้งค่า End Date
+    setexecutionEndDateTime(date.toISOString());
+    console.log("executionEndDateTime:", date.format("YYYY-MM-DD HH:mm"));
+  }}
+  format="YYYY/MM/DD HH:mm"
+  allowClear={false}
+  disabledDate={(current) => {
+    if (!executionDateTime) return false; // ห้ามเลือก End Date จนกว่าจะเลือก Start Date
+    return current && current.isBefore(dayjs(executionDateTime), 'day');
+  }}
+  disabledTime={(current) => {
+    if (!executionDateTime || !current) return {};
+
+    const start = dayjs(executionDateTime);
+    if (!current.isSame(start, "day")) return {}; // อนุญาตให้เลือกวันอื่น
+
+    // ห้ามเลือกเวลาที่น้อยกว่า Start Date + 1 นาที
+    const startHour = start.hour();
+    const startMinute = start.minute();
+
+    return {
+      disabledHours: () =>
+        Array.from({ length: 24 }, (_, i) => i).filter((hour) => hour < startHour),
+      disabledMinutes: (selectedHour) => {
+        if (selectedHour < startHour) return [];
+        return Array.from({ length: 60 }, (_, i) => i).filter((minute) => minute <= startMinute);
+      },
+    };
+  }}
+/>
+
+
+
               </div>
               
               )}
@@ -600,22 +645,64 @@ const SchedulePopup = forwardRef(
                   </div>
                   <div className="flex gap-2 mt-2">
                   <TimePicker
-        value={startDatetime ? dayjs(startDatetime, "HH:mm") : null}
-        onChange={handleStartTimeChange}
-        format="HH:mm"
-        minuteStep={1}
-        className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
-        allowClear={false}
-      />
-      <span>-</span>
-      <TimePicker
-        value={endDatetime ? dayjs(endDatetime, "HH:mm") : null}
-        onChange={handleEndTimeChange}
-        format="HH:mm"
-        minuteStep={1}
-        className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
-        allowClear={false}
-      />
+  value={startDatetime ? dayjs(startDatetime, "HH:mm") : null}
+  onChange={(time) => {
+    if (!time) return;
+
+    const newStartTime = time.format("HH:mm");
+    setStartDatetime(newStartTime);
+    console.log("startDatetime:", newStartTime);
+
+    // Auto-set end time ถ้า end ยังไม่ถูกเลือกหรือ end <= start
+    if (
+      !endDatetime ||
+      dayjs(time, "HH:mm").add(1, "minute").isAfter(dayjs(endDatetime, "HH:mm"))
+    ) {
+      const autoEnd = dayjs(time, "HH:mm").add(1, "minute").format("HH:mm");
+      setEndDatetime(autoEnd);
+      console.log("auto-set endDatetime:", autoEnd);
+    }
+  }}
+  format="HH:mm"
+  minuteStep={1}
+  className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
+  allowClear={false}
+/>
+
+<span>-</span>
+
+<TimePicker
+  value={endDatetime ? dayjs(endDatetime, "HH:mm") : null}
+  onChange={(time) => {
+    if (!time) return;
+    const newEndTime = time.format("HH:mm");
+    setEndDatetime(newEndTime);
+    console.log("endDatetime:", newEndTime);
+  }}
+  format="HH:mm"
+  minuteStep={1}
+  className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
+  allowClear={false}
+  disabled={!startDatetime} // 🔥 ถ้ายังไม่เลือก startDatetime จะ disable endDatetime Picker ไปเลย
+  disabledTime={() => {
+    if (!startDatetime) return {};
+
+    const start = dayjs(startDatetime, "HH:mm");
+    const startHour = start.hour();
+    const startMinute = start.minute();
+
+    return {
+      disabledHours: () =>
+        Array.from({ length: 24 }, (_, i) => i).filter((hour) => hour < startHour),
+      disabledMinutes: (selectedHour) => {
+        if (selectedHour < startHour) return [];
+        return Array.from({ length: 60 }, (_, i) => i).filter((minute) => minute <= startMinute);
+      },
+    };
+  }}
+/>
+
+
                   </div>
                 </div>
               )}
@@ -637,22 +724,62 @@ const SchedulePopup = forwardRef(
                   </div>
                   <div className="flex gap-2 mt-2">
                   <TimePicker
-        value={startDatetime ? dayjs(startDatetime, "HH:mm") : null}
-        onChange={handleStartTimeChange}
-        format="HH:mm"
-        minuteStep={1}
-        className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
-      
-        allowClear={false}/>
-      <span>-</span>
-      <TimePicker
-        value={endDatetime ? dayjs(endDatetime, "HH:mm") : null}
-        onChange={handleEndTimeChange}
-        format="HH:mm"
-        minuteStep={1}
-        className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
-        allowClear={false}
-      />
+  value={startDatetime ? dayjs(startDatetime, "HH:mm") : null}
+  onChange={(time) => {
+    if (!time) return;
+
+    const newStartTime = time.format("HH:mm");
+    setStartDatetime(newStartTime);
+    console.log("startDatetime:", newStartTime);
+
+    // Auto-set end time ถ้า end ยังไม่ถูกเลือกหรือ end <= start
+    if (
+      !endDatetime ||
+      dayjs(time, "HH:mm").add(1, "minute").isAfter(dayjs(endDatetime, "HH:mm"))
+    ) {
+      const autoEnd = dayjs(time, "HH:mm").add(1, "minute").format("HH:mm");
+      setEndDatetime(autoEnd);
+      console.log("auto-set endDatetime:", autoEnd);
+    }
+  }}
+  format="HH:mm"
+  minuteStep={1}
+  className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
+  allowClear={false}
+/>
+
+<span>-</span>
+
+<TimePicker
+  value={endDatetime ? dayjs(endDatetime, "HH:mm") : null}
+  onChange={(time) => {
+    if (!time) return;
+    const newEndTime = time.format("HH:mm");
+    setEndDatetime(newEndTime);
+    console.log("endDatetime:", newEndTime);
+  }}
+  format="HH:mm"
+  minuteStep={1}
+  className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
+  allowClear={false}
+  disabled={!startDatetime} // 🔥 ถ้ายังไม่เลือก startDatetime จะ disable endDatetime Picker ไปเลย
+  disabledTime={() => {
+    if (!startDatetime) return {};
+
+    const start = dayjs(startDatetime, "HH:mm");
+    const startHour = start.hour();
+    const startMinute = start.minute();
+
+    return {
+      disabledHours: () =>
+        Array.from({ length: 24 }, (_, i) => i).filter((hour) => hour < startHour),
+      disabledMinutes: (selectedHour) => {
+        if (selectedHour < startHour) return [];
+        return Array.from({ length: 60 }, (_, i) => i).filter((minute) => minute <= startMinute);
+      },
+    };
+  }}
+/>
                   </div>
                 </div>
               )}
