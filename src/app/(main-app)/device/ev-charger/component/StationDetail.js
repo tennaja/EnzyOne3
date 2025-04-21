@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+
 import StatisticsCard from "../component/StatisticsCard.js";
 import dynamic from "next/dynamic";
 const MapTH = dynamic(() => import("../component/MapSmSt"), { ssr: false });
@@ -10,27 +9,37 @@ import ArrowForwardIosOutlinedIcon from "@mui/icons-material/ArrowForwardIosOutl
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import { getStationbyId, getStationsStatics, getStationHistoryStatistics ,getChargeHeadList} from "@/utils/api";
+import {
+  getStationbyId,
+  getStationsStatics,
+  getStationHistoryStatistics,
+  getChargeHeadList,
+} from "@/utils/api";
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import ChargeHeadModal from "../component/ModalCharghead.js";
+import {
+  setSiteName,
+  setChargerId,
+  setChargerName,
+} from "@/redux/slicer/evchargerSlice";
+import { useDispatch, useSelector } from "react-redux";
+import Loading from "./Loading";
 
-const StationDetail = () => {
-  const router = useRouter();
+const StationDetail = ({ onNavigate }) => {
+  const dispatch = useDispatch();
   const today = dayjs(); // ใช้สำหรับคำนวณและเปรียบเทียบ
   const todayFormatted = today.format("YYYY/MM/DD");
   const [opened, setOpened] = useState(false);
-  const [siteName, setSiteName] = useState("");
   const [station, setStation] = useState({});
   const [staticsToday, setStaticsToday] = useState({});
   const [staticsTotal, setStaticsTotal] = useState({});
   const [chargers, setChargers] = useState([]);
-  const [stationId, setStationId] = useState("");
-  const [stationName, setStationName] = useState("");
   const [startDate, setStartDate] = useState(todayFormatted);
   const [endDate, setEndDate] = useState(todayFormatted);
   const [timeUnit, setTimeUnit] = useState("hour");
   const [graphData, setGraphData] = useState();
+  const [loading, setLoading] = useState(false);
   const [chargeHeadList, setChargeHeadList] = useState();
   const [mapZoomLevel, setMapZoomLevel] = useState(15);
   const [searchChargingQuery, setSearchChargingQuery] = useState("");
@@ -41,13 +50,17 @@ const StationDetail = () => {
     key: "device",
     direction: "asc",
   });
+  const StationId = useSelector((state) => state.evchargerData.stationId);
+  const StationName = useSelector((state) => state.evchargerData.stationName);
+  const SiteName = useSelector((state) => state.evchargerData.siteName);
+  console.log("StationName:", StationName);
   const OptionsTimeUnit = [
     { label: "Hour", value: "hour" },
     { label: "Day", value: "day" },
     { label: "Month", value: "month" },
   ];
-  const GetStationbyId = async (id) => {
-    console.log("station Id:", id);
+  const GetStationbyId = async (id,showLoading = true) => {
+    if (showLoading) setLoading(true); 
     try {
       const result = await getStationbyId(id);
       console.log("Station:", result);
@@ -55,6 +68,10 @@ const StationDetail = () => {
       if (result) {
         setStation(result);
         setChargers(result.chargers);
+
+        dispatch(setSiteName(result.siteName));
+        localStorage.setItem("siteName", result.siteName);
+
         // ตั้งค่า selectedLocation ด้วย latitude และ longitude
         if (result.latitude && result.longitude) {
           setSelectedLocation({
@@ -67,6 +84,10 @@ const StationDetail = () => {
       }
     } catch (error) {
       console.error("Error fetching station data:", error);
+    }finally {
+        if (showLoading) {
+            setLoading(false);
+            }
     }
   };
   const GetStationStatic = async (id) => {
@@ -101,7 +122,7 @@ const StationDetail = () => {
       startDate: startDate,
     };
     try {
-      const result = await getStationHistoryStatistics(Param)
+      const result = await getStationHistoryStatistics(Param);
 
       if (result) {
         setGraphData(result?.data);
@@ -131,32 +152,39 @@ const StationDetail = () => {
 
   useEffect(() => {
     // ดึงข้อมูลจาก Local Storage
-    if (typeof window !== "undefined") {
-      const storedSiteName = localStorage.getItem("siteName");
-      const storedStationId = localStorage.getItem("stationId");
-      const storedStationName = localStorage.getItem("stationName");
 
-      if (storedSiteName) setSiteName(storedSiteName);
-      if (storedStationId) setStationId(storedStationId);
-      if (storedStationName) setStationName(storedStationName);
-      if (storedStationId) {
-        GetStationbyId(storedStationId);
-        GetStationStatic(storedStationId);
-      }
+    if (StationId) {
+      GetStationbyId(StationId);
+      GetStationStatic(StationId);
     }
   }, []);
 
   useEffect(() => {
-    const storedStationId = localStorage.getItem("stationId");
-      if (storedStationId) {
-        GetStationHistoryStatistics(storedStationId)
-      }
-    }, [endDate, startDate, timeUnit]);
+    if (StationId) {
+      GetStationHistoryStatistics(StationId);
+    }
+  }, [endDate, startDate, timeUnit]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("⏳ Refreshing data every 2 minutes from Redux...");
+      Promise.all([GetStationbyId(StationId,false)]);
+      GetStationStatic(StationId);
+      GetStationHistoryStatistics(StationId);
+    }, 300000);
+
+    return () => clearInterval(interval);
+  }, [StationId]);
 
   const handleChargerClick = (chargerId, chargerName) => {
     localStorage.setItem("chargerId", chargerId);
     localStorage.setItem("chargerName", chargerName);
-    router.push("/device/ev-charger?page=chargerdetail");
+
+    dispatch(setChargerId(chargerId));
+    dispatch(setChargerName(chargerName));
+
+    // router.push("/device/ev-charger?page=chargerdetail");
+    onNavigate("chargerdetail");
   };
 
   const handleSearchChargingquery = (e) => {
@@ -236,7 +264,7 @@ const StationDetail = () => {
   const calculateDefaultDateRange = (groupBy) => {
     const today = dayjs(); // วันปัจจุบัน
     let startDate;
-  
+
     switch (groupBy) {
       case "hour":
         startDate = today.subtract(7, "day"); // 7 วันก่อนหน้า
@@ -250,16 +278,16 @@ const StationDetail = () => {
       default:
         startDate = today.subtract(7, "day"); // ค่าเริ่มต้นเป็น 7 วันก่อนหน้า
     }
-  
+
     return {
       startDate: startDate.format("YYYY/MM/DD"),
       endDate: today.format("YYYY/MM/DD"),
     };
   };
-  
+
   const handleTimeUnitChange = (value) => {
     setTimeUnit(value);
-  
+
     // คำนวณ Default Date Range ตาม Group by
     const { startDate, endDate } = calculateDefaultDateRange(value);
     setStartDate(startDate);
@@ -270,7 +298,7 @@ const StationDetail = () => {
       setStartDate(date.format("YYYY/MM/DD")); // อัปเดต startDate
     }
   };
-  
+
   const handleEndDateChange = (date) => {
     if (date) {
       setEndDate(date.format("YYYY/MM/DD")); // อัปเดต endDate
@@ -289,20 +317,19 @@ const StationDetail = () => {
         return dayjs(); // ค่าเริ่มต้นเป็นวันปัจจุบัน
     }
   }, [timeUnit]);
-  
+
   useEffect(() => {
     const { startDate, endDate } = calculateDefaultDateRange(timeUnit);
     setStartDate(startDate);
     setEndDate(endDate);
   }, []);
-  
-  
+
   const getDisplayTime = (open, close) => {
     if (open === null && close === null) return "Closed";
     if (open === "00:00" && close === "00:00") return "Open 24 hrs";
     return `${open} - ${close}`;
   };
-  
+
   const days = [
     { label: "Mon", key: "mon" },
     { label: "Tue", key: "tue" },
@@ -312,7 +339,7 @@ const StationDetail = () => {
     { label: "Sat", key: "sat" },
     { label: "Sun", key: "sun" },
   ];
-   
+
   const openingHours = useMemo(() => {
     return days.map(({ label, key }) => {
       const open = station?.[`${key}OpeningTime`];
@@ -335,17 +362,17 @@ const StationDetail = () => {
                 color: "#2aa7a7",
               },
             }}
-            onClick={() => router.push("/device/ev-charger")}
+            onClick={() => onNavigate("dashboard")}
           />
 
           <div className="flex flex-col">
-            <strong>{stationName}</strong>
-            <Link
-              href="/device/ev-charger"
-              className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200"
+            <strong>{StationName}</strong>
+            <span
+              onClick={() => onNavigate("dashboard")}
+              className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200 cursor-pointer"
             >
-              {siteName}
-            </Link>
+              {SiteName}
+            </span>
           </div>
         </div>
       </div>
@@ -460,19 +487,20 @@ const StationDetail = () => {
                     </td>
                   </tr>
                   <tr className="text-xs border-b border-gray-200">
-          <td className="px-4 py-2 bg-[#F2FAFA] align-top dark:bg-gray-900 dark:text-white">
-            <strong>Opening Hours</strong>
-          </td>
-          <td className="px-4 py-2 font-bold">
-            {openingHours.map(({ label, time }) => (
-              <div className="flex items-center gap-2" key={label}>
-                <span className="w-10">{label}</span> {/* กำหนดขนาดของวันให้เล็กลง */}
-                <span className="ml-2">{time}</span> {/* ลดระยะห่างระหว่างวันและเวลา */}
-              </div>
-            ))}
-          </td>
-        </tr>
-
+                    <td className="px-4 py-2 bg-[#F2FAFA] align-top dark:bg-gray-900 dark:text-white">
+                      <strong>Opening Hours</strong>
+                    </td>
+                    <td className="px-4 py-2 font-bold">
+                      {openingHours.map(({ label, time }) => (
+                        <div className="flex items-center gap-2" key={label}>
+                          <span className="w-10">{label}</span>{" "}
+                          {/* กำหนดขนาดของวันให้เล็กลง */}
+                          <span className="ml-2">{time}</span>{" "}
+                          {/* ลดระยะห่างระหว่างวันและเวลา */}
+                        </div>
+                      ))}
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -731,10 +759,12 @@ const StationDetail = () => {
                             <td className="px-2 py-1 text-right dark:text-white">
                               {highlightText(record.displayIndex)}
                             </td>
-                            <td className="px-2 py-1 text-left text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] dark:text-[#33BFBF] dark:hover:text-[#28A9A9]"
-                            onClick={() => {
-                              handleChargerClick(record.id, record.name);
-                            }}>
+                            <td
+                              className="px-2 py-1 text-left text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] dark:text-[#33BFBF] dark:hover:text-[#28A9A9]"
+                              onClick={() => {
+                                handleChargerClick(record.id, record.name);
+                              }}
+                            >
                               {highlightText(record.name)}
                             </td>
                             <td className="px-2 py-1 text-left dark:text-white">
@@ -743,8 +773,10 @@ const StationDetail = () => {
                             <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.type)}
                             </td>
-                            <td className="px-2 py-1 text-center text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] dark:text-[#33BFBF] dark:hover:text-[#28A9A9]"
-                            onClick={() => getChageHeadList(record.id)}>
+                            <td
+                              className="px-2 py-1 text-center text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] dark:text-[#33BFBF] dark:hover:text-[#28A9A9]"
+                              onClick={() => getChageHeadList(record.id)}
+                            >
                               {highlightText(record.chargeHeadCount)}
                             </td>
                           </tr>
@@ -824,55 +856,55 @@ const StationDetail = () => {
           <span className="text-lg font-bold block mb-2">Statistics</span>
 
           <div className="flex justify-between items-center mb-2 mt-5">
-    <div className="flex items-center gap-2">
-      <span className="text-sm">Group by:</span>
-      <div className="inline-flex items-center bg-gray-100 rounded-md p-1">
-        {OptionsTimeUnit.map((option) => (
-          <button
-            key={option.value}
-            onClick={() => handleTimeUnitChange(option.value)}
-            className={`px-4 py-1 rounded-md text-sm font-medium ${
-              timeUnit === option.value
-                ? "bg-white shadow text-black"
-                : "text-gray-500 hover:text-black"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-    </div>
-    <div className="flex gap-2 mt-5 items-center">
-      <span className="text-sm">Date :</span>
-      <DatePicker
-        className="w-48 p-2 bg-white border shadow-default 
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Group by:</span>
+              <div className="inline-flex items-center bg-gray-100 rounded-md p-1">
+                {OptionsTimeUnit.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleTimeUnitChange(option.value)}
+                    className={`px-4 py-1 rounded-md text-sm font-medium ${
+                      timeUnit === option.value
+                        ? "bg-white shadow text-black"
+                        : "text-gray-500 hover:text-black"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5 items-center">
+              <span className="text-sm">Date :</span>
+              <DatePicker
+                className="w-48 p-2 bg-white border shadow-default 
           dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
-        value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
-        onChange={handleStartDateChange}
-        disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
-        format="YYYY/MM/DD"
-        allowClear={false}
-      />
-      <p>-</p>
-      <DatePicker
-        className="w-48 p-2 bg-white border shadow-default 
+                value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
+                onChange={handleStartDateChange}
+                disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
+                format="YYYY/MM/DD"
+                allowClear={false}
+              />
+              <p>-</p>
+              <DatePicker
+                className="w-48 p-2 bg-white border shadow-default 
           dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
-        value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
-        onChange={handleEndDateChange}
-        format="YYYY/MM/DD"
-        min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null} // กำหนดวันที่เริ่มต้น
-        max={maxEndDate1} // กำหนดวันที่สิ้นสุด
-        disabledDate={(current) => {
-          return (
-            current &&
-            (current.isBefore(dayjs(startDate, "YYYY/MM/DD"), "day") || // น้อยกว่า startDate
-              current.isAfter(dayjs(maxEndDate1, "YYYY/MM/DD"), "day")) // มากกว่า maxEndDate1
-          );
-        }}
-        allowClear={false}
-      />
-    </div>
-  </div>
+                value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
+                onChange={handleEndDateChange}
+                format="YYYY/MM/DD"
+                min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null} // กำหนดวันที่เริ่มต้น
+                max={maxEndDate1} // กำหนดวันที่สิ้นสุด
+                disabledDate={(current) => {
+                  return (
+                    current &&
+                    (current.isBefore(dayjs(startDate, "YYYY/MM/DD"), "day") || // น้อยกว่า startDate
+                      current.isAfter(dayjs(maxEndDate1, "YYYY/MM/DD"), "day")) // มากกว่า maxEndDate1
+                  );
+                }}
+                allowClear={false}
+              />
+            </div>
+          </div>
 
           <div className="mt-5">
             <BarChartComponent
@@ -881,6 +913,9 @@ const StationDetail = () => {
               timestampKey="timestamp"
               valueKeys={["session"]}
               yAxisLabel="Sessions"
+              legendLabels={{
+                session: "Sessions",
+              }}
             />
           </div>
           <div className="mt-5">
@@ -890,6 +925,9 @@ const StationDetail = () => {
               timestampKey="timestamp"
               valueKeys={["electricityAmount"]}
               yAxisLabel="Energy (kWh)"
+              legendLabels={{
+                electricityAmount: "Energy",
+              }}
             />
           </div>
           <div className="mt-5">
@@ -899,6 +937,9 @@ const StationDetail = () => {
               timestampKey="timestamp"
               valueKeys={["revenue"]}
               yAxisLabel="Revenue"
+              legendLabels={{
+                revenue: "Revenue",
+              }}
             />
           </div>
         </div>
@@ -908,6 +949,7 @@ const StationDetail = () => {
         onClose={() => setOpened(false)}
         chargers={chargeHeadList}
       />
+      {loading && <Loading />}
     </div>
   );
 };

@@ -147,7 +147,7 @@ const handleSortCharging = (column) => {
           <thead>
             <tr className="text-xs text-black border-b border-gray-300 dark:text-white">
               <th
-                className="px-2 py-1 text-left cursor-pointer"
+                className="px-2 py-1 text-right cursor-pointer"
                 onClick={() => handleSortCharging('displayIndex')}
               >
                 #
@@ -183,7 +183,7 @@ const handleSortCharging = (column) => {
                 </div>
               </th>
               <th
-                className="px-2 py-1 text-center"
+                className="px-2 py-1 text-left"
                 onClick={() => handleSortCharging('name')}
               >
                 Name
@@ -277,8 +277,8 @@ const handleSortCharging = (column) => {
               }`}
               style={{ borderBottom: "1px solid #e0e0e0" }}
             >
-                <td className="px-2 py-1 text-left">{highlightText(charger.displayIndex)}</td>
-                <td className="px-2 py-1 text-center">
+                <td className="px-2 py-1 text-right">{highlightText(charger.displayIndex)}</td>
+                <td className="px-2 py-1 text-left">
                   {highlightText(charger.name)}
                 </td>
                 <td className="px-2 py-1 text-center font-bold"
@@ -286,7 +286,7 @@ const handleSortCharging = (column) => {
                     color:
                     charger?.status === 'Available' ? '#12B981' :
                     charger?.status === 'Charging' ? '#259AE6' :
-                    charger?.status === 'Out of Order' ? '#DF4667' :
+                    charger?.status === 'Out of order' ? '#DF4667' :
                     charger?.status === 'Reserved' ? '#9747FF' :
                     charger?.status === 'Maintenance' ? '#8A99AF' :
                       'black'

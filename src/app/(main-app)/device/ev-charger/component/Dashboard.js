@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import ArrowForwardIosOutlinedIcon from "@mui/icons-material/ArrowForwardIosOutlined";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { useDispatch, useSelector } from "react-redux";
 import {
   getDropdownSite,
   getDropdownStation,
@@ -16,16 +16,26 @@ import { FaChargingStation } from "react-icons/fa";
 import { RiBatteryChargeLine } from "react-icons/ri";
 import { FaTriangleExclamation } from "react-icons/fa6";
 import { DatePicker, TimePicker } from "antd";
-import Select from 'react-select';
+import Select from "react-select";
 import dayjs from "dayjs";
 import dynamic from "next/dynamic";
+import {
+  setSiteId,
+  setStationId,
+  setStationName,
+} from "@/redux/slicer/evchargerSlice";
+import Loading from "./Loading";
 const MapTH = dynamic(() => import("../component/MapSmSt"), { ssr: false });
 
-const Dashboard = () => {
+const Dashboard = ({ onNavigate }) => {
+  const dispatch = useDispatch();
+
+  const siteIdRedux = useSelector((state) => state.evchargerData.siteId);
+  const stationIdRedux = useSelector((state) => state.evchargerData.stationId);
+  const siteNameRedux = useSelector((state) => state.evchargerData.siteName);
+
   const today = dayjs(); // ใช้สำหรับคำนวณและเปรียบเทียบ
   const todayFormatted = today.format("YYYY/MM/DD");
-  const pathname = usePathname(); // ดึง Path ปัจจุบันจาก Next.js App Router
-  const router = useRouter();
   const [siteDropdwonlist, setSiteDropdwonlist] = useState();
   const [stationDropdwonlist, setStationDropdwonlist] = useState();
   const [charginglist, setChargingList] = useState([]);
@@ -52,11 +62,11 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [stationSortConfig, setStationSortConfig] = useState({
-    key: "device",
+    key: "",
     direction: "asc",
   });
   const [chargingSortConfig, setChargingSortConfig] = useState({
-    key: "device",
+    key: "",
     direction: "asc",
   });
   const [selectedSite, setSelectedSite] = useState("");
@@ -80,6 +90,7 @@ const Dashboard = () => {
         setSelectedSiteName(result[0].name);
         setSelectedSite(result[0].name);
         GetStationList(siteId);
+        dispatch(setSiteId(siteId));
         setIsfirst(false); // เซ็ตให้เป็น false หลังจากใช้งานครั้งแรก
       } else {
         // setSiteid(siteId);
@@ -106,6 +117,7 @@ const Dashboard = () => {
         setStatonid(firstGroupId);
         setSelectedStationId(firstGroupId);
         setSelectedStationName(result[0]?.name || "");
+        dispatch(setStationId(firstGroupId));
         setIsfirst(false); // เซ็ตให้เป็น false หลังจากใช้งานครั้งแรก
       } else {
         setStatonid(firstGroupId);
@@ -119,19 +131,22 @@ const Dashboard = () => {
     }
   };
   //Get stationList
-  const GetStationList = async (site) => {
+  const GetStationList = async (site,showLoading = true) => {
+    if (showLoading) setLoading(true); 
     try {
       const result = await getStationList(site);
       console.log("Station List:", result);
-  
+
       if (!stationid || stationid === "0") {
         // ถ้า stationid เป็น null หรือ "0" ให้แสดงทุกรายการ
         setStationList(result?.length > 0 ? result : []);
       } else {
         // ถ้า stationid มีค่า ให้แสดงเฉพาะที่ stationid ตรงกัน
-        const filteredList = result.filter((station) => station.id === parseInt(stationid));
+        const filteredList = result.filter(
+          (station) => station.id === parseInt(stationid)
+        );
         console.log("Filtered Station List:", filteredList);
-  
+
         // ถ้าไม่มีรายการที่ตรงกับ stationid ให้แสดงรายการทั้งหมด
         if (filteredList.length > 0) {
           setStationList(filteredList);
@@ -142,14 +157,18 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error("Error fetching station list:", error);
+    } finally {
+      if (showLoading) {
+      setLoading(false);
+      }
     }
   };
-  
+
   //Get countbystatusList
-  const GetCountByStatusList = async () => {
+  const GetCountByStatusList = async (siteIdParam, stationIdParam) => {
     const paramsNav = {
-      siteId: siteid,
-      stationId: stationid,
+      siteId: siteIdParam,
+      stationId: stationIdParam,
     };
     // setLoading(true);
     try {
@@ -163,10 +182,10 @@ const Dashboard = () => {
     }
   };
   //Get Charging History
-  const GetChargingHistory = async () => {
+  const GetChargingHistory = async (siteIdParam, stationIdParam) => {
     const Param = {
-      siteId: siteid,
-      stationId: stationid,
+      siteId: siteIdParam,
+      stationId: stationIdParam,
       endDate: endDate,
       startDate: startDate,
     };
@@ -186,7 +205,15 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    GetChargingHistory();
+    if (siteid && stationid) {
+      GetChargingHistory(siteid, stationid);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (siteid && stationid) {
+      GetChargingHistory(siteid, stationid);
+    }
   }, [startDate, endDate]);
   // สร้าง icon map สำหรับ status
   const statusIcons = {
@@ -203,41 +230,48 @@ const Dashboard = () => {
     icon: statusIcons[item.status] || null,
   }));
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedSite = siteNameRedux;
+      if (storedSite && siteDropdwonlist?.length > 0) {
+        const matchedSite = siteDropdwonlist.find(
+          (site) => site.name === storedSite
+        );
+        if (matchedSite) {
+          setSiteid(matchedSite.id);
+          setSelectedSiteId(matchedSite.id);
+          dispatch(setSiteId(matchedSite.id));
+          dispatch(setStationId(stationid));
+          setSelectedSiteName(matchedSite.name);
+          setSelectedSite(matchedSite.name);
+          setSiteName(matchedSite.name);
+          getStationDropdown(matchedSite.id);
+          GetStationList(matchedSite.id); // โหลด Station List ตาม Site ที่เลือกไว้
+          GetCountByStatusList(matchedSite.id, stationid); // โหลด Count By Status List ตาม Site ที่เลือกไว้);
+          GetChargingHistory(matchedSite.id, stationid);
+          console.log("Selected site from localStorage:", matchedSite.name);
+        } else {
+          console.warn("No matching site found for storedSite:", storedSite);
+        }
+      } else if (!storedSite) {
+        console.warn("No selectedSite found in localStorage.");
+      } else if (!siteDropdwonlist?.length) {
+        console.warn("siteDropdwonlist is empty.");
+      }
+    }
+  }, [siteDropdwonlist]);
 
-  // useEffect(() => {
-  //   if (typeof window !== "undefined") {
-  //     const storedSite = localStorage.getItem("selectedSite");
-  //     if (storedSite && siteDropdwonlist?.length > 0) {
-  //       const matchedSite = siteDropdwonlist.find(
-  //         (site) => site.name === storedSite
-  //       );
-  //       if (matchedSite) {
-  //         setSiteid(matchedSite.id);
-  //         setSelectedSite(matchedSite.name);
-  //         setSiteName(matchedSite.name);
-  //         getStationDropdown(matchedSite.id);
-  //         GetStationList(matchedSite.id); // โหลด Station List ตาม Site ที่เลือกไว้
-  //         GetCountByStatusList();
-  //         GetChargingHistory();
-  //         console.log("Selected site from localStorage:", matchedSite.name);
-  //       } else {
-  //         console.warn("No matching site found for storedSite:", storedSite);
-  //       }
-  //     } else if (!storedSite) {
-  //       console.warn("No selectedSite found in localStorage.");
-  //     } else if (!siteDropdwonlist?.length) {
-  //       console.warn("siteDropdwonlist is empty.");
-  //     }
-  //   }
-  // }, [siteDropdwonlist]);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("⏳ Refreshing data every 2 minutes from Redux...");
 
-  const handleSiteChange = (event) => {
-    const site = event.target.value;
-    setSelectedSite(site);
+      Promise.all([GetStationList(siteIdRedux,false)]);
+      GetChargingHistory(siteIdRedux, stationIdRedux);
+      GetCountByStatusList(siteIdRedux, stationIdRedux);
+    }, 300000);
 
-    // เก็บค่า selectedSite ไว้ใน localStorage
-    localStorage.setItem("selectedSite", site);
-  };
+    return () => clearInterval(interval);
+  }, [siteIdRedux, stationIdRedux]);
 
   const handleStationChange = (event) => {
     console.log("Station ID:", event.target.value);
@@ -249,19 +283,15 @@ const Dashboard = () => {
       alert("Please select a site before proceeding.");
       return;
     }
-
-    // เก็บ siteName และ stationId ใน Local Storage
-    localStorage.setItem("siteName", selectedSite);
-    localStorage.setItem("stationId", stationId);
-    localStorage.setItem("stationName", stationName);
-
-    // เปลี่ยนหน้าไปยัง StationDetail
-    router.push("/device/ev-charger?page=stationdetail");
-
+    dispatch(setStationId(stationId));
+    dispatch(setStationName(stationName));
+    onNavigate("stationdetail");
   };
 
   const handleSearchquery = (e) => {
     setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset current page to 1 when searching
+    setChargingCurrentPage(1); // Reset current page to 1 when searching
   };
   const handleSearchChargingquery = (e) => {
     setSearchChargingQuery(e.target.value);
@@ -275,9 +305,16 @@ const Dashboard = () => {
     setstationName(selectedStationName);
     setSiteid(selectedSiteId);
     setStatonid(selectedStationId);
+
+    dispatch(setStationId(selectedStationId));
+    dispatch(setSiteId(selectedSiteId));
     GetStationList(selectedSiteId);
-    GetChargingHistory();
-    GetCountByStatusList();
+    GetChargingHistory(selectedSiteId, selectedStationId);
+    GetCountByStatusList(selectedSiteId, selectedStationId);
+    setSearchQuery("");
+    setSearchChargingQuery("");
+    setStationSortConfig({});
+    setChargingSortConfig({});
   };
 
   const filteredStationList = stationList
@@ -486,17 +523,16 @@ const Dashboard = () => {
   // คำนวณ maxEndDate1 ตาม startDate
   const maxEndDate1 = getMaxEndDate1(startDate);
 
-
   const siteOptions = (siteDropdwonlist ?? []).map((site) => ({
     value: site.id ?? "0",
     label: site.name,
   }));
-  
+
   const stationOptions = (stationDropdwonlist ?? []).map((station) => ({
     value: station.id ?? "0",
     label: station.name,
   }));
-  
+
   return (
     <div>
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
@@ -504,89 +540,102 @@ const Dashboard = () => {
           <div className="flex items-center gap-2">
             <span className="text-sm">Site: </span>
             <Select
-  className="w-60"
-  options={siteOptions}
-  value={siteid ? siteOptions.find((option) => option.value === siteid) : siteOptions[0]}
-  onChange={(selectedOption) => {
-    const selectedValue = selectedOption?.value ?? "0";
-    const selectedLabel = selectedOption?.label ?? "";
+              className="w-60"
+              options={siteOptions}
+              value={
+                siteid
+                  ? siteOptions.find((option) => option.value === siteid)
+                  : siteOptions[0]
+              }
+              onChange={(selectedOption) => {
+                const selectedValue = selectedOption?.value ?? "0";
+                const selectedLabel = selectedOption?.label ?? "";
 
-    setSelectedSiteId(selectedValue);
-    getStationDropdown(selectedValue);
-    setSelectedSite(selectedLabel);
-    localStorage.setItem("selectedSite", selectedLabel);
-    setSelectedSiteName(selectedLabel);
-  }}
-  isSearchable
-  styles={{
-    control: (provided) => ({
-      ...provided,
-      borderColor: 'rgb(203 213 225)', // สีขอบปกติ
-      borderRadius: '0.375rem',
-      zIndex: 10,
-      height: '2.25rem',
-    }),
-    menu: (provided) => ({
-      ...provided,
-      zIndex: 9999,
-      position: 'absolute',
-    }),
-    option: (provided, state) => ({
-      ...provided,
-      backgroundColor: state.isSelected ? '#33BFBF' : state.isFocused ? '#e0f7fa' : 'transparent', // ปรับสีพื้นหลัง
-      color: state.isSelected ? 'white' : 'black', // สีของข้อความ
-      cursor: 'pointer',
-      padding: '8px 16px',
-      '&:active': {
-        backgroundColor: '#33BFBF', // สีเมื่อคลิกเลือก
-      },
-    }),
-  }}
-/>
-
-
+                setSelectedSiteId(selectedValue);
+                getStationDropdown(selectedValue);
+                setSelectedSite(selectedLabel);
+                localStorage.setItem("selectedSite", selectedLabel);
+                setSelectedSiteName(selectedLabel);
+              }}
+              isSearchable
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  borderColor: "rgb(203 213 225)", // สีขอบปกติ
+                  borderRadius: "0.375rem",
+                  zIndex: 10,
+                  height: "2.25rem",
+                }),
+                menu: (provided) => ({
+                  ...provided,
+                  zIndex: 9999,
+                  position: "absolute",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  backgroundColor: state.isSelected
+                    ? "#33BFBF"
+                    : state.isFocused
+                    ? "#e0f7fa"
+                    : "transparent", // ปรับสีพื้นหลัง
+                  color: state.isSelected ? "white" : "black", // สีของข้อความ
+                  cursor: "pointer",
+                  padding: "8px 16px",
+                  "&:active": {
+                    backgroundColor: "#33BFBF", // สีเมื่อคลิกเลือก
+                  },
+                }),
+              }}
+            />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm">Station: </span>
             <Select
-  className="w-48"
-  options={stationOptions}
-  value={stationid ? stationOptions.find((option) => option.value === stationid) : stationOptions[0]}
-  onChange={(selectedOption) => {
-    const value = selectedOption?.value ?? "0";
-    const label = selectedOption?.label ?? "";
+              className="w-48"
+              options={stationOptions}
+              value={
+                stationid
+                  ? stationOptions.find((option) => option.value === stationid)
+                  : stationOptions[0]
+              }
+              onChange={(selectedOption) => {
+                const value = selectedOption?.value ?? "0";
+                const label = selectedOption?.label ?? "";
 
-    setSelectedStationId(value);
-    setSelectedStationName(label);
-    handleStationChange({ target: { value, label } });
-  }}
-  isSearchable
-  styles={{
-    control: (provided) => ({
-      ...provided,
-      borderColor: 'rgb(203 213 225)', // สีขอบปกติ
-      borderRadius: '0.375rem',
-      zIndex: 10,
-      height: '2.25rem',
-    }),
-    menu: (provided) => ({
-      ...provided,
-      zIndex: 9999,
-      position: 'absolute',
-    }),
-    option: (provided, state) => ({
-      ...provided,
-      backgroundColor: state.isSelected ? '#33BFBF' : state.isFocused ? '#e0f7fa' : 'transparent', // ปรับสีพื้นหลัง
-      color: state.isSelected ? 'white' : 'black', // สีของข้อความ
-      cursor: 'pointer',
-      padding: '8px 16px',
-      '&:active': {
-        backgroundColor: '#33BFBF', // สีเมื่อคลิกเลือก
-      },
-    }),
-  }}
-/>
-
+                setSelectedStationId(value);
+                setSelectedStationName(label);
+                handleStationChange({ target: { value, label } });
+              }}
+              isSearchable
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  borderColor: "rgb(203 213 225)", // สีขอบปกติ
+                  borderRadius: "0.375rem",
+                  zIndex: 10,
+                  height: "2.25rem",
+                }),
+                menu: (provided) => ({
+                  ...provided,
+                  zIndex: 9999,
+                  position: "absolute",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  backgroundColor: state.isSelected
+                    ? "#33BFBF"
+                    : state.isFocused
+                    ? "#e0f7fa"
+                    : "transparent", // ปรับสีพื้นหลัง
+                  color: state.isSelected ? "white" : "black", // สีของข้อความ
+                  cursor: "pointer",
+                  padding: "8px 16px",
+                  "&:active": {
+                    backgroundColor: "#33BFBF", // สีเมื่อคลิกเลือก
+                  },
+                }),
+              }}
+            />
           </div>
 
           <button
@@ -629,9 +678,12 @@ const Dashboard = () => {
               <div className="mt-2">
                 <p className="text-3xl font-bold">{item.count}</p>
                 <p className="text-gray-600">Charge heads</p>
-                <p className="text-gray-500 text-sm mt-1">
-                  {item.count} of {item.total}
-                </p>
+                <div className="flex justify-end items-end mt-2">
+                  <p className="text-gray-500 text-sm mt-1">
+                    {item.count} of {item.total}
+                  </p>
+                </div>
+
                 <div className="w-full bg-gray-300 h-1 rounded-full mt-2">
                   <div
                     className="bg-[#33BFBF] h-1 rounded-full"
@@ -651,7 +703,9 @@ const Dashboard = () => {
             Station List
           </span>
           <div className="flex justify-between">
-            <p className="text-sm ">{siteName} | {stationName}</p>
+            <p className="text-sm ">
+              {siteName} | {stationName}
+            </p>
             {/* <p className="text-sm ">Lasted Updated 2025/04/03 08:00</p> */}
           </div>
         </div>
@@ -1022,7 +1076,9 @@ const Dashboard = () => {
             Charging Session History
           </span>
           <div className="flex justify-between">
-            <p className="text-sm ">{siteName} | {stationName}</p>
+            <p className="text-sm ">
+              {siteName} | {stationName}
+            </p>
             {/* <p className="text-sm ">Lasted Updated 2025/04/03 08:00</p> */}
           </div>
         </div>
@@ -1316,7 +1372,8 @@ const Dashboard = () => {
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "electricityAmount" &&
+                                chargingSortConfig.key ===
+                                  "electricityAmount" &&
                                 chargingSortConfig.direction === "asc"
                                   ? 1
                                   : 0.3,
@@ -1327,7 +1384,8 @@ const Dashboard = () => {
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "electricityAmount" &&
+                                chargingSortConfig.key ===
+                                  "electricityAmount" &&
                                 chargingSortConfig.direction === "desc"
                                   ? 1
                                   : 0.3,
@@ -1572,6 +1630,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      {loading && <Loading />}
     </div>
   );
 };

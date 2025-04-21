@@ -46,6 +46,7 @@ const BarChartComponent = ({
   timestampKey = "timestamp",
   valueKeys = ["kwh"],
   yAxisLabel = "kwh",
+  legendLabels = {},
 }) => {
   const [barProps, setBarProps] = useState({});
   const [hover, setHover] = useState(null);
@@ -236,7 +237,7 @@ const BarChartComponent = ({
           key={key}
           dataKey={key}
           fill="#4bc0c0"
-          name={key}
+          name={legendLabels[key] || key}
           opacity={hover === key || !hover ? 1 : 0.5}
           hide={barProps[key] === false}
         />

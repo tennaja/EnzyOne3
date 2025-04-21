@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StatisticsCard from "../component/StatisticsCard.js";
 import dynamic from "next/dynamic";
+import Loading from "./Loading";
 const MapTH = dynamic(() => import("../component/MapSmSt"), { ssr: false });
 import BarChartComponent from "../component/Barchart.js";
-
+import { useDispatch, useSelector } from "react-redux";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import {
   getChargeHeadbyId,
@@ -16,33 +17,29 @@ import {
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
 
-const ChargerHeadDetail = () => {
+const ChargerHeadDetail = ({ onNavigate }) => {
+  const StationName = useSelector((state) => state.evchargerData.stationName);
+  const SiteName = useSelector((state) => state.evchargerData.siteName);
+  const ChargerName = useSelector((state) => state.evchargerData.chargerName);
+  const ChargerHeadName = useSelector(
+    (state) => state.evchargerData.chargeHeadName
+  );
+  const ChargerHeadId = useSelector(
+    (state) => state.evchargerData.chargeHeadId
+  );
   const router = useRouter();
   const today = dayjs(); // ใช้สำหรับคำนวณและเปรียบเทียบ
   const todayFormatted = today.format("YYYY/MM/DD");
-  const [chargerName, setChargerName] = useState("");
-  const [siteName, setSiteName] = useState("");
-  const [stationName, setStationName] = useState("");
-  const [chargerHeadId, setChargerHeadId] = useState("");
-  const [chargerHeadName, setChargerHeadName] = useState("");
-  const [chargerId, setChargerId] = useState("");
   const [station, setStation] = useState({});
   const [staticsToday, setStaticsToday] = useState({});
   const [staticsTotal, setStaticsTotal] = useState({});
-  const [chargersHead, setChargersHead] = useState([]);
   const [startDate, setStartDate] = useState(todayFormatted);
   const [endDate, setEndDate] = useState(todayFormatted);
+  const [loading, setLoading] = useState(false);
   const [timeUnit, setTimeUnit] = useState("hour");
   const [graphData, setGraphData] = useState();
   const [mapZoomLevel, setMapZoomLevel] = useState(15);
-  const [searchChargingQuery, setSearchChargingQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(null);
-  const [chargingCurrentPage, setChargingCurrentPage] = useState(1);
-  const [chargingRowsPerPage, setChargingRowsPerPage] = useState(20);
-  const [chargingSortConfig, setChargingSortConfig] = useState({
-    key: "device",
-    direction: "asc",
-  });
 
   const OptionsTimeUnit = [
     { label: "Hour", value: "hour" },
@@ -50,14 +47,9 @@ const ChargerHeadDetail = () => {
     { label: "Month", value: "month" },
   ];
 
-  const handleChargerHeadClick = (chargerHeadId, chargerHeadName) => {
-    localStorage.setItem("chargerHeadId", chargerHeadId);
-    localStorage.setItem("chargerHeadName", chargerHeadName); // เก็บชื่อของ Charger Head
-    router.push("chargerheaddetail");
-  };
 
-  const GetStationbyId = async (id) => {
-    console.log("station Id:", id);
+  const GetStationbyId = async (id,showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const result = await getChargeHeadbyId(id);
       console.log("Station:", result);
@@ -77,6 +69,10 @@ const ChargerHeadDetail = () => {
       }
     } catch (error) {
       console.error("Error fetching station data:", error);
+    }finally {
+      if (showLoading) {
+        setLoading(false);
+        }
     }
   };
   const GetStationStatic = async (id) => {
@@ -123,163 +119,29 @@ const ChargerHeadDetail = () => {
 
   useEffect(() => {
     // ดึงข้อมูลจาก Local Storage
-    if (typeof window !== "undefined") {
-      const storedSiteName = localStorage.getItem("siteName");
-      const storedChargerId = localStorage.getItem("chargerId");
-      const storedChargerName = localStorage.getItem("chargerName");
-      const storedStationName = localStorage.getItem("stationName");
-      const storedChargerHeadId = localStorage.getItem("chargerHeadId");
-      const storedChargerHeadName = localStorage.getItem("chargerHeadName");
 
-      if (storedChargerHeadId) setChargerHeadId(storedChargerHeadId);
-      if (storedChargerHeadName) setChargerHeadName(storedChargerHeadName);
-      if (storedSiteName) setSiteName(storedSiteName);
-      if (storedChargerId) setChargerId(storedChargerId);
-      if (storedStationName) setStationName(storedStationName);
-      if (storedChargerName) setChargerName(storedChargerName);
-      if (storedChargerHeadId) {
-        GetStationbyId(storedChargerHeadId);
-        GetStationStatic(storedChargerId);
-      }
+    if (ChargerHeadId) {
+      GetStationbyId(ChargerHeadId);
+      GetStationStatic(ChargerHeadId);
     }
   }, []);
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-
-    setChargerName(
-      searchParams.get("chargerName") ||
-        localStorage.getItem("chargerName") ||
-        "Default Charger Name"
-    );
-    setSiteName(
-      searchParams.get("siteName") ||
-        localStorage.getItem("siteName") ||
-        "Default Site Name"
-    );
-    setStationName(
-      searchParams.get("stationName") ||
-        localStorage.getItem("stationName") ||
-        "Default Station Name"
-    );
-    setChargerHeadId(
-      searchParams.get("chargerHeadId") ||
-        localStorage.getItem("chargerHeadId") ||
-        "default-charger-head-id"
-    );
-    setChargerHeadName(
-      searchParams.get("chargerHeadName") ||
-        localStorage.getItem("chargerHeadName") ||
-        "Default Charger Head Name"
-    );
-  }, []);
-
-  useEffect(() => {
-    const storedChargerHeadId = localStorage.getItem("chargerHeadId");
-    if (storedChargerHeadId) {
-      GetChargerHistoryStatistics(storedChargerHeadId);
+    if (ChargerHeadId) {
+      GetChargerHistoryStatistics(ChargerHeadId);
     }
   }, [endDate, startDate, timeUnit]);
 
-  const handleChargerClick = (chargerId, chargerName) => {
-    localStorage.setItem("chargerId", chargerId);
-    localStorage.setItem("chargerName", chargerName);
-    router.push("chargerdetail");
-  };
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("⏳ Refreshing data every 2 minutes from Redux...");
+      Promise.all([GetStationbyId(ChargerHeadId,false)]);
+      GetStationStatic(ChargerHeadId);
+      GetChargerHistoryStatistics(ChargerHeadId);
+    }, 300000);
 
-  const handleSearchChargingquery = (e) => {
-    setSearchChargingQuery(e.target.value);
-  };
-  const filteredChargingList = chargersHead
-    ?.map((item, index) => ({ ...item, displayIndex: index + 1 })) // เพิ่มลำดับเลขให้แต่ละ item
-    .filter(
-      (item) =>
-        item.carBrand
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.carModel
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.chargeHeadName
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.chargerName
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.electricityAmount
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.endTime
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.price
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.startTime
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.stationName
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
-        item.displayIndex.toString().includes(searchChargingQuery)
-    );
-
-  const handleSortCharging = (column) => {
-    let direction = "asc";
-    if (
-      chargingSortConfig.key === column &&
-      chargingSortConfig.direction === "asc"
-    ) {
-      direction = "desc";
-    }
-    setChargingSortConfig({ key: column, direction });
-  };
-
-  // ข้อมูล charging session ที่ sort แล้ว
-  const sortedChargingList = useMemo(() => {
-    const sorted = [...filteredChargingList];
-    sorted.sort((a, b) => {
-      const valueA = a[chargingSortConfig.key];
-      const valueB = b[chargingSortConfig.key];
-
-      if (valueA < valueB)
-        return chargingSortConfig.direction === "asc" ? -1 : 1;
-      if (valueA > valueB)
-        return chargingSortConfig.direction === "asc" ? 1 : -1;
-      return 0;
-    });
-    return sorted;
-  }, [filteredChargingList, chargingSortConfig]);
-
-  // Pagination สำหรับ charging
-  const chargingIndexOfLastItem = chargingCurrentPage * chargingRowsPerPage;
-  const chargingIndexOfFirstItem =
-    chargingIndexOfLastItem - chargingRowsPerPage;
-  const currentChargingData = sortedChargingList.slice(
-    chargingIndexOfFirstItem,
-    chargingIndexOfLastItem
-  );
-  const totalChargingPages = Math.ceil(
-    filteredChargingList.length / chargingRowsPerPage
-  );
-
-  const handleChangeChargingPage = (page) => {
-    setChargingCurrentPage(page);
-  };
-
-  const handleRowsPerChargingPageChange = (e) => {
-    setChargingRowsPerPage(Number(e.target.value));
-    setChargingCurrentPage(1);
-  };
+    return () => clearInterval(interval);
+  }, [ChargerHeadId]);
 
   const calculateDefaultDateRange = (groupBy) => {
     const today = dayjs(); // วันปัจจุบัน
@@ -357,32 +219,32 @@ const ChargerHeadDetail = () => {
                 color: "#2aa7a7",
               },
             }}
-            onClick={() => router.push("/device/ev-charger?page=chargerdetail")}
+            onClick={() => onNavigate("chargerdetail")}
           />
 
           <div className="flex flex-col">
-            <strong>{chargerHeadName}</strong>
+            <strong>{ChargerHeadName}</strong>
             <div className="flex items-center space-x-1 gap-1">
-              <Link
-                href={"/device/ev-charger"}
-                className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200"
+              <span
+                onClick={() => onNavigate("dashboard")}
+                className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200 cursor-pointer"
               >
-                {siteName}
-              </Link>
+                {SiteName}
+              </span>
               <span>/</span>
-              <Link
-                href={"/device/ev-charger?page=stationdetail"}
-                className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200"
+              <span
+                onClick={() => onNavigate("stationdetail")}
+                className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200 cursor-pointer"
               >
-                {stationName}
-              </Link>
+                {StationName}
+              </span>
               <span>/</span>
-              <Link
-                href={"/device/ev-charger?page=chargerdetail"}
-                className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200"
+              <span
+                onClick={() => onNavigate("chargerdetail")}
+                className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200 cursor-pointer"
               >
-                {chargerName}
-              </Link>
+                {ChargerName}
+              </span>
             </div>
           </div>
         </div>
@@ -406,7 +268,7 @@ const ChargerHeadDetail = () => {
                           status: station.stationStatus,
                           lat: station.latitude, // ใช้ latitude จาก station
                           lng: station.longitude, // ใช้ longitude จาก station
-                          siteName: station.siteName,
+                          siteName: SiteName,
                         },
                       ]
                     : [] // ถ้าไม่มีข้อมูล ให้ส่งอาร์เรย์ว่าง
@@ -519,7 +381,7 @@ const ChargerHeadDetail = () => {
                             ? "#12B981"
                             : station?.status === "Charging"
                             ? "#259AE6"
-                            : station?.status === "Out of Order"
+                            : station?.status === "Out of order"
                             ? "#DF4667"
                             : station?.status === "Reserved"
                             ? "#9747FF"
@@ -618,6 +480,9 @@ const ChargerHeadDetail = () => {
               timestampKey="timestamp"
               valueKeys={["session"]}
               yAxisLabel="Sessions"
+              legendLabels={{
+                session: "Sessions",
+              }}
             />
           </div>
           <div className="mt-5">
@@ -627,6 +492,9 @@ const ChargerHeadDetail = () => {
               timestampKey="timestamp"
               valueKeys={["electricityAmount"]}
               yAxisLabel="Energy (kWh)"
+              legendLabels={{
+                electricityAmount: "Energy",
+              }}
             />
           </div>
           <div className="mt-5">
@@ -636,8 +504,12 @@ const ChargerHeadDetail = () => {
               timestampKey="timestamp"
               valueKeys={["revenue"]}
               yAxisLabel="Revenue"
+              legendLabels={{
+                revenue: "Revenue",
+              }}
             />
           </div>
+          {loading && <Loading />}
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import StatisticsCard from "../component/StatisticsCard.js";
 import dynamic from "next/dynamic";
 const MapTH = dynamic(() => import("../component/MapSmSt"), { ssr: false });
@@ -10,18 +10,30 @@ import ArrowForwardIosOutlinedIcon from "@mui/icons-material/ArrowForwardIosOutl
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import { getChargerbyId, getChargersStatics, getChargerHistoryStatistics} from "@/utils/api";
+import {
+  getChargerbyId,
+  getChargersStatics,
+  getChargerHistoryStatistics,
+} from "@/utils/api";
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
+import {
+  setChargeHeadId,
+  setChargeHeadName,
+} from "@/redux/slicer/evchargerSlice";
+import { useDispatch, useSelector } from "react-redux";
+import Loading from "./Loading";
 
-const ChargerDetail = () => {
-  const router = useRouter();
+const ChargerDetail = ({ onNavigate }) => {
+  const dispatch = useDispatch();
+
+  const StationName = useSelector((state) => state.evchargerData.stationName);
+  const SiteName = useSelector((state) => state.evchargerData.siteName);
+  const ChargerName = useSelector((state) => state.evchargerData.chargerName);
+  const ChargerId = useSelector((state) => state.evchargerData.chargerId);
+
   const today = dayjs(); // ใช้สำหรับคำนวณและเปรียบเทียบ
   const todayFormatted = today.format("YYYY/MM/DD");
-  const [chargerId, setChargerId] = useState('');
-  const [chargerName, setChargerName] = useState('');
-  const [siteName, setSiteName] = useState('');
-  const [stationName, setStationName] = useState('');
   const [station, setStation] = useState({});
   const [staticsToday, setStaticsToday] = useState({});
   const [staticsTotal, setStaticsTotal] = useState({});
@@ -30,6 +42,7 @@ const ChargerDetail = () => {
   const [endDate, setEndDate] = useState(todayFormatted);
   const [timeUnit, setTimeUnit] = useState("hour");
   const [graphData, setGraphData] = useState();
+  const [loading, setLoading] = useState(false);
   const [mapZoomLevel, setMapZoomLevel] = useState(15);
   const [searchChargingQuery, setSearchChargingQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -46,259 +59,264 @@ const ChargerDetail = () => {
   ];
 
   const handleChargerHeadClick = (chargerHeadId, chargerHeadName) => {
-    localStorage.setItem("chargerHeadId", chargerHeadId);
-    localStorage.setItem("chargerHeadName", chargerHeadName);
-    router.push("/device/ev-charger?page=chargeheaddetail"); // เปลี่ยนหน้าไปยัง ChargeHeadDetail
+    // localStorage.setItem("chargerHeadId", chargerHeadId);
+    // localStorage.setItem("chargerHeadName", chargerHeadName);
+    dispatch(setChargeHeadId(chargerHeadId));
+    dispatch(setChargeHeadName(chargerHeadName));
+    // router.push("/device/ev-charger?page=chargeheaddetail"); // เปลี่ยนหน้าไปยัง ChargeHeadDetail
+    onNavigate("chargeheaddetail");
   };
 
-    const GetStationbyId = async (id) => {
-      console.log("station Id:", id);
-      try {
-        const result = await getChargerbyId(id);
-        console.log("Station:", result);
-        console.log("Chargers:", result.chargers);
-        if (result) {
-          setStation(result);
-          setChargersHead(result.chargeHeads);
-          // ตั้งค่า selectedLocation ด้วย latitude และ longitude
-          if (result.latitude && result.longitude) {
-            setSelectedLocation({
-              lat: result.latitude,
-              lng: result.longitude,
-            });
-          }
-        } else {
-          console.log("No Stations found!");
+  const GetStationbyId = async (id,showLoading = true) => {
+    if (showLoading) setLoading(true); 
+    try {
+      const result = await getChargerbyId(id);
+      console.log("Station:", result);
+      console.log("Chargers:", result.chargers);
+      if (result) {
+        setStation(result);
+        setChargersHead(result.chargeHeads);
+        // ตั้งค่า selectedLocation ด้วย latitude และ longitude
+        if (result.latitude && result.longitude) {
+          setSelectedLocation({
+            lat: result.latitude,
+            lng: result.longitude,
+          });
         }
-      } catch (error) {
-        console.error("Error fetching station data:", error);
+      } else {
+        console.log("No Stations found!");
       }
-    };
-    const GetStationStatic = async (id) => {
-      console.log("station Id:", id);
-      try {
-        const result = await getChargersStatics(id);
-        console.log("Today:", result?.data?.today);
-        console.log("Total:", result?.data?.total);
-        if (result) {
-          setStaticsToday(result?.data?.today);
-          setStaticsTotal(result?.data?.total);
-          // ตั้งค่า selectedLocation ด้วย latitude และ longitude
-          if (result.latitude && result.longitude) {
-            setSelectedLocation({
-              lat: result.latitude,
-              lng: result.longitude,
-            });
-          }
-        } else {
-          console.log("No Stations found!");
+    } catch (error) {
+      console.error("Error fetching station data:", error);
+    }finally {
+      if (showLoading) {
+        setLoading(false);
         }
-      } catch (error) {
-        console.error("Error fetching station data:", error);
-      }
-    };
-  
-    const GetChargerHistoryStatistics = async (id) => {
-      const Param = {
-        chargerId: id,
-        groupBy: timeUnit,
-        endDate: endDate,
-        startDate: startDate,
-      };
-      try {
-        const result = await getChargerHistoryStatistics(Param)
-        if (result) {
-          setGraphData(result?.data);
-          console.log("Graph Data:", result?.data);
+    }
+  };
+  const GetStationStatic = async (id) => {
+    console.log("station Id:", id);
+    try {
+      const result = await getChargersStatics(id);
+      console.log("Today:", result?.data?.today);
+      console.log("Total:", result?.data?.total);
+      if (result) {
+        setStaticsToday(result?.data?.today);
+        setStaticsTotal(result?.data?.total);
+        // ตั้งค่า selectedLocation ด้วย latitude และ longitude
+        if (result.latitude && result.longitude) {
+          setSelectedLocation({
+            lat: result.latitude,
+            lng: result.longitude,
+          });
         }
-      } catch (error) {
-        console.error("Error fetching graph data:", error);
+      } else {
+        console.log("No Stations found!");
       }
-    };
-  
-    useEffect(() => {
-      // ดึงข้อมูลจาก Local Storage
-      if (typeof window !== "undefined") {
-        const storedSiteName = localStorage.getItem("siteName");
-        const storedChargerId = localStorage.getItem("chargerId");
-        const storedChargerName = localStorage.getItem("chargerName");
-        const storedStationName = localStorage.getItem("stationName");
+    } catch (error) {
+      console.error("Error fetching station data:", error);
+    }
+  };
 
-        if (storedSiteName) setSiteName(storedSiteName);
-        if (storedChargerId) setChargerId(storedChargerId);
-        if (storedStationName) setStationName(storedStationName);
-        if (storedChargerName) setChargerName(storedChargerName);
-        if (storedChargerId) {
-          GetStationbyId(storedChargerId);
-          GetStationStatic(storedChargerId);
-        }
+  const GetChargerHistoryStatistics = async (id) => {
+    const Param = {
+      chargerId: id,
+      groupBy: timeUnit,
+      endDate: endDate,
+      startDate: startDate,
+    };
+    try {
+      const result = await getChargerHistoryStatistics(Param);
+      if (result) {
+        setGraphData(result?.data);
+        console.log("Graph Data:", result?.data);
       }
-    }, []);
-  
-    useEffect(() => {
-      const storedChargerId = localStorage.getItem("chargerId");
-        if (storedChargerId) {
-          GetChargerHistoryStatistics(storedChargerId)
-        }
-      }, [endDate, startDate, timeUnit]);
-  
-    const handleChargerClick = (chargerId, chargerName) => {
-      localStorage.setItem("chargerId", chargerId);
-      localStorage.setItem("chargerName", chargerName);
-      router.push("chargerdetail");
-    };
-  
-    const handleSearchChargingquery = (e) => {
-      setSearchChargingQuery(e.target.value);
-    };
-    const filteredChargingList = chargersHead
-      ?.map((item, index) => ({ ...item, displayIndex: index + 1 })) // เพิ่มลำดับเลขให้แต่ละ item
-      .filter(
-        (item) =>
-          item.name
-            ?.toString()
-            .toLowerCase()
-            .includes(searchChargingQuery.toLowerCase()) ||
-          item.connectorType
-            ?.toString()
-            .toLowerCase()
-            .includes(searchChargingQuery.toLowerCase()) ||
-          item.powerRating
-            ?.toString()
-            .toLowerCase()
-            .includes(searchChargingQuery.toLowerCase()) ||
-          item.reservable
-            ?.toString()
-            .toLowerCase()
-            .includes(searchChargingQuery.toLowerCase()) ||
-          item.chargeBoxMapping
-            ?.toString()
-            .toLowerCase()
-            .includes(searchChargingQuery.toLowerCase()) ||
-          item.status
-            ?.toString()
-            .toLowerCase()
-            .includes(searchChargingQuery.toLowerCase()) ||
-          item.currentCharging
-            ?.toString()
-            .toLowerCase()
-            .includes(searchChargingQuery.toLowerCase()) ||
-          item.displayIndex.toString().includes(searchChargingQuery)
-      );
-  
-    const handleSortCharging = (column) => {
-      let direction = "asc";
-      if (
-        chargingSortConfig.key === column &&
-        chargingSortConfig.direction === "asc"
-      ) {
-        direction = "desc";
-      }
-      setChargingSortConfig({ key: column, direction });
-    };
-  
-    // ข้อมูล charging session ที่ sort แล้ว
-    const sortedChargingList = useMemo(() => {
-      const sorted = [...filteredChargingList];
-      sorted.sort((a, b) => {
-        const valueA = a[chargingSortConfig.key];
-        const valueB = b[chargingSortConfig.key];
-  
-        if (valueA < valueB)
-          return chargingSortConfig.direction === "asc" ? -1 : 1;
-        if (valueA > valueB)
-          return chargingSortConfig.direction === "asc" ? 1 : -1;
-        return 0;
-      });
-      return sorted;
-    }, [filteredChargingList, chargingSortConfig]);
-  
-    // Pagination สำหรับ charging
-    const chargingIndexOfLastItem = chargingCurrentPage * chargingRowsPerPage;
-    const chargingIndexOfFirstItem =
-      chargingIndexOfLastItem - chargingRowsPerPage;
-    const currentChargingData = sortedChargingList.slice(
-      chargingIndexOfFirstItem,
-      chargingIndexOfLastItem
+    } catch (error) {
+      console.error("Error fetching graph data:", error);
+    }
+  };
+
+  useEffect(() => {
+    // ดึงข้อมูลจาก Local Storage
+
+    if (ChargerId) {
+      GetStationbyId(ChargerId);
+      GetStationStatic(ChargerId);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (ChargerId) {
+      GetChargerHistoryStatistics(ChargerId);
+    }
+  }, [endDate, startDate, timeUnit]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("⏳ Refreshing data every 2 minutes from Redux...");
+      Promise.all([GetStationbyId(ChargerId,false)]);
+      GetStationStatic(ChargerId);
+      GetChargerHistoryStatistics(ChargerId);
+    }, 300000);
+
+    return () => clearInterval(interval);
+  }, [ChargerId]);
+
+  // const handleChargerClick = (chargerId, chargerName) => {
+  //   localStorage.setItem("chargerId", chargerId);
+  //   localStorage.setItem("chargerName", chargerName);
+  //   router.push("chargerdetail");
+  // };
+
+  const handleSearchChargingquery = (e) => {
+    setSearchChargingQuery(e.target.value);
+  };
+  const filteredChargingList = chargersHead
+    ?.map((item, index) => ({ ...item, displayIndex: index + 1 })) // เพิ่มลำดับเลขให้แต่ละ item
+    .filter(
+      (item) =>
+        item.name
+          ?.toString()
+          .toLowerCase()
+          .includes(searchChargingQuery.toLowerCase()) ||
+        item.connectorType
+          ?.toString()
+          .toLowerCase()
+          .includes(searchChargingQuery.toLowerCase()) ||
+        item.powerRating
+          ?.toString()
+          .toLowerCase()
+          .includes(searchChargingQuery.toLowerCase()) ||
+        item.reservable
+          ?.toString()
+          .toLowerCase()
+          .includes(searchChargingQuery.toLowerCase()) ||
+        item.chargeBoxMapping
+          ?.toString()
+          .toLowerCase()
+          .includes(searchChargingQuery.toLowerCase()) ||
+        item.status
+          ?.toString()
+          .toLowerCase()
+          .includes(searchChargingQuery.toLowerCase()) ||
+        item.currentCharging
+          ?.toString()
+          .toLowerCase()
+          .includes(searchChargingQuery.toLowerCase()) ||
+        item.displayIndex.toString().includes(searchChargingQuery)
     );
-    const totalChargingPages = Math.ceil(
-      filteredChargingList.length / chargingRowsPerPage
-    );
-  
-    const handleChangeChargingPage = (page) => {
-      setChargingCurrentPage(page);
+
+  const handleSortCharging = (column) => {
+    let direction = "asc";
+    if (
+      chargingSortConfig.key === column &&
+      chargingSortConfig.direction === "asc"
+    ) {
+      direction = "desc";
+    }
+    setChargingSortConfig({ key: column, direction });
+  };
+
+  // ข้อมูล charging session ที่ sort แล้ว
+  const sortedChargingList = useMemo(() => {
+    const sorted = [...filteredChargingList];
+    sorted.sort((a, b) => {
+      const valueA = a[chargingSortConfig.key];
+      const valueB = b[chargingSortConfig.key];
+
+      if (valueA < valueB)
+        return chargingSortConfig.direction === "asc" ? -1 : 1;
+      if (valueA > valueB)
+        return chargingSortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }, [filteredChargingList, chargingSortConfig]);
+
+  // Pagination สำหรับ charging
+  const chargingIndexOfLastItem = chargingCurrentPage * chargingRowsPerPage;
+  const chargingIndexOfFirstItem =
+    chargingIndexOfLastItem - chargingRowsPerPage;
+  const currentChargingData = sortedChargingList.slice(
+    chargingIndexOfFirstItem,
+    chargingIndexOfLastItem
+  );
+  const totalChargingPages = Math.ceil(
+    filteredChargingList.length / chargingRowsPerPage
+  );
+
+  const handleChangeChargingPage = (page) => {
+    setChargingCurrentPage(page);
+  };
+
+  const handleRowsPerChargingPageChange = (e) => {
+    setChargingRowsPerPage(Number(e.target.value));
+    setChargingCurrentPage(1);
+  };
+
+  const calculateDefaultDateRange = (groupBy) => {
+    const today = dayjs(); // วันปัจจุบัน
+    let startDate;
+
+    switch (groupBy) {
+      case "hour":
+        startDate = today.subtract(7, "day"); // 7 วันก่อนหน้า
+        break;
+      case "day":
+        startDate = today.subtract(1, "month"); // 1 เดือนก่อนหน้า
+        break;
+      case "month":
+        startDate = today.subtract(1, "year"); // 1 ปีก่อนหน้า
+        break;
+      default:
+        startDate = today.subtract(7, "day"); // ค่าเริ่มต้นเป็น 7 วันก่อนหน้า
+    }
+
+    return {
+      startDate: startDate.format("YYYY/MM/DD"),
+      endDate: today.format("YYYY/MM/DD"),
     };
-  
-    const handleRowsPerChargingPageChange = (e) => {
-      setChargingRowsPerPage(Number(e.target.value));
-      setChargingCurrentPage(1);
-    };
-  
-    const calculateDefaultDateRange = (groupBy) => {
-        const today = dayjs(); // วันปัจจุบัน
-        let startDate;
-      
-        switch (groupBy) {
-          case "hour":
-            startDate = today.subtract(7, "day"); // 7 วันก่อนหน้า
-            break;
-          case "day":
-            startDate = today.subtract(1, "month"); // 1 เดือนก่อนหน้า
-            break;
-          case "month":
-            startDate = today.subtract(1, "year"); // 1 ปีก่อนหน้า
-            break;
-          default:
-            startDate = today.subtract(7, "day"); // ค่าเริ่มต้นเป็น 7 วันก่อนหน้า
-        }
-      
-        return {
-          startDate: startDate.format("YYYY/MM/DD"),
-          endDate: today.format("YYYY/MM/DD"),
-        };
-      };
-      
-      const handleTimeUnitChange = (value) => {
-        setTimeUnit(value);
-      
-        // คำนวณ Default Date Range ตาม Group by
-        const { startDate, endDate } = calculateDefaultDateRange(value);
-        setStartDate(startDate);
-        setEndDate(endDate);
-      };
-      const handleStartDateChange = (date) => {
-        if (date) {
-          setStartDate(date.format("YYYY/MM/DD")); // อัปเดต startDate
-        }
-      };
-      
-      const handleEndDateChange = (date) => {
-        if (date) {
-          setEndDate(date.format("YYYY/MM/DD")); // อัปเดต endDate
-        }
-      };
-    
-      const maxEndDate1 = useMemo(() => {
-        switch (timeUnit) {
-          case "hour":
-            return dayjs(); // กรณี Hour: ใช้วันปัจจุบัน
-          case "day":
-            return dayjs(); // กรณี Day: ใช้วันปัจจุบัน
-          case "month":
-            return dayjs(); // กรณี Month: ใช้วันปัจจุบัน
-          default:
-            return dayjs(); // ค่าเริ่มต้นเป็นวันปัจจุบัน
-        }
-      }, [timeUnit]);
-      
-      useEffect(() => {
-        const { startDate, endDate } = calculateDefaultDateRange(timeUnit);
-        setStartDate(startDate);
-        setEndDate(endDate);
-      }, []);
-    
-   
-    
+  };
+
+  const handleTimeUnitChange = (value) => {
+    setTimeUnit(value);
+
+    // คำนวณ Default Date Range ตาม Group by
+    const { startDate, endDate } = calculateDefaultDateRange(value);
+    setStartDate(startDate);
+    setEndDate(endDate);
+  };
+  const handleStartDateChange = (date) => {
+    if (date) {
+      setStartDate(date.format("YYYY/MM/DD")); // อัปเดต startDate
+    }
+  };
+
+  const handleEndDateChange = (date) => {
+    if (date) {
+      setEndDate(date.format("YYYY/MM/DD")); // อัปเดต endDate
+    }
+  };
+
+  const maxEndDate1 = useMemo(() => {
+    switch (timeUnit) {
+      case "hour":
+        return dayjs(); // กรณี Hour: ใช้วันปัจจุบัน
+      case "day":
+        return dayjs(); // กรณี Day: ใช้วันปัจจุบัน
+      case "month":
+        return dayjs(); // กรณี Month: ใช้วันปัจจุบัน
+      default:
+        return dayjs(); // ค่าเริ่มต้นเป็นวันปัจจุบัน
+    }
+  }, [timeUnit]);
+
+  useEffect(() => {
+    const { startDate, endDate } = calculateDefaultDateRange(timeUnit);
+    setStartDate(startDate);
+    setEndDate(endDate);
+  }, []);
+
   return (
     <div>
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-5">
@@ -312,21 +330,26 @@ const ChargerDetail = () => {
                 color: "#2aa7a7",
               },
             }}
-            onClick={() => router.push("/device/ev-charger?page=stationdetail")}
+            onClick={() => onNavigate("stationdetail")}
           />
 
           <div className="flex flex-col">
-            <strong>{chargerName}</strong>
+            <strong>{ChargerName}</strong>
             <div className="flex items-center space-x-1 gap-1">
-  <Link href={'/device/ev-charger'} className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200">
-    {siteName}
-  </Link>
-  <span>/</span>
-  <Link href={'/device/ev-charger?page=stationdetail'} className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200">
-    {stationName}
-  </Link>
-</div>
-
+              <span
+                onClick={() => onNavigate("dashboard")}
+                className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200 cursor-pointer"
+              >
+                {SiteName}
+              </span>
+              <span>/</span>
+              <span
+                onClick={() => onNavigate("stationdetail")}
+                className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200 cursor-pointer"
+              >
+                {StationName}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -334,7 +357,7 @@ const ChargerDetail = () => {
       {/* Charger Head Table */}
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
         <span className="text-lg font-bold block mb-2">
-        Charger Information
+          Charger Information
         </span>
 
         <div className="flex flex-col lg:flex-row gap-3">
@@ -350,7 +373,7 @@ const ChargerDetail = () => {
                           status: station.status,
                           lat: station.latitude, // ใช้ latitude จาก station
                           lng: station.longitude, // ใช้ longitude จาก station
-                          siteName: station.siteName,
+                          siteName: SiteName,
                         },
                       ]
                     : [] // ถ้าไม่มีข้อมูล ให้ส่งอาร์เรย์ว่าง
@@ -371,15 +394,15 @@ const ChargerDetail = () => {
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
                       <strong>Charger Name</strong>
                     </td>
-                    <td className="px-4 py-2 font-bold">
-                      {station?.name}
-                    </td>
+                    <td className="px-4 py-2 font-bold">{station?.name}</td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
                       <strong>Brand Name</strong>
                     </td>
-                    <td className="px-4 py-2 font-bold">{station?.brandName}</td>
+                    <td className="px-4 py-2 font-bold">
+                      {station?.brandName}
+                    </td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
@@ -391,7 +414,9 @@ const ChargerDetail = () => {
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
                       <strong>Power Type</strong>
                     </td>
-                    <td className="px-4 py-2 font-bold">{station?.powerType}</td>
+                    <td className="px-4 py-2 font-bold">
+                      {station?.powerType}
+                    </td>
                   </tr>
                   {/* <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
@@ -417,13 +442,17 @@ const ChargerDetail = () => {
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
                       <strong>SimultaneousCharging</strong>
                     </td>
-                    <td className="px-4 py-2 font-bold">{station?.simultaneousCharge}</td>
+                    <td className="px-4 py-2 font-bold">
+                      {station?.simultaneousCharge}
+                    </td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
                       <strong>StationName</strong>
                     </td>
-                    <td className="px-4 py-2 font-bold">{station?.stationName}</td>
+                    <td className="px-4 py-2 font-bold">
+                      {station?.stationName}
+                    </td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
@@ -799,10 +828,12 @@ const ChargerDetail = () => {
                             <td className="px-2 py-1 text-right dark:text-white">
                               {highlightText(record.displayIndex)}
                             </td>
-                            <td className="px-2 py-1 text-left text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] dark:text-[#33BFBF] dark:hover:text-[#28A9A9]"
-                            onClick={() => {
-                              handleChargerHeadClick(record.id, record.name);
-                            }}>
+                            <td
+                              className="px-2 py-1 text-left text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] dark:text-[#33BFBF] dark:hover:text-[#28A9A9]"
+                              onClick={() => {
+                                handleChargerHeadClick(record.id, record.name);
+                              }}
+                            >
                               {highlightText(record.name)}
                             </td>
                             <td className="px-2 py-1 text-left dark:text-white">
@@ -818,19 +849,24 @@ const ChargerDetail = () => {
                               {highlightText(record.chargeBoxMapping)}
                             </td>
                             <td
-  className="px-2 py-1 text-left font-bold"
-  style={{
-    color:
-      record?.status === 'Available' ? '#12B981' :
-      record?.status === 'Charging' ? '#259AE6' :
-      record?.status === 'Out of Order' ? '#DF4667' :
-      record?.status === 'Reserved' ? '#9747FF' :
-      record?.status === 'Maintenance' ? '#8A99AF' :
-      'black'
-  }}
->
-  {highlightText(record?.status)}
-</td>
+                              className="px-2 py-1 text-left font-bold"
+                              style={{
+                                color:
+                                  record?.status === "Available"
+                                    ? "#12B981"
+                                    : record?.status === "Charging"
+                                    ? "#259AE6"
+                                    : record?.status === "Out of order"
+                                    ? "#DF4667"
+                                    : record?.status === "Reserved"
+                                    ? "#9747FF"
+                                    : record?.status === "Maintenance"
+                                    ? "#8A99AF"
+                                    : "black",
+                              }}
+                            >
+                              {highlightText(record?.status)}
+                            </td>
 
                             <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.currentCharging ?? "-")}
@@ -912,64 +948,66 @@ const ChargerDetail = () => {
           <span className="text-lg font-bold block mb-2">Statistics</span>
 
           <div className="flex justify-between items-center mb-2 mt-5">
-              <div className="flex items-center gap-2">
-                <span className="text-sm">Group by:</span>
-                <div className="inline-flex items-center bg-gray-100 rounded-md p-1">
-                  {OptionsTimeUnit.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => handleTimeUnitChange(option.value)}
-                      className={`px-4 py-1 rounded-md text-sm font-medium ${
-                        timeUnit === option.value
-                          ? "bg-white shadow text-black"
-                          : "text-gray-500 hover:text-black"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex gap-2 mt-5 items-center">
-                <span className="text-sm">Date :</span>
-                <DatePicker
-                  className="w-48 p-2 bg-white border shadow-default 
-                    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
-                  value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
-                  onChange={handleStartDateChange}
-                  disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
-                  format="YYYY/MM/DD"
-                  allowClear={false}
-                />
-                <p>-</p>
-                <DatePicker
-                  className="w-48 p-2 bg-white border shadow-default 
-                    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
-                  value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
-                  onChange={handleEndDateChange}
-                  format="YYYY/MM/DD"
-                  min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null} // กำหนดวันที่เริ่มต้น
-                  max={maxEndDate1} // กำหนดวันที่สิ้นสุด
-                  disabledDate={(current) => {
-                    return (
-                      current &&
-                      (current.isBefore(dayjs(startDate, "YYYY/MM/DD"), "day") || // น้อยกว่า startDate
-                        current.isAfter(dayjs(maxEndDate1, "YYYY/MM/DD"), "day")) // มากกว่า maxEndDate1
-                    );
-                  }}
-                  allowClear={false}
-                />
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Group by:</span>
+              <div className="inline-flex items-center bg-gray-100 rounded-md p-1">
+                {OptionsTimeUnit.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleTimeUnitChange(option.value)}
+                    className={`px-4 py-1 rounded-md text-sm font-medium ${
+                      timeUnit === option.value
+                        ? "bg-white shadow text-black"
+                        : "text-gray-500 hover:text-black"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
             </div>
-          
+            <div className="flex gap-2 mt-5 items-center">
+              <span className="text-sm">Date :</span>
+              <DatePicker
+                className="w-48 p-2 bg-white border shadow-default 
+                    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
+                value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
+                onChange={handleStartDateChange}
+                disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
+                format="YYYY/MM/DD"
+                allowClear={false}
+              />
+              <p>-</p>
+              <DatePicker
+                className="w-48 p-2 bg-white border shadow-default 
+                    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
+                value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
+                onChange={handleEndDateChange}
+                format="YYYY/MM/DD"
+                min={startDate ? dayjs(startDate, "YYYY/MM/DD") : null} // กำหนดวันที่เริ่มต้น
+                max={maxEndDate1} // กำหนดวันที่สิ้นสุด
+                disabledDate={(current) => {
+                  return (
+                    current &&
+                    (current.isBefore(dayjs(startDate, "YYYY/MM/DD"), "day") || // น้อยกว่า startDate
+                      current.isAfter(dayjs(maxEndDate1, "YYYY/MM/DD"), "day")) // มากกว่า maxEndDate1
+                  );
+                }}
+                allowClear={false}
+              />
+            </div>
+          </div>
 
-            <div className="mt-5">
+          <div className="mt-5">
             <BarChartComponent
               data={graphData}
               type="hour"
               timestampKey="timestamp"
               valueKeys={["session"]}
               yAxisLabel="Sessions"
+              legendLabels={{
+                session: "Sessions",
+              }}
             />
           </div>
           <div className="mt-5">
@@ -979,6 +1017,9 @@ const ChargerDetail = () => {
               timestampKey="timestamp"
               valueKeys={["electricityAmount"]}
               yAxisLabel="Energy (kWh)"
+              legendLabels={{
+                electricityAmount: "Energy",
+              }}
             />
           </div>
           <div className="mt-5">
@@ -988,8 +1029,12 @@ const ChargerDetail = () => {
               timestampKey="timestamp"
               valueKeys={["revenue"]}
               yAxisLabel="Revenue"
+              legendLabels={{
+                revenue: "Revenue",
+              }}
             />
           </div>
+           {loading && <Loading />}
         </div>
       </div>
     </div>
