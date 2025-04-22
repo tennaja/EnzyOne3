@@ -598,8 +598,8 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
                           key={index}
                           className={`${
                             index % 2 === 0
-                              ? "bg-gray-100 dark:bg-gray-800"
-                              : "bg-white dark:bg-gray-900"
+                              ? "bg-gray-100 dark:bg-gray-900"
+                              : "bg-white dark:bg-gray-800"
                           } border-b border-gray-300`}
                         >
                           <td className="py-2 px-4">

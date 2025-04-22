@@ -23,6 +23,7 @@ import {
   setSiteId,
   setStationId,
   setStationName,
+  clearAll,
 } from "@/redux/slicer/evchargerSlice";
 import Loading from "./Loading";
 const MapTH = dynamic(() => import("../component/MapSmSt"), { ssr: false });
@@ -205,15 +206,9 @@ const Dashboard = ({ onNavigate }) => {
   }, []);
 
   useEffect(() => {
-    if (siteid && stationid) {
+   
       GetChargingHistory(siteid, stationid);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (siteid && stationid) {
-      GetChargingHistory(siteid, stationid);
-    }
+    
   }, [startDate, endDate]);
   // สร้าง icon map สำหรับ status
   const statusIcons = {
@@ -230,8 +225,42 @@ const Dashboard = ({ onNavigate }) => {
     icon: statusIcons[item.status] || null,
   }));
 
+  // useEffect(() => {
+  //   if (typeof window !== "undefined") {
+  //     // เช็คว่าเป็นการรีเฟรชหน้า
+  //     const navType = window.performance.navigation.type;
+  
+  //     if (navType === 1) {
+  //       // ถ้าเป็นการรีเฟรช, เคลียร์ Redux และเก็บค่าใน sessionStorage ว่ารีเฟรชแล้ว
+  //       dispatch(clearAll()); // เคลียร์ Redux
+  //       sessionStorage.setItem("hasPageRefreshed", "true");  // ตั้งค่าว่ารีเฟรชแล้ว
+  //       console.log("Redux state cleared due to page refresh.");
+  //     } else {
+  //       console.log("Not a page refresh, skipping Redux clear.");
+  //     }
+  //   }
+  // }, []);  // ใช้เมื่อหน้าโหลดครั้งแรก
+  
+  // useEffect(() => {
+  //   // เมื่อเข้ามาหน้าก่อนและไม่ต้องการให้เคลียร์ Redux
+  //   const hasPageRefreshed = sessionStorage.getItem("hasPageRefreshed");
+  
+  //   // ถ้าไม่มีการรีเฟรชหน้า จะไม่ทำการเคลียร์
+  //   if (hasPageRefreshed) {
+  //     console.log("Already refreshed before, skipping state reset.");
+  //   } else {
+  //     console.log("Not refreshed yet, Redux state will not be cleared.");
+  //   }
+  
+  //   // เมื่อ component จะ unmount, ลบค่า sessionStorage
+  //   return () => {
+  //     sessionStorage.removeItem("hasPageRefreshed");
+  //   };
+  // }, []);  // ตรวจสอบเฉพาะตอนที่ component mount ครั้งแรก
+  
+  
+
   useEffect(() => {
-    if (typeof window !== "undefined") {
       const storedSite = siteNameRedux;
       if (storedSite && siteDropdwonlist?.length > 0) {
         const matchedSite = siteDropdwonlist.find(
@@ -258,7 +287,7 @@ const Dashboard = ({ onNavigate }) => {
       } else if (!siteDropdwonlist?.length) {
         console.warn("siteDropdwonlist is empty.");
       }
-    }
+    
   }, [siteDropdwonlist]);
 
   useEffect(() => {
@@ -540,53 +569,66 @@ const Dashboard = ({ onNavigate }) => {
           <div className="flex items-center gap-2">
             <span className="text-sm">Site: </span>
             <Select
-              className="w-60"
-              options={siteOptions}
-              value={
-                siteid
-                  ? siteOptions.find((option) => option.value === siteid)
-                  : siteOptions[0]
-              }
-              onChange={(selectedOption) => {
-                const selectedValue = selectedOption?.value ?? "0";
-                const selectedLabel = selectedOption?.label ?? "";
+  className="w-48"
+  options={siteOptions}
+  value={
+    siteid
+      ? siteOptions.find((option) => option.value === siteid)
+      : siteOptions[0]
+  }
+  onChange={(selectedOption) => {
+    const selectedValue = selectedOption?.value ?? "0";
+    const selectedLabel = selectedOption?.label ?? "";
 
-                setSelectedSiteId(selectedValue);
-                getStationDropdown(selectedValue);
-                setSelectedSite(selectedLabel);
-                localStorage.setItem("selectedSite", selectedLabel);
-                setSelectedSiteName(selectedLabel);
-              }}
-              isSearchable
-              styles={{
-                control: (provided) => ({
-                  ...provided,
-                  borderColor: "rgb(203 213 225)", // สีขอบปกติ
-                  borderRadius: "0.375rem",
-                  zIndex: 10,
-                  height: "2.25rem",
-                }),
-                menu: (provided) => ({
-                  ...provided,
-                  zIndex: 9999,
-                  position: "absolute",
-                }),
-                option: (provided, state) => ({
-                  ...provided,
-                  backgroundColor: state.isSelected
-                    ? "#33BFBF"
-                    : state.isFocused
-                    ? "#e0f7fa"
-                    : "transparent", // ปรับสีพื้นหลัง
-                  color: state.isSelected ? "white" : "black", // สีของข้อความ
-                  cursor: "pointer",
-                  padding: "8px 16px",
-                  "&:active": {
-                    backgroundColor: "#33BFBF", // สีเมื่อคลิกเลือก
-                  },
-                }),
-              }}
-            />
+    setSelectedSiteId(selectedValue);
+    getStationDropdown(selectedValue);
+    setSelectedSite(selectedLabel);
+    localStorage.setItem("selectedSite", selectedLabel);
+    setSelectedSiteName(selectedLabel);
+  }}
+  isSearchable
+  styles={{
+    control: (provided) => ({
+      ...provided,
+      borderColor: "rgb(203 213 225)",
+      borderRadius: "0.375rem",
+      zIndex: 10,
+      height: "2.25rem",
+      backgroundColor: "white",
+    }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 9999,
+      position: "absolute",
+      backgroundColor: "white",
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected
+        ? "#33BFBF"
+        : state.isFocused
+        ? "#e0f7fa"
+        : "transparent",
+      color: state.isSelected ? "white" : "black",
+      cursor: "pointer",
+      padding: "8px 16px",
+      "&:active": {
+        backgroundColor: "#33BFBF",
+      },
+    }),
+  }}
+  classNames={{
+    control: () => "dark:bg-slate-900 dark:text-white dark:border-slate-600",
+    menu: () => "dark:bg-slate-700",
+    option: ({ isFocused, isSelected }) =>
+      `${isSelected ? "bg-teal-500 text-white" : ""} ${
+        isFocused && !isSelected ? "dark:bg-slate-900" : ""
+      } dark:text-white`,
+    singleValue: () => "dark:text-white", // <<< ตรงนี้สำคัญสำหรับข้อความที่แสดงผล
+    input: () => "dark:text-white",       // <<< สำหรับ text input ตอนค้นหา
+  }}
+/>
+
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm">Station: </span>
@@ -635,6 +677,16 @@ const Dashboard = ({ onNavigate }) => {
                   },
                 }),
               }}
+              classNames={{
+                control: () => "dark:bg-slate-900 dark:text-white dark:border-slate-600",
+                menu: () => "dark:bg-slate-700",
+                option: ({ isFocused, isSelected }) =>
+                  `${isSelected ? "bg-teal-500 text-white" : ""} ${
+                    isFocused && !isSelected ? "dark:bg-slate-900" : ""
+                  } dark:text-white`,
+                singleValue: () => "dark:text-white", // <<< ตรงนี้สำคัญสำหรับข้อความที่แสดงผล
+                input: () => "dark:text-white",       // <<< สำหรับ text input ตอนค้นหา
+              }}
             />
           </div>
 
@@ -667,11 +719,11 @@ const Dashboard = ({ onNavigate }) => {
           return (
             <div
               key={index}
-              className="p-6 shadow-md rounded-xl bg-white border"
+              className="p-6 shadow-md rounded-xl bg-white dark:border-slate-800 dark:bg-dark-box dark:text-slate-200"
             >
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-semibold">{item.title}</h2>
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#f6f7fc] text-[#33BFBF]">
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#f6f7fc] text-[#33BFBF] dark:bg-gray-900">
                   {item.icon}
                 </div>
               </div>
@@ -686,7 +738,7 @@ const Dashboard = ({ onNavigate }) => {
 
                 <div className="w-full bg-gray-300 h-1 rounded-full mt-2">
                   <div
-                    className="bg-[#33BFBF] h-1 rounded-full"
+                    className="bg-[#33BFBF] h-1 rounded-full "
                     style={{ width: `${(item.count / item.total) * 100}%` }}
                   ></div>
                 </div>
@@ -718,7 +770,7 @@ const Dashboard = ({ onNavigate }) => {
                     ? stationList.map((loca) => ({
                         id: loca.id,
                         name: loca.name,
-                        address: loca.address,
+                        siteName: loca.siteName,
                         status: loca.status,
                         lat: loca.latitude,
                         lng: loca.longitude,

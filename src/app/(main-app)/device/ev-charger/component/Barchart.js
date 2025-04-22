@@ -40,6 +40,19 @@ const aggregateData = (data, key, valueKeys) => {
   }, []);
 };
 
+const formatData = (data, valueKeys, decimalPlaces = 2) => {
+  return data.map((item) => {
+    const formattedItem = { ...item };
+    valueKeys.forEach((key) => {
+      if (formattedItem[key] !== undefined) {
+        // ใช้ toFixed เพื่อให้เป็นทศนิยมที่ต้องการ
+        formattedItem[key] = Number(formattedItem[key].toFixed(decimalPlaces));
+      }
+    });
+    return formattedItem;
+  });
+};
+
 const BarChartComponent = ({
   data,
   type = "hour",
@@ -47,6 +60,7 @@ const BarChartComponent = ({
   valueKeys = ["kwh"],
   yAxisLabel = "kwh",
   legendLabels = {},
+  decimalPlaces = 2, 
 }) => {
   const [barProps, setBarProps] = useState({});
   const [hover, setHover] = useState(null);
@@ -54,7 +68,7 @@ const BarChartComponent = ({
   const [refAreaLeft, setRefAreaLeft] = useState(null);
   const [refAreaRight, setRefAreaRight] = useState(null);
   const [chartKey, setChartKey] = useState(0);
-
+console.log("BarChartComponent", data);
   useEffect(() => {
     const initialBarProps = {};
     valueKeys.forEach((key) => {
@@ -74,49 +88,40 @@ const BarChartComponent = ({
   }
 
   const rawData = data.timestamp.map((time, index) => {
-    // ใช้ `new Date(time)` โดยตรงเพราะเวลามีรูปแบบที่รองรับอยู่แล้ว
-    const date = new Date(time); // time เป็น "2025/03/20 00:00:00"
-  
-    // ตรวจสอบการแปลงว่าเป็นวันที่ที่ถูกต้องหรือไม่
+    const date = new Date(time);
     if (isNaN(date)) {
       console.error(`Invalid Date format: ${time}`);
-      return {}; // ถ้าแปลงไม่สำเร็จ จะข้ามรายการนั้นไป
+      return {};
     }
-  
+
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     const hour = String(date.getHours()).padStart(2, "0");
-    const dayAbbreviation = getDayAbbreviation(date); // เช่น Mon, Tue
-  
-    // สร้างผลลัพธ์เบื้องต้น
+    const dayAbbreviation = getDayAbbreviation(date);
+
     const result = {
-      fullTime: `${year}/${month}/${day} ${hour}:00`, // รูปแบบสำหรับ hour
-      day: `${dayAbbreviation} ${year}/${month}/${day}`, // รูปแบบสำหรับ day
-      month: `${year}/${month}`, // รูปแบบสำหรับ month
+      fullTime: `${year}/${month}/${day} ${hour}:00`,
+      day: `${dayAbbreviation} ${year}/${month}/${day}`,
+      month: `${year}/${month}`,
     };
-  
-    // ใช้ valueKeys เพื่อเพิ่มข้อมูลใน result
+
     valueKeys.forEach((key) => {
-      result[key] = data[key]?.[index] ?? 0; // ใช้ค่าใน data หรือ 0 ถ้าไม่มี
+      result[key] = data[key]?.[index] ?? 0;
     });
-  
+
     return result;
   });
-  
-  
-  
-  
-  
+
+  const formattedData = formatData(rawData, valueKeys, decimalPlaces);
 
   const xAxisKey = {
     hour: "fullTime",
     day: "day",
     month: "month",
   }[type] || "fullTime";
-  console.log("xAxisKey:", xAxisKey);
 
-  let chartData = aggregateData(rawData, xAxisKey, valueKeys);
+  let chartData = aggregateData(formattedData, xAxisKey, valueKeys);
 
   if (zoomDomain) {
     chartData = chartData.filter(
@@ -166,90 +171,92 @@ const BarChartComponent = ({
 
   return (
     <div style={{ position: "relative", textAlign: "left" }}>
-  <div
-    style={{
-      position: "absolute",
-      top: 10,
-      right: 10,
-      zIndex: 10,
-    }}
-  >
-    <button
-      onClick={zoomOut}
-      className="border-2 border-gray-400 rounded-lg px-3 py-1"
-    >
-      Zoom Out
-    </button>
-  </div>
-
-  <ResponsiveContainer
-    width="100%"
-    height={400}
-    style={{ backgroundColor: "#f0f0f0", borderRadius: "10px" }}
-  >
-    <BarChart
-      key={chartKey}
-      data={chartData}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      margin={{ top: 50, left: 30 }}
-    >
-      <CartesianGrid horizontal={true} vertical={false} />
-      <XAxis
-        dataKey={xAxisKey}
-        angle={-45}
-        textAnchor="end"
-        fontSize={10}
-        interval={0}
-        height={80}
-        allowDataOverflow={true}
-      />
-      <YAxis
-        axisLine={false}
-        tickLine={false}
-        label={{
-          value: yAxisLabel,
-          position: "top",
-          offset: 30,
-          angle: 0,
-          dx: -50,
-          dy: -20,
-          style: {
-            textAnchor: "start",
-            fontSize: 17,
-            fontWeight: "bold",
-          },
+      <div
+        style={{
+          position: "absolute",
+          top: 10,
+          right: 10,
+          zIndex: 10,
         }}
-      />
-      <Tooltip />
-      <Legend
-        layout="horizontal"
-        align="center"
-        verticalAlign="top"
-        wrapperStyle={{ marginBottom: 20 }}
-        onClick={selectBar}
-        onMouseOver={handleLegendMouseEnter}
-        onMouseOut={handleLegendMouseLeave}
-      />
-      {valueKeys.map((key) => (
-        <Bar
-          key={key}
-          dataKey={key}
-          fill="#4bc0c0"
-          name={legendLabels[key] || key}
-          opacity={hover === key || !hover ? 1 : 0.5}
-          hide={barProps[key] === false}
-        />
-      ))}
-      {refAreaLeft && refAreaRight ? (
-        <ReferenceArea x1={refAreaLeft} x2={refAreaRight} strokeOpacity={0.3} fill="gray" />
-      ) : null}
-    </BarChart>
-  </ResponsiveContainer>
-</div>
+      >
+        <button
+          onClick={zoomOut}
+          className="border-2 border-gray-400 rounded-lg px-3 py-1"
+        >
+          Zoom Out
+        </button>
+      </div>
 
-
+      <ResponsiveContainer
+  width="100%"
+  height={400}
+  className="bg-[#f0f0f0] dark:bg-slate-900 dark:text-white rounded-lg"
+>
+        <BarChart
+          key={chartKey}
+          data={chartData}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          margin={{ top: 50, left: 30 }}
+          maxBarSize={30}
+        >
+          <CartesianGrid horizontal={true} vertical={false} />
+          <XAxis
+            dataKey={xAxisKey}
+            angle={-45}
+            textAnchor="end"
+            fontSize={10}
+            interval={0}
+            height={80}
+            allowDataOverflow={true}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            label={{
+              value: yAxisLabel,
+              position: "top",
+              offset: 30,
+              angle: 0,
+              dx: -50,
+              dy: -20,
+              style: {
+                textAnchor: "start",
+                fontSize: 17,
+                fontWeight: "bold",
+              },
+            }}
+            tickFormatter={(value) => value.toFixed(decimalPlaces)}  
+          />
+          <Tooltip
+            formatter={(value) => value.toFixed(decimalPlaces)}  
+          />
+          <Legend
+            layout="horizontal"
+            align="center"
+            verticalAlign="top"
+            wrapperStyle={{ marginBottom: 20 }}
+            onClick={selectBar}
+            onMouseOver={handleLegendMouseEnter}
+            onMouseOut={handleLegendMouseLeave}
+          />
+          {valueKeys.map((key) => (
+            <Bar
+              key={key}
+              dataKey={key}
+              fill="#4bc0c0"
+              name={legendLabels[key] || key}
+              opacity={hover === key || !hover ? 1 : 0.5}
+              hide={barProps[key] === false}
+            />
+          ))}
+          {refAreaLeft && refAreaRight ? (
+            <ReferenceArea x1={refAreaLeft} x2={refAreaRight} strokeOpacity={0.3} fill="gray" />
+          ) : null}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 

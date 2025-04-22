@@ -357,6 +357,16 @@ const Header = () => {
           position: 'absolute',  // ตั้ง position เป็น absolute
         }),
       }}
+      classNames={{
+        control: () => "dark:bg-slate-900 dark:text-white dark:border-slate-600",
+        menu: () => "dark:bg-slate-700",
+        option: ({ isFocused, isSelected }) =>
+          `${isSelected ? "bg-teal-500 text-white" : ""} ${
+            isFocused && !isSelected ? " dark:bg-slate-900" : ""
+          } dark:text-white`,
+        singleValue: () => "dark:text-white", // <<< ตรงนี้สำคัญสำหรับข้อความที่แสดงผล
+        input: () => "dark:text-white",       // <<< สำหรับ text input ตอนค้นหา
+      }}
     />
   </div>
 
@@ -389,6 +399,16 @@ const Header = () => {
           zIndex: 9999,  // เพิ่ม z-index ที่เมนูเลือก
           position: 'absolute',  // ตั้ง position เป็น absolute
         }),
+      }}
+      classNames={{
+        control: () => "dark:bg-slate-900 dark:text-white dark:border-slate-600",
+        menu: () => "dark:bg-slate-700",
+        option: ({ isFocused, isSelected }) =>
+          `${isSelected ? "bg-teal-500 text-white" : ""} ${
+            isFocused && !isSelected ? "dark:bg-slate-900" : ""
+          } dark:text-white`,
+        singleValue: () => "dark:text-white", // <<< ตรงนี้สำคัญสำหรับข้อความที่แสดงผล
+        input: () => "dark:text-white",       // <<< สำหรับ text input ตอนค้นหา
       }}
     />
   </div>

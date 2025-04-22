@@ -147,7 +147,7 @@ const handleSortCharging = (column) => {
           <thead>
             <tr className="text-xs text-black border-b border-gray-300 dark:text-white">
               <th
-                className="px-2 py-1 text-right cursor-pointer"
+                className="px-2 py-1 text-left cursor-pointer"
                 onClick={() => handleSortCharging('displayIndex')}
               >
                 #
@@ -277,7 +277,7 @@ const handleSortCharging = (column) => {
               }`}
               style={{ borderBottom: "1px solid #e0e0e0" }}
             >
-                <td className="px-2 py-1 text-right">{highlightText(charger.displayIndex)}</td>
+                <td className="px-2 py-1 text-left">{highlightText(charger.displayIndex)}</td>
                 <td className="px-2 py-1 text-left">
                   {highlightText(charger.name)}
                 </td>

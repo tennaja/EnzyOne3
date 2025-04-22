@@ -33,7 +33,7 @@ const ChargerHeadDetail = ({ onNavigate }) => {
   const [station, setStation] = useState({});
   const [staticsToday, setStaticsToday] = useState({});
   const [staticsTotal, setStaticsTotal] = useState({});
-  const [startDate, setStartDate] = useState(todayFormatted);
+  const [startDate, setStartDate] = useState(dayjs().subtract(7, 'days').format("YYYY/MM/DD"));
   const [endDate, setEndDate] = useState(todayFormatted);
   const [loading, setLoading] = useState(false);
   const [timeUnit, setTimeUnit] = useState("hour");
@@ -130,7 +130,7 @@ const ChargerHeadDetail = ({ onNavigate }) => {
     if (ChargerHeadId) {
       GetChargerHistoryStatistics(ChargerHeadId);
     }
-  }, [endDate, startDate, timeUnit]);
+  }, [endDate, startDate, timeUnit,ChargerHeadId]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -425,21 +425,22 @@ const ChargerHeadDetail = ({ onNavigate }) => {
           <div className="flex justify-between items-center mb-2 mt-5">
             <div className="flex items-center gap-2">
               <span className="text-sm">Group by:</span>
-              <div className="inline-flex items-center bg-gray-100 rounded-md p-1">
-                {OptionsTimeUnit.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => handleTimeUnitChange(option.value)}
-                    className={`px-4 py-1 rounded-md text-sm font-medium ${
-                      timeUnit === option.value
-                        ? "bg-white shadow text-black"
-                        : "text-gray-500 hover:text-black"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+              <div className="inline-flex items-center bg-gray-100 dark:bg-gray-800 rounded-md p-1">
+  {OptionsTimeUnit.map((option) => (
+    <button
+      key={option.value}
+      onClick={() => handleTimeUnitChange(option.value)}
+      className={`px-4 py-1 rounded-md text-sm font-medium ${
+        timeUnit === option.value
+          ? "bg-white dark:bg-gray-600 shadow text-black dark:text-white"
+          : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
+      }`}
+    >
+      {option.label}
+    </button>
+  ))}
+</div>
+
             </div>
             <div className="flex gap-2 mt-5 items-center">
               <span className="text-sm">Date :</span>
@@ -481,8 +482,9 @@ const ChargerHeadDetail = ({ onNavigate }) => {
               valueKeys={["session"]}
               yAxisLabel="Sessions"
               legendLabels={{
-                session: "Sessions",
+                session: "Session",
               }}
+              decimalPlaces={0} 
             />
           </div>
           <div className="mt-5">
@@ -495,6 +497,7 @@ const ChargerHeadDetail = ({ onNavigate }) => {
               legendLabels={{
                 electricityAmount: "Energy",
               }}
+              decimalPlaces={2} 
             />
           </div>
           <div className="mt-5">
@@ -507,6 +510,7 @@ const ChargerHeadDetail = ({ onNavigate }) => {
               legendLabels={{
                 revenue: "Revenue",
               }}
+              decimalPlaces={2} 
             />
           </div>
           {loading && <Loading />}
