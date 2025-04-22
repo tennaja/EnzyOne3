@@ -190,7 +190,7 @@ console.log("BarChartComponent", data);
       <ResponsiveContainer
   width="100%"
   height={400}
-  className="bg-[#f0f0f0] dark:bg-slate-900 dark:text-white rounded-lg"
+  className="bg-[#f0f0f0] dark:bg-slate-900 dark:text-black rounded-lg"
 >
         <BarChart
           key={chartKey}

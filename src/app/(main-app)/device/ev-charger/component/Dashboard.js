@@ -559,7 +559,7 @@ const Dashboard = ({ onNavigate }) => {
 
   const stationOptions = (stationDropdwonlist ?? []).map((station) => ({
     value: station.id ?? "0",
-    label: station.name,
+    label: station.siteName ? `${station.siteName} - ${station.name}` : station.name,
   }));
 
   return (
@@ -633,7 +633,7 @@ const Dashboard = ({ onNavigate }) => {
           <div className="flex items-center gap-2">
             <span className="text-sm">Station: </span>
             <Select
-              className="w-48"
+              className="w-52"
               options={stationOptions}
               value={
                 stationid

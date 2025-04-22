@@ -117,20 +117,16 @@ const handleSortCharging = (column) => {
     <Modal
       opened={opened}
       onClose={onClose}
-      title="Charge Head"
       size="xl"
       withCloseButton={false}
       closeOnClickOutside={false}
       centered
-        style={{ zIndex: 9999}}
-        styles={{ 
-        body: { borderRadius: "12px" },
-        title: { fontSize: '18px', fontWeight: 600 }
-    }}
-
-
-    ><>
-      <div className="flex justify-between items-center mb-2 mt-3">
+      styles={{ body: { padding: 0, borderRadius: "12px" } }}
+      style={{ zIndex: 9999, padding: 0 }}
+    >
+      <div className="p-4 dark:bg-gray-800 border dark:text-white border-gray-600 rounded-md">
+      <label className="text-xl font-semibold mb-4">Charge Head</label>
+      <div className="flex justify-between items-center mb-2 mt-3 ">
         <span className="text-xs font-semibold">
         {chargers?.length ?? 0} records
         </span>
@@ -143,7 +139,7 @@ const handleSortCharging = (column) => {
         />
       </div>
       <div className="overflow-x-auto mt-3">
-        <table className="min-w-full table-auto text-sm">
+        <table className="min-w-full table-auto text-sm dark:text-white">
           <thead>
             <tr className="text-xs text-black border-b border-gray-300 dark:text-white">
               <th
@@ -302,7 +298,7 @@ const handleSortCharging = (column) => {
           <div className="flex items-center">
             <span className="text-xs">Rows per page: </span>
             <select
-              className="border border-gray-300 p-1 text-sm ml-2"
+              className="border border-gray-300 p-1 text-sm ml-2 dark:text-white"
               value={chargingRowsPerPage}
               onChange={handleRowsPerChargingPageChange}
             >
@@ -343,7 +339,7 @@ const handleSortCharging = (column) => {
   Close
 </button>
 </div>
-      </>
+      </div>
     </Modal>
   );
 };
