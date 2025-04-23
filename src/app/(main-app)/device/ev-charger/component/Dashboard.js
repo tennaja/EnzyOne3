@@ -320,10 +320,12 @@ const Dashboard = ({ onNavigate }) => {
   const handleSearchquery = (e) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1); // Reset current page to 1 when searching
-    setChargingCurrentPage(1); // Reset current page to 1 when searching
+   
   };
   const handleSearchChargingquery = (e) => {
     setSearchChargingQuery(e.target.value);
+    setChargingCurrentPage(1); // Reset current page to 1 when searching
+    
   };
 
   const handleSearch = () => {
@@ -344,6 +346,8 @@ const Dashboard = ({ onNavigate }) => {
     setSearchChargingQuery("");
     setStationSortConfig({});
     setChargingSortConfig({});
+    setChargingCurrentPage(1); // Reset current page to 1 when searching
+    setCurrentPage(1); // Reset current page to 1 when searching
   };
 
   const filteredStationList = stationList
@@ -532,6 +536,7 @@ const Dashboard = ({ onNavigate }) => {
     if (endDate && dayjs(endDate).isAfter(newMaxEndDate1)) {
       setEndDate(newMaxEndDate1.format("YYYY/MM/DD"));
     }
+    setChargingCurrentPage(1); // Reset current page to 1 when changing start date
   };
 
   // ฟังก์ชันอัปเดต endDate
@@ -547,6 +552,7 @@ const Dashboard = ({ onNavigate }) => {
     if (!startDate) {
       setStartDate(dayjs(date).subtract(31, "day").format("YYYY/MM/DD"));
     }
+    setChargingCurrentPage(1); // Reset current page to 1 when changing end date
   };
 
   // คำนวณ maxEndDate1 ตาม startDate

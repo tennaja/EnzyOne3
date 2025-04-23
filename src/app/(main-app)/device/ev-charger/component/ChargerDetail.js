@@ -170,6 +170,7 @@ const ChargerDetail = ({ onNavigate }) => {
 
   const handleSearchChargingquery = (e) => {
     setSearchChargingQuery(e.target.value);
+    setChargingCurrentPage(1);
   };
   const filteredChargingList = chargersHead
     ?.map((item, index) => ({ ...item, displayIndex: index + 1 })) // เพิ่มลำดับเลขให้แต่ละ item
@@ -285,6 +286,7 @@ const ChargerDetail = ({ onNavigate }) => {
     const { startDate, endDate } = calculateDefaultDateRange(value);
     setStartDate(startDate);
     setEndDate(endDate);
+    
   };
   const handleStartDateChange = (date) => {
     if (date) {

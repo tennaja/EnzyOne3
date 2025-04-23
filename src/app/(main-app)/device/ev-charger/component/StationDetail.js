@@ -189,6 +189,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
 
   const handleSearchChargingquery = (e) => {
     setSearchChargingQuery(e.target.value);
+    setChargingCurrentPage(1);
   };
   const filteredChargingList = chargers
     ?.map((item, index) => ({ ...item, displayIndex: index + 1 })) // เพิ่มลำดับเลขให้แต่ละ item
