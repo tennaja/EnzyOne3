@@ -2,11 +2,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import StatisticsCard from "../component/StatisticsCard.js";
+import StatisticsCard from "./StatisticsCard.js.js";
 import dynamic from "next/dynamic";
-import Loading from "./Loading";
-const MapTH = dynamic(() => import("../component/MapSmSt"), { ssr: false });
-import BarChartComponent from "../component/Barchart.js";
+import Loading from "./Loading.js";
+const MapTH = dynamic(() => import("./MapSmSt.js"), { ssr: false });
+import BarChartComponent from "./Barchart.js";
 import { useDispatch, useSelector } from "react-redux";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import {

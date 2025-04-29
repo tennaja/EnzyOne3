@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-import Header from "./component/Header";
+import Header from "./components/Header";
 
 
 export default function EvChargerLayout({ children }) {

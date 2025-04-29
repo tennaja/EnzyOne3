@@ -1,46 +1,48 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-
-import StatisticsCard from "../component/StatisticsCard.js";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import StatisticsCard from "./StatisticsCard.js.js";
 import dynamic from "next/dynamic";
-const MapTH = dynamic(() => import("../component/MapSmSt"), { ssr: false });
-import BarChartComponent from "../component/Barchart.js";
+const MapTH = dynamic(() => import("./MapSmSt.js"), { ssr: false });
+import BarChartComponent from "./Barchart.js";
 import ArrowForwardIosOutlinedIcon from "@mui/icons-material/ArrowForwardIosOutlined";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import {
-  getStationbyId,
-  getStationsStatics,
-  getStationHistoryStatistics,
-  getChargeHeadList,
+  getChargerbyId,
+  getChargersStatics,
+  getChargerHistoryStatistics,
 } from "@/utils/api";
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
-import ChargeHeadModal from "../component/ModalCharghead.js";
 import {
-  setSiteName,
-  setChargerId,
-  setChargerName,
+  setChargeHeadId,
+  setChargeHeadName,
 } from "@/redux/slicer/evchargerSlice";
 import { useDispatch, useSelector } from "react-redux";
-import Loading from "./Loading";
+import Loading from "./Loading.js";
 
-const StationDetail = ({ onNavigate }) => {
+const ChargerDetail = ({ onNavigate }) => {
   const dispatch = useDispatch();
+
+  const StationName = useSelector((state) => state.evchargerData.stationName);
+  const SiteName = useSelector((state) => state.evchargerData.siteName);
+  const ChargerName = useSelector((state) => state.evchargerData.chargerName);
+  const ChargerId = useSelector((state) => state.evchargerData.chargerId);
+
   const today = dayjs(); // ใช้สำหรับคำนวณและเปรียบเทียบ
   const todayFormatted = today.format("YYYY/MM/DD");
-  const [opened, setOpened] = useState(false);
   const [station, setStation] = useState({});
   const [staticsToday, setStaticsToday] = useState({});
   const [staticsTotal, setStaticsTotal] = useState({});
-  const [chargers, setChargers] = useState([]);
+  const [chargersHead, setChargersHead] = useState([]);
   const [startDate, setStartDate] = useState(dayjs().subtract(7, 'days').format("YYYY/MM/DD"));
-const [endDate, setEndDate] = useState(todayFormatted);
+  const [endDate, setEndDate] = useState(todayFormatted);
   const [timeUnit, setTimeUnit] = useState("hour");
   const [graphData, setGraphData] = useState();
   const [loading, setLoading] = useState(false);
-  const [chargeHeadList, setChargeHeadList] = useState();
   const [mapZoomLevel, setMapZoomLevel] = useState(15);
   const [searchChargingQuery, setSearchChargingQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -50,28 +52,30 @@ const [endDate, setEndDate] = useState(todayFormatted);
     key: "device",
     direction: "asc",
   });
-  const StationId = useSelector((state) => state.evchargerData.stationId);
-  const StationName = useSelector((state) => state.evchargerData.stationName);
-  const SiteName = useSelector((state) => state.evchargerData.siteName);
-  console.log("StationName:", StationName);
   const OptionsTimeUnit = [
     { label: "Hour", value: "hour" },
     { label: "Day", value: "day" },
     { label: "Month", value: "month" },
   ];
+
+  const handleChargerHeadClick = (chargerHeadId, chargerHeadName) => {
+    // localStorage.setItem("chargerHeadId", chargerHeadId);
+    // localStorage.setItem("chargerHeadName", chargerHeadName);
+    dispatch(setChargeHeadId(chargerHeadId));
+    dispatch(setChargeHeadName(chargerHeadName));
+    // router.push("/device/ev-charger?page=chargeheaddetail"); // เปลี่ยนหน้าไปยัง ChargeHeadDetail
+    onNavigate("chargeheaddetail");
+  };
+
   const GetStationbyId = async (id,showLoading = true) => {
     if (showLoading) setLoading(true); 
     try {
-      const result = await getStationbyId(id);
+      const result = await getChargerbyId(id);
       console.log("Station:", result);
       console.log("Chargers:", result.chargers);
       if (result) {
         setStation(result);
-        setChargers(result.chargers);
-
-        dispatch(setSiteName(result.siteName));
-        localStorage.setItem("siteName", result.siteName);
-
+        setChargersHead(result.chargeHeads);
         // ตั้งค่า selectedLocation ด้วย latitude และ longitude
         if (result.latitude && result.longitude) {
           setSelectedLocation({
@@ -85,15 +89,15 @@ const [endDate, setEndDate] = useState(todayFormatted);
     } catch (error) {
       console.error("Error fetching station data:", error);
     }finally {
-        if (showLoading) {
-            setLoading(false);
-            }
+      if (showLoading) {
+        setLoading(false);
+        }
     }
   };
   const GetStationStatic = async (id) => {
     console.log("station Id:", id);
     try {
-      const result = await getStationsStatics(id);
+      const result = await getChargersStatics(id);
       console.log("Today:", result?.data?.today);
       console.log("Total:", result?.data?.total);
       if (result) {
@@ -114,16 +118,15 @@ const [endDate, setEndDate] = useState(todayFormatted);
     }
   };
 
-  const GetStationHistoryStatistics = async (id) => {
+  const GetChargerHistoryStatistics = async (id) => {
     const Param = {
-      stationId: id,
+      chargerId: id,
       groupBy: timeUnit,
       endDate: endDate,
       startDate: startDate,
     };
     try {
-      const result = await getStationHistoryStatistics(Param);
-
+      const result = await getChargerHistoryStatistics(Param);
       if (result) {
         setGraphData(result?.data);
         console.log("Graph Data:", result?.data);
@@ -133,65 +136,43 @@ const [endDate, setEndDate] = useState(todayFormatted);
     }
   };
 
-  const getChageHeadList = async (id) => {
-    console.log("Device Id:", id);
-    try {
-      const result = await getChargeHeadList(id);
-      console.log("Group List Result:", result);
-
-      if (result) {
-        setChargeHeadList(result?.data);
-        setOpened(true); // ✅ เก็บค่า status ของอุปกรณ์
-      } else {
-        console.log("No groups found!");
-      }
-    } catch (error) {
-      console.error("Error fetching device data:", error);
-    }
-  };
-
   useEffect(() => {
     // ดึงข้อมูลจาก Local Storage
 
-    if (StationId) {
-      GetStationbyId(StationId);
-      GetStationStatic(StationId);
+    if (ChargerId) {
+      GetStationbyId(ChargerId);
+      GetStationStatic(ChargerId);
     }
   }, []);
 
   useEffect(() => {
-    if (StationId ) {
-      GetStationHistoryStatistics(StationId);
+    if (ChargerId) {
+      GetChargerHistoryStatistics(ChargerId);
     }
-  }, [endDate, startDate, timeUnit,StationId]);
+  }, [endDate, startDate, timeUnit,ChargerId]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       console.log("⏳ Refreshing data every 2 minutes from Redux...");
-      Promise.all([GetStationbyId(StationId,false)]);
-      GetStationStatic(StationId);
-      GetStationHistoryStatistics(StationId);
+      Promise.all([GetStationbyId(ChargerId,false)]);
+      GetStationStatic(ChargerId);
+      GetChargerHistoryStatistics(ChargerId);
     }, 300000);
 
     return () => clearInterval(interval);
-  }, [StationId]);
+  }, [ChargerId]);
 
-  const handleChargerClick = (chargerId, chargerName) => {
-    localStorage.setItem("chargerId", chargerId);
-    localStorage.setItem("chargerName", chargerName);
-
-    dispatch(setChargerId(chargerId));
-    dispatch(setChargerName(chargerName));
-
-    // router.push("/device/ev-charger?page=chargerdetail");
-    onNavigate("chargerdetail");
-  };
+  // const handleChargerClick = (chargerId, chargerName) => {
+  //   localStorage.setItem("chargerId", chargerId);
+  //   localStorage.setItem("chargerName", chargerName);
+  //   router.push("chargerdetail");
+  // };
 
   const handleSearchChargingquery = (e) => {
     setSearchChargingQuery(e.target.value);
     setChargingCurrentPage(1);
   };
-  const filteredChargingList = chargers
+  const filteredChargingList = chargersHead
     ?.map((item, index) => ({ ...item, displayIndex: index + 1 })) // เพิ่มลำดับเลขให้แต่ละ item
     .filter(
       (item) =>
@@ -199,15 +180,27 @@ const [endDate, setEndDate] = useState(todayFormatted);
           ?.toString()
           .toLowerCase()
           .includes(searchChargingQuery.toLowerCase()) ||
-        item.brand
+        item.connectorType
           ?.toString()
           .toLowerCase()
           .includes(searchChargingQuery.toLowerCase()) ||
-        item.type
+        item.powerRating
           ?.toString()
           .toLowerCase()
           .includes(searchChargingQuery.toLowerCase()) ||
-        item.chargeHeadCount
+        item.reservable
+          ?.toString()
+          .toLowerCase()
+          .includes(searchChargingQuery.toLowerCase()) ||
+        item.chargeBoxMapping
+          ?.toString()
+          .toLowerCase()
+          .includes(searchChargingQuery.toLowerCase()) ||
+        item.status
+          ?.toString()
+          .toLowerCase()
+          .includes(searchChargingQuery.toLowerCase()) ||
+        item.currentCharging
           ?.toString()
           .toLowerCase()
           .includes(searchChargingQuery.toLowerCase()) ||
@@ -293,6 +286,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
     const { startDate, endDate } = calculateDefaultDateRange(value);
     setStartDate(startDate);
     setEndDate(endDate);
+    
   };
   const handleStartDateChange = (date) => {
     if (date) {
@@ -325,31 +319,6 @@ const [endDate, setEndDate] = useState(todayFormatted);
     setEndDate(endDate);
   }, []);
 
-  const getDisplayTime = (open, close) => {
-    if (open === null && close === null) return "Closed";
-    if (open === "00:00" && close === "00:00") return "Open 24 hrs";
-    return `${open} - ${close}`;
-  };
-
-  const days = [
-    { label: "Mon", key: "mon" },
-    { label: "Tue", key: "tue" },
-    { label: "Wed", key: "wed" },
-    { label: "Thu", key: "thu" },
-    { label: "Fri", key: "fri" },
-    { label: "Sat", key: "sat" },
-    { label: "Sun", key: "sun" },
-  ];
-
-  const openingHours = useMemo(() => {
-    return days.map(({ label, key }) => {
-      const open = station?.[`${key}OpeningTime`];
-      const close = station?.[`${key}ClosingTime`];
-      const time = getDisplayTime(open, close);
-      return { label, time };
-    });
-  }, [station]); // Recompute when station changes
-
   return (
     <div>
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-5">
@@ -363,24 +332,34 @@ const [endDate, setEndDate] = useState(todayFormatted);
                 color: "#2aa7a7",
               },
             }}
-            onClick={() => onNavigate("dashboard")}
+            onClick={() => onNavigate("stationdetail")}
           />
 
           <div className="flex flex-col">
-            <strong>{StationName}</strong>
-            <span
-              onClick={() => onNavigate("dashboard")}
-              className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200 cursor-pointer"
-            >
-              {SiteName}
-            </span>
+            <strong>{ChargerName}</strong>
+            <div className="flex items-center space-x-1 gap-1">
+              <span
+                onClick={() => onNavigate("dashboard")}
+                className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200 cursor-pointer"
+              >
+                {SiteName}
+              </span>
+              <span>/</span>
+              <span
+                onClick={() => onNavigate("stationdetail")}
+                className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200 cursor-pointer"
+              >
+                {StationName}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Charger Head Table */}
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
         <span className="text-lg font-bold block mb-2">
-          Station Information
+          Charger Information
         </span>
 
         <div className="flex flex-col lg:flex-row gap-3">
@@ -392,11 +371,11 @@ const [endDate, setEndDate] = useState(todayFormatted);
                     ? [
                         {
                           id: station.id,
-                          name: station.name,
+                          name: station.stationName,
                           status: station.status,
                           lat: station.latitude, // ใช้ latitude จาก station
                           lng: station.longitude, // ใช้ longitude จาก station
-                          siteName: station.siteName,
+                          siteName: SiteName,
                         },
                       ]
                     : [] // ถ้าไม่มีข้อมูล ให้ส่งอาร์เรย์ว่าง
@@ -415,31 +394,33 @@ const [endDate, setEndDate] = useState(todayFormatted);
                 <tbody>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Station Name</strong>
+                      <strong>Charger Name</strong>
                     </td>
                     <td className="px-4 py-2 font-bold">{station?.name}</td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Description</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {station?.description}
-                    </td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
                       <strong>Brand Name</strong>
                     </td>
-                    <td className="px-4 py-2 font-bold">{station?.brand}</td>
+                    <td className="px-4 py-2 font-bold">
+                      {station?.brandName}
+                    </td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Currency</strong>
+                      <strong>Charger Type</strong>
                     </td>
-                    <td className="px-4 py-2 font-bold">{station?.currency}</td>
+                    <td className="px-4 py-2 font-bold">{station?.type}</td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
+                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
+                      <strong>Power Type</strong>
+                    </td>
+                    <td className="px-4 py-2 font-bold">
+                      {station?.powerType}
+                    </td>
+                  </tr>
+                  {/* <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
                       <strong>Station Status</strong>
                     </td>
@@ -452,31 +433,27 @@ const [endDate, setEndDate] = useState(todayFormatted);
                     >
                       {station?.status}
                     </td>
-                  </tr>
+                  </tr> */}
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Address</strong>
+                      <strong>Charger Price (per kWh)</strong>
                     </td>
-                    <td className="px-4 py-2 font-bold">{station?.address}</td>
+                    <td className="px-4 py-2 font-bold">{station?.price}</td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
                     <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Country</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.country}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Province</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.province}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Postal Code</strong>
+                      <strong>SimultaneousCharging</strong>
                     </td>
                     <td className="px-4 py-2 font-bold">
-                      {station?.postalCode}
+                      {station?.simultaneousCharge}
+                    </td>
+                  </tr>
+                  <tr className="text-xs  border-b border-gray-200">
+                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
+                      <strong>StationName</strong>
+                    </td>
+                    <td className="px-4 py-2 font-bold">
+                      {station?.stationName}
                     </td>
                   </tr>
                   <tr className="text-xs  border-b border-gray-200">
@@ -485,21 +462,6 @@ const [endDate, setEndDate] = useState(todayFormatted);
                     </td>
                     <td className="px-4 py-2 font-bold">
                       {station?.latitude},{station?.longitude}
-                    </td>
-                  </tr>
-                  <tr className="text-xs border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] align-top dark:bg-gray-900 dark:text-white">
-                      <strong>Opening Hours</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {openingHours.map(({ label, time }) => (
-                        <div className="flex items-center gap-2" key={label}>
-                          <span className="w-10">{label}</span>{" "}
-                          {/* กำหนดขนาดของวันให้เล็กลง */}
-                          <span className="ml-2">{time}</span>{" "}
-                          {/* ลดระยะห่างระหว่างวันและเวลา */}
-                        </div>
-                      ))}
                     </td>
                   </tr>
                 </tbody>
@@ -511,7 +473,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
         <div>
           <span className="text-lg font-bold block mb-2">
-            Charger Information
+            Charge Head Information
           </span>
         </div>
         <div className="flex flex-col lg:flex-row gap-3">
@@ -519,7 +481,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
             <div className="flex-1">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-semibold">
-                  {chargers.length} Chargers
+                  {chargersHead.length} Chargers
                 </span>
                 <input
                   type="text"
@@ -607,9 +569,9 @@ const [endDate, setEndDate] = useState(todayFormatted);
                       </th>
                       <th
                         className="px-2 py-1 text-left"
-                        onClick={() => handleSortCharging("brand")}
+                        onClick={() => handleSortCharging("connectorType")}
                       >
-                        Brand
+                        Connector Type
                         <div
                           style={{
                             display: "inline-flex",
@@ -621,7 +583,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "brand" &&
+                                chargingSortConfig.key === "connectorType" &&
                                 chargingSortConfig.direction === "asc"
                                   ? 1
                                   : 0.3,
@@ -632,7 +594,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "brand" &&
+                                chargingSortConfig.key === "connectorType" &&
                                 chargingSortConfig.direction === "desc"
                                   ? 1
                                   : 0.3,
@@ -643,9 +605,9 @@ const [endDate, setEndDate] = useState(todayFormatted);
                       </th>
                       <th
                         className="px-2 py-1 text-left"
-                        onClick={() => handleSortCharging("type")}
+                        onClick={() => handleSortCharging("powerRating")}
                       >
-                        Type
+                        Power Rating
                         <div
                           style={{
                             display: "inline-flex",
@@ -657,7 +619,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "type" &&
+                                chargingSortConfig.key === "powerRating" &&
                                 chargingSortConfig.direction === "asc"
                                   ? 1
                                   : 0.3,
@@ -668,7 +630,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "type" &&
+                                chargingSortConfig.key === "powerRating" &&
                                 chargingSortConfig.direction === "desc"
                                   ? 1
                                   : 0.3,
@@ -679,9 +641,9 @@ const [endDate, setEndDate] = useState(todayFormatted);
                       </th>
                       <th
                         className="px-2 py-1 text-center"
-                        onClick={() => handleSortCharging("chargeHeadCount")}
+                        onClick={() => handleSortCharging("reservable")}
                       >
-                        Count of Charge Head
+                        Reservable
                         <div
                           style={{
                             display: "inline-flex",
@@ -693,7 +655,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "chargeHeadCount" &&
+                                chargingSortConfig.key === "reservable" &&
                                 chargingSortConfig.direction === "asc"
                                   ? 1
                                   : 0.3,
@@ -704,7 +666,115 @@ const [endDate, setEndDate] = useState(todayFormatted);
                             style={{
                               fontSize: "14px",
                               opacity:
-                                chargingSortConfig.key === "chargeHeadCount" &&
+                                chargingSortConfig.key === "reservable" &&
+                                chargingSortConfig.direction === "desc"
+                                  ? 1
+                                  : 0.3,
+                              marginTop: "-2px",
+                            }}
+                          />
+                        </div>
+                      </th>
+                      <th
+                        className="px-2 py-1 text-center"
+                        onClick={() => handleSortCharging("chargeBoxMapping")}
+                      >
+                        ChargeBox Mapping
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            flexDirection: "column",
+                            marginLeft: "4px",
+                          }}
+                        >
+                          <ArrowDropUpIcon
+                            style={{
+                              fontSize: "14px",
+                              opacity:
+                                chargingSortConfig.key === "chargeBoxMapping" &&
+                                chargingSortConfig.direction === "asc"
+                                  ? 1
+                                  : 0.3,
+                              marginBottom: "-2px",
+                            }}
+                          />
+                          <ArrowDropDownIcon
+                            style={{
+                              fontSize: "14px",
+                              opacity:
+                                chargingSortConfig.key === "chargeBoxMapping" &&
+                                chargingSortConfig.direction === "desc"
+                                  ? 1
+                                  : 0.3,
+                              marginTop: "-2px",
+                            }}
+                          />
+                        </div>
+                      </th>
+                      <th
+                        className="px-2 py-1 text-left"
+                        onClick={() => handleSortCharging("status")}
+                      >
+                        Status
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            flexDirection: "column",
+                            marginLeft: "4px",
+                          }}
+                        >
+                          <ArrowDropUpIcon
+                            style={{
+                              fontSize: "14px",
+                              opacity:
+                                chargingSortConfig.key === "status" &&
+                                chargingSortConfig.direction === "asc"
+                                  ? 1
+                                  : 0.3,
+                              marginBottom: "-2px",
+                            }}
+                          />
+                          <ArrowDropDownIcon
+                            style={{
+                              fontSize: "14px",
+                              opacity:
+                                chargingSortConfig.key === "status" &&
+                                chargingSortConfig.direction === "desc"
+                                  ? 1
+                                  : 0.3,
+                              marginTop: "-2px",
+                            }}
+                          />
+                        </div>
+                      </th>
+                      <th
+                        className="px-2 py-1 text-left"
+                        onClick={() => handleSortCharging("currentCharging")}
+                      >
+                        Current EV Charging
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            flexDirection: "column",
+                            marginLeft: "4px",
+                          }}
+                        >
+                          <ArrowDropUpIcon
+                            style={{
+                              fontSize: "14px",
+                              opacity:
+                                chargingSortConfig.key === "currentCharging" &&
+                                chargingSortConfig.direction === "asc"
+                                  ? 1
+                                  : 0.3,
+                              marginBottom: "-2px",
+                            }}
+                          />
+                          <ArrowDropDownIcon
+                            style={{
+                              fontSize: "14px",
+                              opacity:
+                                chargingSortConfig.key === "currentCharging" &&
                                 chargingSortConfig.direction === "desc"
                                   ? 1
                                   : 0.3,
@@ -763,22 +833,45 @@ const [endDate, setEndDate] = useState(todayFormatted);
                             <td
                               className="px-2 py-1 text-left text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] dark:text-[#33BFBF] dark:hover:text-[#28A9A9]"
                               onClick={() => {
-                                handleChargerClick(record.id, record.name);
+                                handleChargerHeadClick(record.id, record.name);
                               }}
                             >
                               {highlightText(record.name)}
                             </td>
                             <td className="px-2 py-1 text-left dark:text-white">
-                              {highlightText(record.brand)}
+                              {highlightText(record.connectorType)}
                             </td>
                             <td className="px-2 py-1 text-left dark:text-white">
-                              {highlightText(record.type)}
+                              {highlightText(record.powerRating)}
+                            </td>
+                            <td className="px-2 py-1 text-center dark:text-white">
+                              {highlightText(record.reservable)}
+                            </td>
+                            <td className="px-2 py-1 text-center dark:text-white">
+                              {highlightText(record.chargeBoxMapping)}
                             </td>
                             <td
-                              className="px-2 py-1 text-center text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] dark:text-[#33BFBF] dark:hover:text-[#28A9A9]"
-                              onClick={() => getChageHeadList(record.id)}
+                              className="px-2 py-1 text-left font-bold"
+                              style={{
+                                color:
+                                  record?.status === "Available"
+                                    ? "#12B981"
+                                    : record?.status === "Charging"
+                                    ? "#259AE6"
+                                    : record?.status === "Out of order"
+                                    ? "#DF4667"
+                                    : record?.status === "Reserved"
+                                    ? "#9747FF"
+                                    : record?.status === "Maintenance"
+                                    ? "#8A99AF"
+                                    : "black",
+                              }}
                             >
-                              {highlightText(record.chargeHeadCount)}
+                              {highlightText(record?.status)}
+                            </td>
+
+                            <td className="px-2 py-1 text-left dark:text-white">
+                              {highlightText(record.currentCharging ?? "-")}
                             </td>
                           </tr>
                         );
@@ -880,7 +973,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
               <span className="text-sm">Date :</span>
               <DatePicker
                 className="w-48 p-2 bg-white border shadow-default 
-          dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
+                    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
                 value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
                 onChange={handleStartDateChange}
                 disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
@@ -890,7 +983,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
               <p>-</p>
               <DatePicker
                 className="w-48 p-2 bg-white border shadow-default 
-          dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
+                    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
                 value={endDate ? dayjs(endDate, "YYYY/MM/DD") : null}
                 onChange={handleEndDateChange}
                 format="YYYY/MM/DD"
@@ -947,16 +1040,11 @@ const [endDate, setEndDate] = useState(todayFormatted);
               decimalPlaces={2} 
             />
           </div>
+           {loading && <Loading />}
         </div>
       </div>
-      <ChargeHeadModal
-        opened={opened}
-        onClose={() => setOpened(false)}
-        chargers={chargeHeadList}
-      />
-      {loading && <Loading />}
     </div>
   );
 };
 
-export default StationDetail;
+export default ChargerDetail;

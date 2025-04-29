@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import classNames from "classnames";
@@ -255,11 +256,12 @@ const Sidebar = ({ collapsed, shown, setCollapsed }) => {
                   ) : item.isActive ? (
                     !collapsed ? (
                       <div className="flex flex-col  w-full  rounded-md  mx-3 gap-4 ">
-                        <Disclosure defaultOpen={pathname.startsWith(item.href)}>
+                        <Disclosure defaultOpen={pathname.includes(item.href)}>
                           {({ open }) => (
+                            /* Use the `open` state to conditionally change the direction of an icon. */
                             <>
-                              <Disclosure.Button className="flex gap-4 hover:text-[#33BFBF] rounded-md p-2 transition-colors duration-300 items-center">
-                                <div className="rounded-full p-2 bg-[#21424E] text-[#33BFBF]">
+                              <Disclosure.Button className="flex gap-4  hover:text-[#33BFBF] rounded-md p-2 transition-colors duration-300 items-center">
+                                <div className="rounded-full p-2 bg-[#21424E] text-[#33BFBF] ">
                                   <NavigationIcon icon={item.icon} />
                                 </div>
 
@@ -278,32 +280,35 @@ const Sidebar = ({ collapsed, shown, setCollapsed }) => {
                               </Disclosure.Button>
                               <Disclosure.Panel>
                                 <ul className="flex flex-col gap-2 items-stretch indent-12">
-                                  {item.sub.map((sub, i) => (
-                                    <li key={i}>
-                                      {sub.isActive &&
-                                      userModule.find(
-                                        (user) => user.Module === sub.name
-                                      ) ? (
-                                        <Link
-                                          href={sub.href}
-                                          className={classNames({
-                                            "flex w-full text-sm hover:text-[#33BFBF] transition-colors duration-300 rounded-md p-2 gap-4": true,
-                                            "text-[#33BFBF]": pathname.startsWith(sub.href),
-                                          })}
-                                        >
-                                          {sub.label}
-                                        </Link>
-                                      ) : (
-                                        <div
-                                          className={classNames({
-                                            "flex w-full text-sm text-gray-500 rounded-md p-2 gap-4": true,
-                                          })}
-                                        >
-                                          {sub.label}
-                                        </div>
-                                      )}
-                                    </li>
-                                  ))}
+                                  {item.sub.map((sub, i) => {
+                                    return (
+                                      <li key={i}>
+                                        {sub.isActive &&
+                                        userModule.find(
+                                          (user) => user.Module === sub.name
+                                        ) ? (
+                                          <Link
+                                            href={sub.href}
+                                            className={classNames({
+                                              "flex w-full text-sm hover:text-[#33BFBF] transition-colors duration-300 rounded-md p-2   gap-4 ": true,
+                                              "text-[#33BFBF]":
+                                                sub.href.includes(pathname),
+                                            })}
+                                          >
+                                            {sub.label}
+                                          </Link>
+                                        ) : (
+                                          <div
+                                            className={classNames({
+                                              "flex w-full text-sm text-gray-500 rounded-md p-2   gap-4 ": true,
+                                            })}
+                                          >
+                                            {sub.label}
+                                          </div>
+                                        )}
+                                      </li>
+                                    );
+                                  })}
                                 </ul>
                               </Disclosure.Panel>
                             </>
@@ -403,3 +408,4 @@ const Sidebar = ({ collapsed, shown, setCollapsed }) => {
   );
 };
 export default Sidebar;
+

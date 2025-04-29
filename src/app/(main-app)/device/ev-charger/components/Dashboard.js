@@ -26,7 +26,11 @@ import {
   clearAll,
 } from "@/redux/slicer/evchargerSlice";
 import Loading from "./Loading";
-const MapTH = dynamic(() => import("../component/MapSmSt"), { ssr: false });
+import EnergyChart from "./EnergyChart";
+import SplitBarChart from "./EnergyChart";
+import EnergyTrendChart from "./EnergyChart";
+import EnergyMirrorChart from "./EnergyChart";
+const MapTH = dynamic(() => import("./MapSmSt"), { ssr: false });
 
 const Dashboard = ({ onNavigate }) => {
   const dispatch = useDispatch();
@@ -1688,7 +1692,13 @@ const Dashboard = ({ onNavigate }) => {
           </div>
         </div>
       </div>
+      
       {loading && <Loading />}
+      {/* <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
+      <EnergyMirrorChart/>
+      <div>
+      
+      </div></div> */}
     </div>
   );
 };

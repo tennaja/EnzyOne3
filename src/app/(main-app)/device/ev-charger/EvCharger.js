@@ -4,10 +4,10 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { clearAll } from "@/redux/slicer/evchargerSlice"; // คำสั่ง clear Redux state
 import { useState } from "react";
-import StationDetail from "./component/StationDetail";
-import Dashboard from "./component/Dashboard";
-import ChargerDetail from "./component/ChargerDetail";
-import ChargerHeadDetail from "./component/ChargeHead";
+import StationDetail from "./components/StationDetail";
+import Dashboard from "./components/Dashboard";
+import ChargerDetail from "./components/ChargerDetail";
+import ChargerHeadDetail from "./components/ChargeHead";
 
 export default function EVChargerPage() {
   const dispatch = useDispatch();
