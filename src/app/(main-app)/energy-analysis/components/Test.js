@@ -21,31 +21,73 @@ dayjs.extend(customParseFormat);
 const { RangePicker } = DatePicker;
 
 const allParameters = [
-  { type: "Voltage", label: "V80BUS1-A", unit: "kV" },
-  { type: "Current", label: "I80KA--2A", unit: "kA" },
-  { type: "Water Temp", label: "CPMS01-", unit: "celcius" },
-  { type: "Water Temp", label: "CPMS02-", unit: "celcius" },
-  { type: "Voltage", label: "V80BUS1-B", unit: "kV" },
-  { type: "Current", label: "I80KA--2B", unit: "kA" },
-];
+    { type: "Voltage", label: "V80BUS1-A", unit: "kV" },
+    { type: "Voltage", label: "V80BUS1-B", unit: "kV" },
+    { type: "Voltage", label: "V80BUS2-A", unit: "kV" },
+  
+    { type: "Current", label: "I80KA--2A", unit: "kA" },
+    { type: "Current", label: "I80KA--2B", unit: "kA" },
+    { type: "Current", label: "I80KA--3A", unit: "kA" },
+  
+    { type: "Water Temp", label: "CPMS01-", unit: "celcius" },
+    { type: "Water Temp", label: "CPMS02-", unit: "celcius" },
+    { type: "Water Temp", label: "CPMS03-", unit: "celcius" },
+  
+  
+    { type: "Frequency", label: "FRQ-MAIN", unit: "Hz" },
+    { type: "Frequency", label: "FRQ-BACK", unit: "Hz" },
+  
+    { type: "Power", label: "PWR-MAIN", unit: "MW" },
+  
+    { type: "Pressure", label: "PRS-VALVE1", unit: "bar" },
+  ];
+  
 
-const generateMockData = () => {
-  const result = [];
-  const now = dayjs();
-  for (let i = 0; i < 744; i++) {
-    const time = now.subtract(i, "hour").format("YYYY-MM-DD HH:mm");
-    result.unshift({
-      time,
-      "V80BUS1-A": 200 + Math.sin(i * 0.05) * 20,
-      "I80KA--2A": 10 + Math.cos(i * 0.1) * 5,
-      "CPMS01-": 30 + Math.sin(i * 0.1) * 2,
-      "CPMS02-": 32 + Math.sin(i * 0.07) * 1.5,
-      "V80BUS1-B": 195 + Math.cos(i * 0.04) * 25,
-      "I80KA--2B": 11 + Math.sin(i * 0.09) * 4,
-    });
-  }
-  return result;
-};
+  const generateMockData = () => {
+    const result = [];
+    const now = dayjs();
+  
+    for (let i = 0; i < 744; i++) {
+      const time = now.subtract(i, "hour").format("YYYY/MM/DD HH:mm");
+      const dataPoint = { time };
+  
+      allParameters.forEach((param, index) => {
+        let value;
+        switch (param.type) {
+          case "Voltage":
+            value = 190 + Math.sin(i * 0.03 + index) * 20;
+            break;
+          case "Current":
+            value = 9 + Math.cos(i * 0.05 + index) * 3;
+            break;
+          case "Water Temp":
+            value = 30 + Math.sin(i * 0.08 + index) * 1.5;
+            break;
+          case "Oil Temp":
+            value = 45 + Math.cos(i * 0.07 + index) * 2;
+            break;
+          case "Frequency":
+            value = 49 + Math.sin(i * 0.02 + index) * 0.5;
+            break;
+          case "Power":
+            value = 80 + Math.cos(i * 0.04 + index) * 10;
+            break;
+          case "Pressure":
+            value = 2 + Math.sin(i * 0.05 + index) * 0.5;
+            break;
+          default:
+            value = 0;
+        }
+  
+        dataPoint[param.label] = parseFloat(value.toFixed(2));
+      });
+  
+      result.unshift(dataPoint);
+    }
+  
+    return result;
+  };
+  
 
 const getDistinctColor = (() => {
   const usedHues = new Set(); // ✅ แก้ตรงนี้
@@ -284,7 +326,9 @@ const ChartDashboard = () => {
               </div>
             </div>
 
-            <Button danger onClick={() => handleDeleteChart(chart.id)}>
+            <Button danger onClick={() => handleDeleteChart(chart.id)}
+                className="mt-3"
+                >
               Delete Chart
             </Button>
           </div>
