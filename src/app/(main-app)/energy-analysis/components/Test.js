@@ -252,7 +252,7 @@ const ChartDashboard = () => {
                       const rowClass = isSelected
   ? "bg-green-100 dark:text-black"
   : isDisabled
-  ? "bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-500"
+  ? "bg-gray-100  text-gray-400 dark:bg-gray-700 dark:text-gray-500"
   : idx % 2 === 0
   ? "bg-gray-100 dark:bg-gray-900 dark:text-white"
   : "bg-white dark:bg-gray-800 dark:text-white";
