@@ -140,7 +140,7 @@ export default function Summary() {
     totalYield: { value: "828.91", unit: "MWh", hasInfo: true },
     inventorRatedPower: { value: "980.00", unit: "kW", hasInfo: true },
     rateEssCapacity: { value: "0.00", unit: "kWh" },
-    supplyFromGrid: { value: "76.37", unit: "kWh", hasInfo: true },
+    supplyFromGrid: { value: "76.37", unit: "kWh"},
     co2Avoided: { value: "2.37", unit: "tons" },
     treePlanted: { value: "4", unit: "" },
   };

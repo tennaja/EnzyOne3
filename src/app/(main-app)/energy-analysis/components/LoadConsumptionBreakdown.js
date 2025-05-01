@@ -35,7 +35,7 @@ export default function LoadConsumption() {
     <div>
     <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200">
     <div className="flex justify-between items-center">
-        <span className="font-semibold text-xl text-enzy-dark">Load & Consumption Breakdown</span>
+        <span className="font-semibold text-xl text-enzy-dark">Energy Analysis</span>
           <TabNavigation
             activeTab={activeTab}
             onTabChange={setActiveTab}

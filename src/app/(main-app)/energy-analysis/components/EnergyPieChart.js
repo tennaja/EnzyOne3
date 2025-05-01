@@ -12,14 +12,15 @@ const COLORS = ['#10B981', '#6B7280'];
 export default function EnergyPieChart() {
   return (
     <>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={250}>
         <PieChart>
-          <Pie
+        <Pie
             data={pieData}
             cx="50%"
             cy="50%"
-            innerRadius={50}
-            outerRadius={80}
+            startAngle={90}   // 👈 หมุนให้เริ่มจากบน
+            endAngle={-270}   // 👈 ไปจบที่ล่าง
+            outerRadius={100}
             fill="#8884d8"
             dataKey="value"
           >
@@ -31,7 +32,7 @@ export default function EnergyPieChart() {
         </PieChart>
       </ResponsiveContainer>
 
-      <div className="flex gap-4">
+      <div className="flex gap-4 mt-4 justify-center">
         {pieData.map((entry, idx) => (
           <div key={idx} className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx] }}></div>
