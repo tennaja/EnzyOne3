@@ -16,14 +16,14 @@ const iconMap = {
   "Yield today": <BoltIcon fontSize="large" className="text-green-500" />,
   "Revenue today": <PaidIcon fontSize="large" className="text-yellow-600" />,
   "Total yield": <TrendingUpIcon fontSize="large" className="text-indigo-400" />,
-  "Inventor rated power": <SettingsInputComponentIcon fontSize="large" className="text-gray-500" />,
+  "Inverter rated power": <SettingsInputComponentIcon fontSize="large" className="text-gray-500" />,
   "Rate ESS capacity": <BatteryChargingFullIcon fontSize="large" className="text-red-400" />,
-  "Supply from grid today": <ElectricalServicesIcon fontSize="large" className="text-teal-500" />,
+  "Purchased from grid": <ElectricalServicesIcon fontSize="large" className="text-teal-500" />,
   "CO₂ avoided": <Co2Icon fontSize="large" className="text-green-600" />,
   "Equivalent tree planted": <ForestIcon fontSize="large" className="text-lime-600" />,
 };
 
-export default function Card({ title, value, unit = "", hasInfo = false }) {
+export default function Card({ title, value, unit ,tootipword = "", hasInfo = false }) {
   return (
     <div className="bg-white rounded-xl shadow-md p-4 flex items-center gap-4 min-h-[100px]">
       {/* Left Icon */}
@@ -40,7 +40,7 @@ export default function Card({ title, value, unit = "", hasInfo = false }) {
         <div className="flex items-center text-sm text-gray-500">
           {title}
           {hasInfo && (
-  <Tooltip title="More information about this metric" arrow placement="top">
+  <Tooltip title={tootipword} arrow placement="top">
     <InfoOutlinedIcon className="text-[#33BFBF] ml-1 cursor-pointer" fontSize="small" />
   </Tooltip>
 )}

@@ -161,6 +161,7 @@ const Header = () => {
             deviceData={devcielist}
             Sitename={siteName}
             Groupname={groupName}
+            SiteId={siteid}
           />
         );
       case "schedule":
