@@ -1,6 +1,5 @@
-// pages/load-consumption.js
 "use client";
-import { useState ,useEffect} from 'react';
+import { useState, useEffect } from 'react';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import Tooltip from '@mui/material/Tooltip';
 import dayjs from 'dayjs';
@@ -39,7 +38,6 @@ const GroupTabs = ({ range, onChange, tabs }) => (
     ))}
   </div>
 );
-
 const DatePickerByRange = ({ range, value, onChange }) => {
   if (range === 'lifetime') {
     return <DatePicker disabled className="ml-4" />;
@@ -90,7 +88,6 @@ const meterData = [
 ];
 
 export default function Production() {
-  const [activeTab, setActiveTab] = useState('load');
   const [searchLoad, setSearchLoad] = useState('');
   const [searchMeter, setSearchMeter] = useState('');
   const [energyRange, setEnergyRange] = useState('day');
@@ -100,132 +97,6 @@ export default function Production() {
 
   const filterData = (data, search) =>
     data.filter((item) => item.source.toLowerCase().includes(search.toLowerCase()));
-
-  const renderEnergyTrend = () => (
-    <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
-      <div className="flex items-center justify-between gap-2 mb-4">
-        <div className="flex items-center">
-          <span className="text-xl font-bold">Energy Trend</span>
-          <Tooltip title="More information about this metric" arrow placement="top">
-            <InfoOutlinedIcon className="text-[#33BFBF] ml-1 cursor-pointer" fontSize="small" />
-          </Tooltip>
-        </div>
-        <div className="flex items-center">
-          <GroupTabs range={energyRange} onChange={(val) => { setEnergyRange(val); setEnergyDate(dayjs()); }} tabs={allTabs} />
-          <DatePickerByRange range={energyRange} value={energyDate} onChange={(val) => setEnergyDate(dayjs(val))} />
-        </div>
-      </div>
-
-      <div className="text-lg mb-4">
-        <span className="text-sm">Yield: </span>
-        <span className="font-bold text-xl">25.24</span> kWh
-        <span className="ml-6 text-sm">Consumption: </span>
-        <span className="font-bold text-xl">101.61</span> kWh
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-4">
-        <div className="w-full lg:w-2/3 h-80 flex items-center justify-center">
-          <EnergyTrendChart2 type={energyRange} />
-        </div>
-        <div className="w-full lg:w-1/3 h-80  flex flex-col items-center justify-center">
-          <EnergyPieChart />
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderRevenueTrend = () => (
-    <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
-      <div className="flex items-center justify-between gap-2 mb-4">
-        <div className="flex items-center">
-          <span className="text-xl font-bold">Revenue Trend</span>
-          <Tooltip title="More information about this metric" arrow placement="top">
-            <InfoOutlinedIcon className="text-[#33BFBF] ml-1 cursor-pointer" fontSize="small" />
-          </Tooltip>
-        </div>
-
-        <div className="flex items-center">
-          <GroupTabs
-            range={revenueRange}
-            onChange={(val) => {
-              setRevenueRange(val);
-              setRevenueDate(dayjs());
-            }}
-            tabs={revenueTabs}
-          />
-          <DatePickerByRange
-            range={revenueRange}
-            value={revenueDate}
-            onChange={(val) => setRevenueDate(val)}
-          />
-        </div>
-      </div>
-
-      <div className="text-lg mb-4">
-        <span className="text-sm">Total Revenue: </span>
-        <span className="font-bold text-xl">25.24</span> ฿
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-4">
-        <RevenueBarChart2 />
-      </div>
-    </div>
-  );
-
-  const renderTable = (data, search, setSearch) => (
-    <>
-      <div className="flex justify-between mb-4">
-  <h2 className="text-xl font-bold">Energy Consumption</h2>
-  <div className="flex flex-col items-end gap-4">
-    <input
-      type="text"
-      placeholder="Search"
-      className="border rounded px-3 py-1 text-sm"
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-    />
-    <span className="text-sm text-gray-500">
-      Last Updated on DD/MM/YYYY 00:00
-    </span>
-  </div>
-</div>
-
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm text-left">
-          <thead className="border-y border-gray-200 bg-gray-50">
-            <tr className="text-gray-700">
-              <th className="py-2">#</th>
-              <th className="py-2">Source</th>
-              <th className="py-2">Current Power (kWh)</th>
-              <th className="py-2">Energy Consumption (kWh)</th>
-              <th className="py-2">On - Peak (kWh)</th>
-              <th className="py-2">Off - Peak</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filterData(data, search).map((item) => (
-              <tr key={item.id} className="border-b border-gray-200">
-                <td className="py-2">{item.id}</td>
-                <td className="py-2">{item.source}</td>
-                <td className="py-2">{item.currentPower}</td>
-                <td className="py-2">{item.energyConsumption}</td>
-                <td className="py-2">{item.onPeak}</td>
-                <td className="py-2">{item.offPeak}</td>
-              </tr>
-            ))}
-            <tr className="font-semibold bg-gray-100 border-t border-gray-200">
-              <td className="py-2" colSpan={2}>Total</td>
-              <td className="py-2">XXX.XX</td>
-              <td className="py-2">XXX.XX</td>
-              <td className="py-2">XXX.XX</td>
-              <td className="py-2"></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
 
   const currentYear = new Date().getFullYear().toString();
   const currentMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
@@ -264,102 +135,174 @@ export default function Production() {
     setExternalData(filteredData);
   }, [year, month, sourceType]);
 
-  
-
-  const renderHeatmapSection = () => (
-    <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
-      <div className="flex items-center justify-between gap-2 mb-4">
-         
-      <div className="flex items-center">
-        <span className="text-xl font-bold">Heatmap</span>
-         <Tooltip
-              title="More information about this metric"
-              arrow
-              placement="top"
-            >
-              <InfoOutlinedIcon
-                className="text-[#33BFBF] ml-1 cursor-pointer"
-                fontSize="small"
-              />
-            </Tooltip>
-            </div>
-        <Space>
-          <Select value={year} onChange={setYear} style={{ width: 100 }}>
-            {[2023, 2024, 2025].map((y) => (
-              <Option key={y} value={y.toString()}>
-                {y}
-              </Option>
-            ))}
-          </Select>
-          <Select value={month} onChange={setMonth} style={{ width: 100 }}>
-            {Array.from({ length: 12 }, (_, i) => {
-              const val = (i + 1).toString().padStart(2, '0');
-              return (
-                <Option key={val} value={val}>
-                  {val}
-                </Option>
-              );
-            })}
-          </Select>
-          <Select value={sourceType} onChange={setSourceType} style={{ width: 150 }}>
-            <Option value="All">All</Option>
-            <Option value="Solar">Solar</Option>
-            <Option value="Wind">Wind</Option>
-          </Select>
-        </Space>
-      </div>
-      <div className='mt-5'>
-      <HeatmapPage externalData={externalData} year={year} month={month} sourceType={sourceType} />
-      </div>
-    </div>
-  );
-
   return (
     <>
-    <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
-        <div className="flex mb-6 border-b">
-          <button
-            className={`px-4 py-2 font-semibold ${
-              activeTab === 'load' ? 'border-b-2 border-teal-500 text-black' : 'text-gray-400'
-            }`}
-            onClick={() => setActiveTab('load')}
-          >
-            Load Consumption
-          </button>
-          <button
-            className={`ml-4 px-4 py-2 font-semibold ${
-              activeTab === 'meter' ? 'border-b-2 border-teal-500 text-black' : 'text-gray-400'
-            }`}
-            onClick={() => setActiveTab('meter')}
-          >
-            Meter Consumption
-          </button>
+      <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
+        <div className="flex justify-between mb-4">
+          <h2 className="text-xl font-bold">Energy Consumption</h2>
+          <div className="flex flex-col items-end gap-4">
+            <input
+              type="text"
+              placeholder="Search"
+              className="border rounded px-3 py-1 text-sm"
+              value={searchLoad}
+              onChange={(e) => setSearchLoad(e.target.value)}
+            />
+            <span className="text-sm text-gray-500">
+              Last Updated on DD/MM/YYYY 00:00
+            </span>
+          </div>
         </div>
-        {activeTab === 'load' ? (
-      <>
-        {renderTable(loadData, searchLoad, setSearchLoad)}
-      </>
-    ) : (
-      <>
-        {renderTable(meterData, searchMeter, setSearchMeter)}
-     
-      </>
-    )}
-      </div>
-     {activeTab === 'load' ? (
-      <>
-        {renderEnergyTrend()}
-        {renderRevenueTrend()}
-        {renderHeatmapSection()}
-      </>
-    ) : (
-      <>
-        
-        {renderEnergyTrend()}
-        {renderRevenueTrend()}
-        {renderHeatmapSection()}
-      </>
-    )}
+      
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm text-left">
+            <thead className="border-y border-gray-200 bg-gray-50">
+              <tr className="text-gray-700">
+                <th className="py-2">#</th>
+                <th className="py-2">Source</th>
+                <th className="py-2">Current Power (kWh)</th>
+                <th className="py-2">Energy Consumption (kWh)</th>
+                <th className="py-2">On - Peak (kWh)</th>
+                <th className="py-2">Off - Peak</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filterData(loadData, searchLoad).map((item) => (
+                <tr key={item.id} className="border-b border-gray-200">
+                  <td className="py-2">{item.id}</td>
+                  <td className="py-2">{item.source}</td>
+                  <td className="py-2">{item.currentPower}</td>
+                  <td className="py-2">{item.energyConsumption}</td>
+                  <td className="py-2">{item.onPeak}</td>
+                  <td className="py-2">{item.offPeak}</td>
+                </tr>
+              ))}
+              <tr className="font-semibold bg-gray-100 border-t border-gray-200">
+                <td className="py-2" colSpan={2}>Total</td>
+                <td className="py-2">XXX.XX</td>
+                <td className="py-2">XXX.XX</td>
+                <td className="py-2">XXX.XX</td>
+                <td className="py-2"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        </div>
+        {/* Energy Trend Section */}
+        <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center">
+              <span className="text-xl font-bold">Energy Trend</span>
+              <Tooltip title="More information about this metric" arrow placement="top">
+                <InfoOutlinedIcon className="text-[#33BFBF] ml-1 cursor-pointer" fontSize="small" />
+              </Tooltip>
+            </div>
+            <div className="flex items-center">
+              <GroupTabs range={energyRange} onChange={(val) => { setEnergyRange(val); setEnergyDate(dayjs()); }} tabs={allTabs} />
+              <DatePickerByRange range={energyRange} value={energyDate} onChange={(val) => setEnergyDate(dayjs(val))} />
+            </div>
+          </div>
+
+          <div className="text-lg mb-4">
+            <span className="text-sm">Yield: </span>
+            <span className="font-bold text-xl">25.24</span> kWh
+            <span className="ml-6 text-sm">Consumption: </span>
+            <span className="font-bold text-xl">101.61</span> kWh
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="w-full lg:w-2/3 h-80 flex items-center justify-center">
+              <EnergyTrendChart2 type={energyRange} />
+            </div>
+            <div className="w-full lg:w-1/3 h-80  flex flex-col items-center justify-center">
+              <EnergyPieChart />
+            </div>
+          </div>
+        </div>
+
+        {/* Revenue Trend Section */}
+        <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center">
+              <span className="text-xl font-bold">Revenue Trend</span>
+              <Tooltip title="More information about this metric" arrow placement="top">
+                <InfoOutlinedIcon className="text-[#33BFBF] ml-1 cursor-pointer" fontSize="small" />
+              </Tooltip>
+            </div>
+
+            <div className="flex items-center">
+              <GroupTabs
+                range={revenueRange}
+                onChange={(val) => {
+                  setRevenueRange(val);
+                  setRevenueDate(dayjs());
+                }}
+                tabs={revenueTabs}
+              />
+              <DatePickerByRange
+                range={revenueRange}
+                value={revenueDate}
+                onChange={(val) => setRevenueDate(val)}
+              />
+            </div>
+          </div>
+
+          <div className="text-lg mb-4">
+            <span className="text-sm">Total Revenue: </span>
+            <span className="font-bold text-xl">25.24</span> ฿
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-4">
+            <RevenueBarChart2 />
+          </div>
+        </div>
+
+        {/* Heatmap Section */}
+        <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center">
+              <span className="text-xl font-bold">Heatmap</span>
+              <Tooltip
+                title="More information about this metric"
+                arrow
+                placement="top"
+              >
+                <InfoOutlinedIcon
+                  className="text-[#33BFBF] ml-1 cursor-pointer"
+                  fontSize="small"
+                />
+              </Tooltip>
+            </div>
+            <Space>
+              <Select value={year} onChange={setYear} style={{ width: 100 }}>
+                {[2023, 2024, 2025].map((y) => (
+                  <Option key={y} value={y.toString()}>
+                    {y}
+                  </Option>
+                ))}
+              </Select>
+              <Select value={month} onChange={setMonth} style={{ width: 100 }}>
+                {Array.from({ length: 12 }, (_, i) => {
+                  const val = (i + 1).toString().padStart(2, '0');
+                  return (
+                    <Option key={val} value={val}>
+                      {val}
+                    </Option>
+                  );
+                })}
+              </Select>
+              <Select value={sourceType} onChange={setSourceType} style={{ width: 150 }}>
+                <Option value="All">All</Option>
+                <Option value="Solar">Solar</Option>
+                <Option value="Wind">Wind</Option>
+              </Select>
+            </Space>
+          </div>
+
+          <HeatmapPage externalData={externalData} year={year} month={month} sourceType={sourceType} />
+        </div>
+      
     </>
   );
 }

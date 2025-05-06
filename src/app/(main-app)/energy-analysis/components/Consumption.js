@@ -6,8 +6,8 @@ import Tooltip from '@mui/material/Tooltip';
 import dayjs from 'dayjs';
 import { DatePicker } from 'antd';
 import EnergyPieChart from "./EnergyPieChart";
-import EnergyTrendChart2 from "./Trendchart";
-import RevenueBarChart2 from "./BarChart";
+import EnergyTrendChart3 from "./TrendChart2";
+import RevenueBarChart3 from "./BarChart2";
 import { Select, Space } from 'antd';
 import HeatmapPage from './Heatmap';
 
@@ -105,7 +105,7 @@ export default function Consumption() {
     <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center">
-          <span className="text-xl font-bold">Energy Trend</span>
+          <span className="text-xl font-bold">Energy Load Consumption</span>
           <Tooltip title="More information about this metric" arrow placement="top">
             <InfoOutlinedIcon className="text-[#33BFBF] ml-1 cursor-pointer" fontSize="small" />
           </Tooltip>
@@ -125,7 +125,7 @@ export default function Consumption() {
 
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="w-full lg:w-2/3 h-80 flex items-center justify-center">
-          <EnergyTrendChart2 type={energyRange} />
+          <EnergyTrendChart3 type={energyRange} />
         </div>
         <div className="w-full lg:w-1/3 h-80  flex flex-col items-center justify-center">
           <EnergyPieChart />
@@ -138,7 +138,7 @@ export default function Consumption() {
     <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center">
-          <span className="text-xl font-bold">Revenue Trend</span>
+          <span className="text-xl font-bold">Consumption Cost</span>
           <Tooltip title="More information about this metric" arrow placement="top">
             <InfoOutlinedIcon className="text-[#33BFBF] ml-1 cursor-pointer" fontSize="small" />
           </Tooltip>
@@ -167,7 +167,7 @@ export default function Consumption() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4">
-        <RevenueBarChart2 />
+        <RevenueBarChart3 />
       </div>
     </div>
   );

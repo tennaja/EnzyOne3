@@ -12,82 +12,82 @@ import {
   ResponsiveContainer,
   Brush,
 } from "recharts";
+import { Checkbox } from "antd";
 import { DatePicker, Button } from "antd";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import "dayjs/locale/en";
 dayjs.extend(customParseFormat);
+import DeleteIcon from "@mui/icons-material/Delete";
+import IconButton from "@mui/material/IconButton";
 
 const { RangePicker } = DatePicker;
 
 const allParameters = [
-    { type: "Voltage", label: "V80BUS1-A", unit: "kV" },
-    { type: "Voltage", label: "V80BUS1-B", unit: "kV" },
-    { type: "Voltage", label: "V80BUS2-A", unit: "kV" },
-  
-    { type: "Current", label: "I80KA--2A", unit: "kA" },
-    { type: "Current", label: "I80KA--2B", unit: "kA" },
-    { type: "Current", label: "I80KA--3A", unit: "kA" },
-  
-    { type: "Water Temp", label: "CPMS01-", unit: "celcius" },
-    { type: "Water Temp", label: "CPMS02-", unit: "celcius" },
-    { type: "Water Temp", label: "CPMS03-", unit: "celcius" },
-  
-  
-    { type: "Frequency", label: "FRQ-MAIN", unit: "Hz" },
-    { type: "Frequency", label: "FRQ-BACK", unit: "Hz" },
-  
-    { type: "Power", label: "PWR-MAIN", unit: "MW" },
-  
-    { type: "Pressure", label: "PRS-VALVE1", unit: "bar" },
-  ];
-  
+  { type: "Voltage", label: "V80BUS1-A", unit: "kV" },
+  { type: "Voltage", label: "V80BUS1-B", unit: "kV" },
+  { type: "Voltage", label: "V80BUS2-A", unit: "kV" },
 
-  const generateMockData = () => {
-    const result = [];
-    const now = dayjs();
-  
-    for (let i = 0; i < 744; i++) {
-      const time = now.subtract(i, "hour").format("YYYY/MM/DD HH:mm");
-      const dataPoint = { time };
-  
-      allParameters.forEach((param, index) => {
-        let value;
-        switch (param.type) {
-          case "Voltage":
-            value = 190 + Math.sin(i * 0.03 + index) * 20;
-            break;
-          case "Current":
-            value = 9 + Math.cos(i * 0.05 + index) * 3;
-            break;
-          case "Water Temp":
-            value = 30 + Math.sin(i * 0.08 + index) * 1.5;
-            break;
-          case "Oil Temp":
-            value = 45 + Math.cos(i * 0.07 + index) * 2;
-            break;
-          case "Frequency":
-            value = 49 + Math.sin(i * 0.02 + index) * 0.5;
-            break;
-          case "Power":
-            value = 80 + Math.cos(i * 0.04 + index) * 10;
-            break;
-          case "Pressure":
-            value = 2 + Math.sin(i * 0.05 + index) * 0.5;
-            break;
-          default:
-            value = 0;
-        }
-  
-        dataPoint[param.label] = parseFloat(value.toFixed(2));
-      });
-  
-      result.unshift(dataPoint);
-    }
-  
-    return result;
-  };
-  
+  { type: "Current", label: "I80KA--2A", unit: "kA" },
+  { type: "Current", label: "I80KA--2B", unit: "kA" },
+  { type: "Current", label: "I80KA--3A", unit: "kA" },
+
+  { type: "Water Temp", label: "CPMS01-", unit: "celcius" },
+  { type: "Water Temp", label: "CPMS02-", unit: "celcius" },
+  { type: "Water Temp", label: "CPMS03-", unit: "celcius" },
+
+  { type: "Frequency", label: "FRQ-MAIN", unit: "Hz" },
+  { type: "Frequency", label: "FRQ-BACK", unit: "Hz" },
+
+  { type: "Power", label: "PWR-MAIN", unit: "MW" },
+
+  { type: "Pressure", label: "PRS-VALVE1", unit: "bar" },
+];
+
+const generateMockData = () => {
+  const result = [];
+  const now = dayjs();
+
+  for (let i = 0; i < 744; i++) {
+    const time = now.subtract(i, "hour").format("YYYY/MM/DD HH:mm");
+    const dataPoint = { time };
+
+    allParameters.forEach((param, index) => {
+      let value;
+      switch (param.type) {
+        case "Voltage":
+          value = 190 + Math.sin(i * 0.03 + index) * 20;
+          break;
+        case "Current":
+          value = 9 + Math.cos(i * 0.05 + index) * 3;
+          break;
+        case "Water Temp":
+          value = 30 + Math.sin(i * 0.08 + index) * 1.5;
+          break;
+        case "Oil Temp":
+          value = 45 + Math.cos(i * 0.07 + index) * 2;
+          break;
+        case "Frequency":
+          value = 49 + Math.sin(i * 0.02 + index) * 0.5;
+          break;
+        case "Power":
+          value = 80 + Math.cos(i * 0.04 + index) * 10;
+          break;
+        case "Pressure":
+          value = 2 + Math.sin(i * 0.05 + index) * 0.5;
+          break;
+        default:
+          value = 0;
+      }
+
+      dataPoint[param.label] = parseFloat(value.toFixed(2));
+    });
+
+    result.unshift(dataPoint);
+  }
+
+  return result;
+};
 
 const getDistinctColor = (() => {
   const usedHues = new Set(); // ✅ แก้ตรงนี้
@@ -192,9 +192,7 @@ const ChartDashboard = () => {
 
   return (
     <div className="mt-4">
-      <Button type="primary" onClick={handleCreateNewChart}>
-        + Create New Chart
-      </Button>
+     
 
       {charts.map((chart, index) => {
         const [startDate, endDate] = chart.dateRange;
@@ -215,92 +213,104 @@ const ChartDashboard = () => {
             className="rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4"
           >
             <div className="flex justify-between items-center mb-3">
-            <h3 className="font-semibold text-xl">Chart #{index + 1}</h3>
+              <div className="flex items-center space-x-4 text-xl font-semibold">
+                <div>
+                  Select:{" "}
+                  <span className="text-cyan-500">
+                    {chart.selectedParams.length}
+                  </span>{" "}
+                  parameter
+                </div>
+                <div className="h-5 w-px bg-gray-300" />
+                <div>
+                  Unit:{" "}
+                  {[...new Set(chart.selectedParams.map((p) => p.unit))].map(
+                    (unit, i, arr) => (
+                      <span key={unit} className="text-cyan-500">
+                        {unit}
+                        {i < arr.length - 1 ? ", " : ""}
+                      </span>
+                    )
+                  )}
+                </div>
+              </div>
 
-<RangePicker
-  value={chart.dateRange}
-  onChange={(dates) => handleDateChange(chart.id, dates)}
-  disabledDate={disabledDate}
-  format="YYYY/MM/DD"
-/>
+              <div className="flex items-center justify-between gap-4">
+                <RangePicker
+                  value={chart.dateRange}
+                  onChange={(dates) => handleDateChange(chart.id, dates)}
+                  disabledDate={disabledDate}
+                  format="YYYY/MM/DD"
+                  className="items-start"
+                />
+                <IconButton
+                  aria-label="delete"
+                  color="error"
+                  onClick={() => handleDeleteChart(chart.id)}
+                  className="mt-3"
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </div>
             </div>
 
             <div className="flex flex-col lg:flex-row">
-              {/* Table Section */}
-              <div className="lg:w-1/2 w-full pr-0 lg:pr-4 mb-4 lg:mb-0 lg:border-r ">
-                <h4 className="font-semibold mb-2">Parameter List</h4>
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="text-xs text-black border-b border-gray-300 dark:text-white">
-                      <th className="py-2 px-4 text-left ">Type</th>
-                      <th className="py-2 px-4 text-left ">Label</th>
-                      <th className="py-2 px-4 text-left ">Unit</th>
-                      <th className="py-2 px-4 text-left ">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allParameters.map((param, idx) => {
-                      const isSelected = chart.selectedParams.some(
-                        (p) => p.label === param.label
-                      );
-                      const isUnitAllowed =
-                        chart.selectedParams.length < 2 ||
-                        uniqueUnits.length === 1 ||
-                        selectedUnits.includes(param.unit);
-                      const isDisabled = !isSelected && !isUnitAllowed;
+              {/* Parameter Cards Section */}
+              <div className="lg:w-1/2 w-full pr-0 lg:pr-4 mb-4 lg:mb-0 lg:border-r">
+                {/* <h4 className="font-semibold mb-2">Parameter List</h4> */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {allParameters.map((param) => {
+                    const isSelected = chart.selectedParams.some(
+                      (p) => p.label === param.label
+                    );
+                    const isUnitAllowed =
+                      chart.selectedParams.length < 2 ||
+                      uniqueUnits.length === 1 ||
+                      selectedUnits.includes(param.unit);
+                    const isDisabled = !isSelected && !isUnitAllowed;
 
-                      const rowClass = isSelected
-  ? "bg-green-100 dark:text-black"
-  : isDisabled
-  ? "bg-gray-100  text-gray-400 dark:bg-gray-700 dark:text-gray-500"
-  : idx % 2 === 0
-  ? "bg-gray-100 dark:bg-gray-900 dark:text-white"
-  : "bg-white dark:bg-gray-800 dark:text-white";
-
-
-                      return (
-                        <tr
-                          key={param.label}
-                          className={`${rowClass} border-b border-[#e0e0e0]`}
-                        >
-                          <td className="px-2 py-1 text-left">{param.type}</td>
-                          <td className="px-2 py-1 text-left">{param.label}</td>
-                          <td className="px-2 py-1 text-left">{param.unit}</td>
-                          <td className="px-2 py-1 text-left">
-                            {isSelected ? (
-                              <Button
-                                type="default"
-                                danger
-                                size="small"
-                                onClick={() =>
-                                  handleRemoveParam(chart.id, param.label)
-                                }
-                              >
-                                Unselect
-                              </Button>
-                            ) : (
-                              <Button
-                                type="primary"
-                                size="small"
-                                onClick={() => handleAddParam(chart.id, param)}
-                                disabled={isDisabled}
-                                className={isDisabled ? "dark:text-gray-500" : "dark:text-white"}
-
-                              >
-                                Select
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                    return (
+                      <div
+                        key={param.label}
+                        className={`border rounded-lg p-3 shadow-sm ${
+                          isSelected
+                            ? "bg-green-100 dark:bg-green-900"
+                            : isDisabled
+                            ? "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500"
+                            : "bg-white dark:bg-gray-800 dark:text-white"
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm font-semibold">
+                              {param.label}
+                            </p>
+                            <p className="text-xs">{param.type}</p>
+                            <p className="text-xs text-gray-500">
+                              {param.unit}
+                            </p>
+                          </div>
+                          <Checkbox
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                handleAddParam(chart.id, param);
+                              } else {
+                                handleRemoveParam(chart.id, param.label);
+                              }
+                            }}
+                            disabled={isDisabled}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Chart View */}
               <div className="lg:w-1/2 w-full">
-                <h4 className="font-semibold mb-2 ml-2">Chart View</h4>
+                {/* <h4 className="font-semibold mb-2 ml-2">Chart View</h4> */}
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={filteredData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -325,15 +335,16 @@ const ChartDashboard = () => {
                 </ResponsiveContainer>
               </div>
             </div>
-
-            <Button danger onClick={() => handleDeleteChart(chart.id)}
-                className="mt-3"
-                >
-              Delete Chart
-            </Button>
           </div>
         );
       })}
+      <div className="grid rounded-xl bg-white p-3 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
+      <div className="border-2 border-dashed border-gray-400 rounded-lg p-4 flex justify-center items-center">
+    <Button type="primary" onClick={handleCreateNewChart}>
+      + Add Graph
+    </Button>
+  </div>
+  </div>
     </div>
   );
 };
