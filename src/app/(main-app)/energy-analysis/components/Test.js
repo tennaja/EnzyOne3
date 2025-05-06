@@ -213,7 +213,7 @@ const ChartDashboard = () => {
             className="rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4"
           >
             <div className="flex justify-between items-center mb-3">
-              <div className="flex items-center space-x-4 text-xl font-semibold">
+              <div className="flex items-center space-x-4 text-lg font-semibold">
                 <div>
                   Select:{" "}
                   <span className="text-cyan-500">
@@ -242,6 +242,7 @@ const ChartDashboard = () => {
                   disabledDate={disabledDate}
                   format="YYYY/MM/DD"
                   className="items-start"
+                  allowClear={false}
                 />
                 <IconButton
                   aria-label="delete"
@@ -339,7 +340,7 @@ const ChartDashboard = () => {
         );
       })}
       <div className="grid rounded-xl bg-white p-3 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
-      <div className="border-2 border-dashed border-gray-400 rounded-lg p-4 flex justify-center items-center">
+      <div className="border border-dashed border-gray-400 rounded-lg p-4 flex justify-center items-center">
     <Button type="primary" onClick={handleCreateNewChart}>
       + Add Graph
     </Button>

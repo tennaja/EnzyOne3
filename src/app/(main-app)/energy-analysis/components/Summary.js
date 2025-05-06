@@ -24,15 +24,15 @@ const revenueTabs = allTabs.filter((tab) => tab.id !== "day");
 
 const GroupTabs = ({ range, onChange, tabs }) => {
   return (
-    <div className="inline-flex border rounded-lg overflow-hidden">
+    <div className="inline-flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
-          className={`px-4 py-2 text-sm border-r last:border-r-0 transition-all ${
+          className={`px-4 py-2 text-sm border-r last:border-r-0 border-gray-300 dark:border-gray-600 transition-all ${
             range === tab.id
               ? "bg-teal-500 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-100"
+              : "bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           }`}
         >
           {tab.label}
@@ -41,6 +41,7 @@ const GroupTabs = ({ range, onChange, tabs }) => {
     </div>
   );
 };
+
 
 const DatePickerByRange = ({ range, value, onChange }) => {
   if (range === "lifetime") {
@@ -55,6 +56,7 @@ const DatePickerByRange = ({ range, value, onChange }) => {
         value={value}
         onChange={onChange}
         className="ml-4"
+        allowClear={false}
       />
     );
   }
@@ -67,6 +69,7 @@ const DatePickerByRange = ({ range, value, onChange }) => {
         value={value}
         onChange={onChange}
         className="ml-4"
+        allowClear={false}
       />
     );
   }
@@ -78,6 +81,7 @@ const DatePickerByRange = ({ range, value, onChange }) => {
       value={value}
       onChange={onChange}
       className="ml-4"
+      allowClear={false}
     />
   );
 };
@@ -89,49 +93,52 @@ export default function Summary() {
   const [revenueRange, setRevenueRange] = useState("month");
   const [revenueDate, setRevenueDate] = useState(dayjs());
 
-  const handleClick = (id) => {
-    setEnergyRange(id);
-  };
+  // const handleClick = (id) => {
+  //   setEnergyRange(id);
+  // };
 
-  const renderDatePicker = () => {
-    if (energyRange === "lifetime") {
-      return <DatePicker disabled className="ml-4" />;
-    }
+  // const renderDatePicker = () => {
+  //   if (energyRange === "lifetime") {
+  //     return <DatePicker disabled className="ml-4" />;
+  //   }
 
-    if (energyRange === "year") {
-      return (
-        <DatePicker
-          picker="year"
-          format="YYYY"
-          value={selectedDate}
-          onChange={(date) => setSelectedDate(date)}
-          className="ml-4"
-        />
-      );
-    }
+  //   if (energyRange === "year") {
+  //     return (
+  //       <DatePicker
+  //         picker="year"
+  //         format="YYYY"
+  //         value={selectedDate}
+  //         onChange={(date) => setSelectedDate(date)}
+  //         className="ml-4"
+  //         allowClear={false}
+  //       />
+  //     );
+  //   }
 
-    if (energyRange === "month") {
-      return (
-        <DatePicker
-          picker="month"
-          format="YYYY/MM"
-          value={selectedDate}
-          onChange={(date) => setSelectedDate(date)}
-          className="ml-4"
-        />
-      );
-    }
+  //   if (energyRange === "month") {
+  //     return (
+  //       <DatePicker
+  //         picker="month"
+  //         format="YYYY/MM"
+  //         value={selectedDate}
+  //         onChange={(date) => setSelectedDate(date)}
+  //         className="ml-4"
+  //         allowClear={false}
+  //       />
+  //     );
+  //   }
 
-    // Default: day
-    return (
-      <DatePicker
-        format="YYYY/MM/DD"
-        value={selectedDate}
-        onChange={(date) => setSelectedDate(date)}
-        className="ml-4"
-      />
-    );
-  };
+  //   // Default: day
+  //   return (
+  //     <DatePicker
+  //       format="YYYY/MM/DD"
+  //       value={selectedDate}
+  //       onChange={(date) => setSelectedDate(date)}
+  //       className="ml-4"
+  //       allowClear={false}
+  //     />
+  //   );
+  // };
   const data = {
     currentPower: { value: "254.14", unit: "kW" },
     yieldToday: { value: "1.72", unit: "MWh" },
@@ -147,7 +154,7 @@ export default function Summary() {
 
   return (
     <>
-      <div className="bg-gray-100 mt-5 rounded-lg">
+      <div className="mt-5">
         <span className="text-xl font-bold">Plant KPI</span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 mt-2">
           <Card title="Current power" {...data.currentPower} />

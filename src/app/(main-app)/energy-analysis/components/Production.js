@@ -22,15 +22,15 @@ const allTabs = [
 const revenueTabs = allTabs.filter(tab => tab.id !== 'day');
 
 const GroupTabs = ({ range, onChange, tabs }) => (
-  <div className="inline-flex border rounded-lg overflow-hidden">
+  <div className="inline-flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
     {tabs.map((tab) => (
       <button
         key={tab.id}
         onClick={() => onChange(tab.id)}
-        className={`px-4 py-2 text-sm border-r last:border-r-0 transition-all ${
+        className={`px-4 py-2 text-sm border-r last:border-r-0 border-gray-300 dark:border-gray-600 transition-all ${
           range === tab.id
             ? 'bg-teal-500 text-white'
-            : 'bg-white text-gray-700 hover:bg-gray-100'
+            : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
         }`}
       >
         {tab.label}
@@ -38,6 +38,7 @@ const GroupTabs = ({ range, onChange, tabs }) => (
     ))}
   </div>
 );
+
 const DatePickerByRange = ({ range, value, onChange }) => {
   if (range === 'lifetime') {
     return <DatePicker disabled className="ml-4" />;
@@ -51,6 +52,7 @@ const DatePickerByRange = ({ range, value, onChange }) => {
         value={value}
         onChange={onChange}
         className="ml-4"
+        allowClear={false}
       />
     );
   }
@@ -63,6 +65,7 @@ const DatePickerByRange = ({ range, value, onChange }) => {
         value={value}
         onChange={onChange}
         className="ml-4"
+        allowClear={false}
       />
     );
   }
@@ -73,23 +76,32 @@ const DatePickerByRange = ({ range, value, onChange }) => {
       value={value}
       onChange={onChange}
       className="ml-4"
+      allowClear={false}
     />
   );
 };
 
 const loadData = [
-  { id: 1, source: 'Load A', currentPower: '120.5', energyConsumption: '300.5', onPeak: '100', offPeak: '200' },
-  { id: 2, source: 'Load B', currentPower: '110.1', energyConsumption: '280.0', onPeak: '90', offPeak: '190' },
+  {
+    id: 1,
+    source: 'Gen 1',
+    powerGeneration: '120.50 kW',
+    energyGeneration: '300.50 kWh',
+    revenue: '100.00 Bath',
+  },
+  {
+    id: 2,
+    source: 'Gen 2',
+    powerGeneration: '110.10 kW',
+    energyGeneration: '280.00 kWh',
+    revenue: '90.00 Bath',
+  },
 ];
 
-const meterData = [
-  { id: 1, source: 'Meter X', currentPower: '98.0', energyConsumption: '240.3', onPeak: '80', offPeak: '160' },
-  { id: 2, source: 'Meter Y', currentPower: '105.2', energyConsumption: '250.6', onPeak: '85', offPeak: '165' },
-];
+
 
 export default function Production() {
   const [searchLoad, setSearchLoad] = useState('');
-  const [searchMeter, setSearchMeter] = useState('');
   const [energyRange, setEnergyRange] = useState('day');
   const [energyDate, setEnergyDate] = useState(dayjs());
   const [revenueRange, setRevenueRange] = useState('month');
@@ -139,7 +151,7 @@ export default function Production() {
     <>
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
         <div className="flex justify-between mb-4">
-          <h2 className="text-xl font-bold">Energy Consumption</h2>
+          <h2 className="text-xl font-bold">Energy Production</h2>
           <div className="flex flex-col items-end gap-4">
             <input
               type="text"
@@ -156,37 +168,35 @@ export default function Production() {
       
 
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm text-left">
-            <thead className="border-y border-gray-200 bg-gray-50">
-              <tr className="text-gray-700">
-                <th className="py-2">#</th>
-                <th className="py-2">Source</th>
-                <th className="py-2">Current Power (kWh)</th>
-                <th className="py-2">Energy Consumption (kWh)</th>
-                <th className="py-2">On - Peak (kWh)</th>
-                <th className="py-2">Off - Peak</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filterData(loadData, searchLoad).map((item) => (
-                <tr key={item.id} className="border-b border-gray-200">
-                  <td className="py-2">{item.id}</td>
-                  <td className="py-2">{item.source}</td>
-                  <td className="py-2">{item.currentPower}</td>
-                  <td className="py-2">{item.energyConsumption}</td>
-                  <td className="py-2">{item.onPeak}</td>
-                  <td className="py-2">{item.offPeak}</td>
-                </tr>
-              ))}
-              <tr className="font-semibold bg-gray-100 border-t border-gray-200">
-                <td className="py-2" colSpan={2}>Total</td>
-                <td className="py-2">XXX.XX</td>
-                <td className="py-2">XXX.XX</td>
-                <td className="py-2">XXX.XX</td>
-                <td className="py-2"></td>
-              </tr>
-            </tbody>
-          </table>
+        <table className="min-w-full text-sm text-left">
+  <thead className="border-y border-gray-200 bg-gray-50">
+    <tr className="text-gray-700">
+      <th className="py-2">#</th>
+      <th className="py-2">Source</th>
+      <th className="py-2">Power Generation (kW)</th>
+      <th className="py-2">Energy Generation (kWh)</th>
+      <th className="py-2">Revenue (Bath)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {filterData(loadData, searchLoad).map((item) => (
+      <tr key={item.id} className="border-b border-gray-200">
+        <td className="py-2">{item.id}</td>
+        <td className="py-2">{item.source}</td>
+        <td className="py-2">{item.powerGeneration}</td>
+        <td className="py-2">{item.energyGeneration}</td>
+        <td className="py-2">{item.revenue}</td>
+      </tr>
+    ))}
+    <tr className="font-semibold bg-gray-100 border-t border-gray-200">
+      <td className="py-2" colSpan={2}>Total</td>
+      <td className="py-2">XXX.XX kW</td>
+      <td className="py-2">XXX.XX kWh</td>
+      <td className="py-2">XXX.XX Bath</td>
+    </tr>
+  </tbody>
+</table>
+
         </div>
         </div>
         {/* Energy Trend Section */}
@@ -204,12 +214,12 @@ export default function Production() {
             </div>
           </div>
 
-          <div className="text-lg mb-4">
+          {/* <div className="text-lg mb-4">
             <span className="text-sm">Yield: </span>
             <span className="font-bold text-xl">25.24</span> kWh
             <span className="ml-6 text-sm">Consumption: </span>
             <span className="font-bold text-xl">101.61</span> kWh
-          </div>
+          </div> */}
 
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="w-full lg:w-2/3 h-80 flex items-center justify-center">
@@ -244,6 +254,7 @@ export default function Production() {
                 range={revenueRange}
                 value={revenueDate}
                 onChange={(val) => setRevenueDate(val)}
+                
               />
             </div>
           </div>

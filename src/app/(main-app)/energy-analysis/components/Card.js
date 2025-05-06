@@ -25,29 +25,28 @@ const iconMap = {
 
 export default function Card({ title, value, unit ,tootipword = "", hasInfo = false }) {
   return (
-    <div className="bg-white rounded-xl shadow-md p-4 flex items-center gap-4 min-h-[100px]">
-      {/* Left Icon */}
-      <div className="w-10 h-10 flex items-center justify-center border border-dashed rounded-md text-gray-400">
-        {iconMap[title] || <FlashOnIcon />}
+    <div className="bg-white dark:bg-dark-box rounded-xl shadow-md p-4 flex items-center gap-4 min-h-[100px]">
+    {/* Left Icon */}
+    <div className="w-10 h-10 flex items-center justify-center border border-dashed border-gray-300 dark:border-gray-600 rounded-md text-gray-400 dark:text-gray-300">
+      {iconMap[title] || <FlashOnIcon />}
+    </div>
+  
+    {/* Right Content */}
+    <div className="flex flex-col justify-center">
+      <div className="flex items-baseline gap-1">
+        <span className="text-2xl font-semibold text-gray-800 dark:text-white">{value}</span>
+        {unit && <span className="text-sm text-gray-500 dark:text-gray-400">{unit}</span>}
       </div>
-
-      {/* Right Content */}
-      <div className="flex flex-col justify-center">
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-semibold text-gray-800">{value}</span>
-          {unit && <span className="text-sm text-gray-500">{unit}</span>}
-        </div>
-        <div className="flex items-center text-sm text-gray-500">
-          {title}
-          {hasInfo && (
-  <Tooltip title={tootipword} arrow placement="top">
-    <InfoOutlinedIcon className="text-[#33BFBF] ml-1 cursor-pointer" fontSize="small" />
-  </Tooltip>
-)}
-
-
-        </div>
+      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+        {title}
+        {hasInfo && (
+          <Tooltip title={tootipword} arrow placement="top">
+            <InfoOutlinedIcon className="text-[#33BFBF] ml-1 cursor-pointer" fontSize="small" />
+          </Tooltip>
+        )}
       </div>
     </div>
+  </div>
+  
   );
 }

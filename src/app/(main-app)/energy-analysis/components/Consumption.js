@@ -23,15 +23,15 @@ const allTabs = [
 const revenueTabs = allTabs.filter(tab => tab.id !== 'day');
 
 const GroupTabs = ({ range, onChange, tabs }) => (
-  <div className="inline-flex border rounded-lg overflow-hidden">
+  <div className="inline-flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
     {tabs.map((tab) => (
       <button
         key={tab.id}
         onClick={() => onChange(tab.id)}
-        className={`px-4 py-2 text-sm border-r last:border-r-0 transition-all ${
+        className={`px-4 py-2 text-sm border-r last:border-r-0 border-gray-300 dark:border-gray-600 transition-all ${
           range === tab.id
             ? 'bg-teal-500 text-white'
-            : 'bg-white text-gray-700 hover:bg-gray-100'
+            : 'bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
         }`}
       >
         {tab.label}
@@ -39,6 +39,7 @@ const GroupTabs = ({ range, onChange, tabs }) => (
     ))}
   </div>
 );
+
 
 const DatePickerByRange = ({ range, value, onChange }) => {
   if (range === 'lifetime') {
@@ -53,6 +54,7 @@ const DatePickerByRange = ({ range, value, onChange }) => {
         value={value}
         onChange={onChange}
         className="ml-4"
+        allowClear={false}
       />
     );
   }
@@ -65,6 +67,7 @@ const DatePickerByRange = ({ range, value, onChange }) => {
         value={value}
         onChange={onChange}
         className="ml-4"
+        allowClear={false}
       />
     );
   }
@@ -75,6 +78,7 @@ const DatePickerByRange = ({ range, value, onChange }) => {
       value={value}
       onChange={onChange}
       className="ml-4"
+      allowClear={false}
     />
   );
 };
@@ -85,8 +89,8 @@ const loadData = [
 ];
 
 const meterData = [
-  { id: 1, source: 'Meter X', currentPower: '98.0', energyConsumption: '240.3', onPeak: '80', offPeak: '160' },
-  { id: 2, source: 'Meter Y', currentPower: '105.2', energyConsumption: '250.6', onPeak: '85', offPeak: '165' },
+  { id: 1, source: 'Meter X', currentPower: '98.0', energyConsumption: '240.3' },
+  { id: 2, source: 'Meter Y', currentPower: '105.2', energyConsumption: '250.6' },
 ];
 
 export default function Consumption() {
@@ -102,7 +106,7 @@ export default function Consumption() {
     data.filter((item) => item.source.toLowerCase().includes(search.toLowerCase()));
 
   const renderEnergyTrend = () => (
-    <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
+    <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center">
           <span className="text-xl font-bold">Energy Load Consumption</span>
@@ -116,12 +120,12 @@ export default function Consumption() {
         </div>
       </div>
 
-      <div className="text-lg mb-4">
+      {/* <div className="text-lg mb-4">
         <span className="text-sm">Yield: </span>
         <span className="font-bold text-xl">25.24</span> kWh
         <span className="ml-6 text-sm">Consumption: </span>
         <span className="font-bold text-xl">101.61</span> kWh
-      </div>
+      </div> */}
 
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="w-full lg:w-2/3 h-80 flex items-center justify-center">
@@ -135,7 +139,7 @@ export default function Consumption() {
   );
 
   const renderRevenueTrend = () => (
-    <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
+    <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center">
           <span className="text-xl font-bold">Consumption Cost</span>
@@ -157,12 +161,13 @@ export default function Consumption() {
             range={revenueRange}
             value={revenueDate}
             onChange={(val) => setRevenueDate(val)}
+            allowClear={false}
           />
         </div>
       </div>
 
       <div className="text-lg mb-4">
-        <span className="text-sm">Total Revenue: </span>
+        <span className="text-sm">Total Cost: </span>
         <span className="font-bold text-xl">25.24</span> ฿
       </div>
 
@@ -172,10 +177,10 @@ export default function Consumption() {
     </div>
   );
 
-  const renderTable = (data, search, setSearch) => (
+  const renderTableLoad = (data, search, setSearch) => (
     <>
       <div className="flex justify-between mb-4">
-  <h2 className="text-xl font-bold">Energy Consumption</h2>
+  <h2 className="text-xl font-bold">Energy Load Consumption</h2>
   <div className="flex flex-col items-end gap-4">
     <input
       type="text"
@@ -227,6 +232,59 @@ export default function Consumption() {
     </>
   );
 
+  const renderTableMeter = (data, search, setSearch) => (
+    <>
+      <div className="flex justify-between mb-4">
+        <h2 className="text-xl font-bold">Energy  Meter Consumption</h2>
+        <div className="flex flex-col items-end gap-4">
+          <input
+            type="text"
+            placeholder="Search"
+            className="border rounded px-3 py-1 text-sm"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <span className="text-sm text-gray-500">
+            Last Updated on DD/MM/YYYY 00:00
+          </span>
+        </div>
+      </div>
+  
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm text-left">
+          <thead className="border-y border-gray-200 bg-gray-50">
+            <tr className="text-gray-700">
+              <th className="py-2">#</th>
+              <th className="py-2">Source</th>
+              <th className="py-2">Energy (kW)</th>
+              <th className="py-2">Power (kWh)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filterData(data, search).map((item) => (
+              <tr key={item.id} className="border-b border-gray-200">
+                <td className="py-2">{item.id}</td>
+                <td className="py-2">{item.source}</td>
+                <td className="py-2">
+                  {parseFloat(item.energyConsumption).toFixed(2)}
+                </td>
+                <td className="py-2">
+                  {parseFloat(item.currentPower).toFixed(2)}
+                </td>
+              </tr>
+            ))}
+            <tr className="font-semibold bg-gray-100 border-t border-gray-200">
+              <td className="py-2" colSpan={2}>Total</td>
+              <td className="py-2">XXX.XX</td>
+              <td className="py-2">XXX.XX</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+  
+
   const currentYear = new Date().getFullYear().toString();
   const currentMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
   const [year, setYear] = useState(currentYear);
@@ -267,7 +325,7 @@ export default function Consumption() {
   
 
   const renderHeatmapSection = () => (
-    <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
+    <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
       <div className="flex items-center justify-between gap-2 mb-4">
          
       <div className="flex items-center">
@@ -316,11 +374,11 @@ export default function Consumption() {
 
   return (
     <>
-    <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
+    <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
         <div className="flex mb-6 border-b">
           <button
             className={`px-4 py-2 font-semibold ${
-              activeTab === 'load' ? 'border-b-2 border-teal-500 text-black' : 'text-gray-400'
+              activeTab === 'load' ? 'border-b-2 border-teal-500 text-black dark:text-white' : 'text-gray-400 dark:text-gray-600'
             }`}
             onClick={() => setActiveTab('load')}
           >
@@ -328,7 +386,7 @@ export default function Consumption() {
           </button>
           <button
             className={`ml-4 px-4 py-2 font-semibold ${
-              activeTab === 'meter' ? 'border-b-2 border-teal-500 text-black' : 'text-gray-400'
+              activeTab === 'meter' ? 'border-b-2 border-teal-500 text-black dark:text-white' : 'text-gray-400 dark:text-gray-600'
             }`}
             onClick={() => setActiveTab('meter')}
           >
@@ -337,11 +395,11 @@ export default function Consumption() {
         </div>
         {activeTab === 'load' ? (
       <>
-        {renderTable(loadData, searchLoad, setSearchLoad)}
+        {renderTableLoad(loadData, searchLoad, setSearchLoad)}
       </>
     ) : (
       <>
-        {renderTable(meterData, searchMeter, setSearchMeter)}
+        {renderTableMeter(meterData, searchMeter, setSearchMeter)}
      
       </>
     )}
