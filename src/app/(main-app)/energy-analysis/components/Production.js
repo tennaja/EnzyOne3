@@ -85,16 +85,16 @@ const loadData = [
   {
     id: 1,
     source: 'Gen 1',
-    powerGeneration: '120.50 kW',
-    energyGeneration: '300.50 kWh',
-    revenue: '100.00 Bath',
+    powerGeneration: '120.50',
+    energyGeneration: '300.50',
+    revenue: '100.00',
   },
   {
     id: 2,
     source: 'Gen 2',
-    powerGeneration: '110.10 kW',
-    energyGeneration: '280.00 kWh',
-    revenue: '90.00 Bath',
+    powerGeneration: '110.10',
+    energyGeneration: '280.00',
+    revenue: '90.00',
   },
 ];
 
