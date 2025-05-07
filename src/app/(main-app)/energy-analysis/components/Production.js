@@ -160,7 +160,7 @@ export default function Production() {
               value={searchLoad}
               onChange={(e) => setSearchLoad(e.target.value)}
             />
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-white">
               Last Updated on DD/MM/YYYY 00:00
             </span>
           </div>
@@ -169,8 +169,8 @@ export default function Production() {
 
         <div className="overflow-x-auto">
         <table className="min-w-full text-sm text-left">
-  <thead className="border-y border-gray-200 bg-gray-50">
-    <tr className="text-gray-700">
+  <thead className="border-y border-gray-200 bg-gray-50 dark:bg-gray-900 ">
+    <tr className="text-gray-700 dark:text-white">
       <th className="py-2">#</th>
       <th className="py-2">Source</th>
       <th className="py-2">Power Generation (kW)</th>
@@ -188,7 +188,7 @@ export default function Production() {
         <td className="py-2">{item.revenue}</td>
       </tr>
     ))}
-    <tr className="font-semibold bg-gray-100 border-t border-gray-200">
+    <tr className="font-semibold bg-gray-100 border-t border-gray-200 dark:bg-gray-900 dark:text-white">
       <td className="py-2" colSpan={2}>Total</td>
       <td className="py-2">XXX.XX kW</td>
       <td className="py-2">XXX.XX kWh</td>

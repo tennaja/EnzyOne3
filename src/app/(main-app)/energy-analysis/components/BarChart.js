@@ -55,11 +55,12 @@ export default function RevenueBarChart2() {
           <text
             x={70}
             y={18}
-            fill="#000"
-            fontSize="16"
+            fill="currentColor"
+            className="text-black dark:text-white"
+            fontSize={20}
             fontWeight="bold"
           >
-            kWh
+            ฿
           </text>
         </BarChart>
       </ResponsiveContainer>

@@ -49,9 +49,17 @@ const maxY = Math.max(
 
 export default function EnergyTrendChart2({ type }) {
   const renderUnitLabel = () => (
-    <text x={40} y={15} fill="#000" fontSize={14} fontWeight="bold">
-      kWh
-    </text>
+    <text
+  x={40}
+  y={15}
+  fontSize={15}
+  fontWeight="bold"
+  fill="currentColor"
+  className="text-black dark:text-white"
+>
+  kWh
+</text>
+
   );
 
   if (type === 'month' || type === 'year' || type === 'lifetime') {

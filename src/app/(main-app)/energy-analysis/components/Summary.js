@@ -191,7 +191,7 @@ export default function Summary() {
           <div className="flex items-center">
             <span className="text-xl font-bold">Energy Trend</span>
             <Tooltip
-              title="More information about this metric"
+              title="Values above the zero line represent production power, while values below represent consumption power."
               arrow
               placement="top"
             >

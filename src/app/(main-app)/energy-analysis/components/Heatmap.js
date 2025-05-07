@@ -133,6 +133,8 @@ export default function HeatmapPage({ externalData, year, month, sourceType }) {
               y={rowIndex * cellHeight + cellHeight / 2 + 4}
               textAnchor="end"
               fontSize="11"
+              fill="currentColor"
+              className="text-black dark:text-white"
             >
               {row.hour}
             </text>
@@ -146,6 +148,8 @@ export default function HeatmapPage({ externalData, year, month, sourceType }) {
               y={reversedData.length * cellHeight + 15}
               textAnchor="middle"
               fontSize="11"
+              fill="currentColor"
+              className="text-black dark:text-white"
             >
               {day}
             </text>

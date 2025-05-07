@@ -51,8 +51,9 @@ export default function RevenueBarChart() {
           <text
             x={70}
             y={18}
-            fill="#000"
-            fontSize="20"
+            fill="currentColor"
+  className="text-black dark:text-white"
+            fontSize={20}
             fontWeight="bold"
           >
             ฿

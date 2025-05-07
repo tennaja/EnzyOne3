@@ -94,8 +94,15 @@ export default function RevenueChart3() {
 
           <Brush dataKey="day" height={30} stroke="#8884d8" />
 
-          <text x={70} y={18} fill="#000" fontSize="16" fontWeight="bold">
-            kWh
+          <text
+            x={70}
+            y={18}
+            fill="currentColor"
+            className="text-black dark:text-white"
+            fontSize={20}
+            fontWeight="bold"
+          >
+            ฿
           </text>
         </ComposedChart>
       </ResponsiveContainer>

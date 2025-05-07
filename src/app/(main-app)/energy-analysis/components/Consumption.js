@@ -189,7 +189,7 @@ export default function Consumption() {
       value={search}
       onChange={(e) => setSearch(e.target.value)}
     />
-    <span className="text-sm text-gray-500">
+    <span className="text-sm text-gray-500 dark:text-white">
       Last Updated on DD/MM/YYYY 00:00
     </span>
   </div>
@@ -198,8 +198,8 @@ export default function Consumption() {
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm text-left">
-          <thead className="border-y border-gray-200 bg-gray-50">
-            <tr className="text-gray-700">
+          <thead className="border-y border-gray-200 bg-gray-50 dark:bg-gray-900">
+            <tr className="text-gray-700 dark:text-white">
               <th className="py-2">#</th>
               <th className="py-2">Source</th>
               <th className="py-2">Current Power (kWh)</th>
@@ -219,7 +219,7 @@ export default function Consumption() {
                 <td className="py-2">{item.offPeak}</td>
               </tr>
             ))}
-            <tr className="font-semibold bg-gray-100 border-t border-gray-200">
+            <tr className="font-semibold bg-gray-100 border-t border-gray-200 dark:bg-gray-900 dark:text-white">
               <td className="py-2" colSpan={2}>Total</td>
               <td className="py-2">XXX.XX</td>
               <td className="py-2">XXX.XX</td>
@@ -244,7 +244,7 @@ export default function Consumption() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500 dark:text-white">
             Last Updated on DD/MM/YYYY 00:00
           </span>
         </div>
@@ -252,8 +252,8 @@ export default function Consumption() {
   
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm text-left">
-          <thead className="border-y border-gray-200 bg-gray-50">
-            <tr className="text-gray-700">
+          <thead className="border-y border-gray-200 bg-gray-50 dark:bg-gray-900">
+            <tr className="text-gray-700 dark:text-white">
               <th className="py-2">#</th>
               <th className="py-2">Source</th>
               <th className="py-2">Energy (kW)</th>
@@ -273,7 +273,7 @@ export default function Consumption() {
                 </td>
               </tr>
             ))}
-            <tr className="font-semibold bg-gray-100 border-t border-gray-200">
+            <tr className="font-semibold bg-gray-100 border-t border-gray-200 dark:bg-gray-900 dark:text-white">
               <td className="py-2" colSpan={2}>Total</td>
               <td className="py-2">XXX.XX</td>
               <td className="py-2">XXX.XX</td>
