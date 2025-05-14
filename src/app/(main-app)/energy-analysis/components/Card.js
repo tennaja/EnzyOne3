@@ -22,7 +22,15 @@ const iconMap = {
   "CO₂ avoided": <Co2Icon fontSize="large" className="text-green-600" />,
   "Equivalent tree planted": <ForestIcon fontSize="large" className="text-lime-600" />,
 };
-
+function formatNumber(num) {
+  if (typeof num !== 'number' || isNaN(num)) {
+    return '-'; // หรือ '' แล้วแต่ UI/UX ที่ต้องการ
+  }
+  return num.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
 export default function Card({ title, value, unit ,tootipword = "", hasInfo = false }) {
   return (
     <div className="bg-white dark:bg-dark-box rounded-xl shadow-md p-4 flex items-center gap-4 min-h-[100px]">
@@ -40,7 +48,16 @@ export default function Card({ title, value, unit ,tootipword = "", hasInfo = fa
       <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
         {title}
         {hasInfo && (
-          <Tooltip title={tootipword} arrow placement="top">
+          <Tooltip title={tootipword} arrow 
+          placement="top" 
+          componentsProps={{
+            tooltip: {
+              sx: {
+                fontSize: '14px', // ปรับขนาดฟอนต์
+              },
+            },
+          }}
+          >
             <InfoOutlinedIcon className="text-[#33BFBF] ml-1 cursor-pointer" fontSize="small" />
           </Tooltip>
         )}

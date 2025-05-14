@@ -1,6 +1,12 @@
 'use client';
 
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 function generateRandomColors(count) {
   const colors = [];
@@ -15,19 +21,8 @@ function generateRandomColors(count) {
   return colors;
 }
 
-const pieData = [
-  { name: 'Grid', value: 30 },
-  { name: 'PV', value: 40 },
-  { name: 'Battery', value: 20 },
-  { name: 'Loss', value: 10 },
-];
-
-const COLORS = generateRandomColors(pieData.length);
-
-// ✅ Custom label: แนวนอน + ตัวเล็ก
-const renderSimpleLabel = ({
-  cx, cy, midAngle, outerRadius, percent, name,
-}) => {
+// ✅ Label: แสดงแค่เปอร์เซ็นต์
+const renderSimpleLabel = ({ cx, cy, midAngle, outerRadius, percent }) => {
   const RADIAN = Math.PI / 180;
   const radius = outerRadius * 0.7;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -38,16 +33,34 @@ const renderSimpleLabel = ({
       x={x}
       y={y}
       fill="white"
-      fontSize={10} // 👈 ตัวเล็กลง
+      fontSize={10}
       textAnchor="middle"
       dominantBaseline="central"
     >
-      {`${name} ${(percent * 100).toFixed(0)}%`}
+      {`${(percent * 100).toFixed(2)}%`}
     </text>
   );
 };
 
-export default function EnergyPieChart() {
+export default function EnergyPieChart({ data }) {
+  let pieData = [];
+
+  if (Array.isArray(data)) {
+    // ✅ กรณีรับแบบ [{ name: 'Energy from Grid', value: 45 }, ...]
+    pieData = data;
+  } else if (data?.devices) {
+    // ✅ กรณีรับแบบ { devices: [...] }
+    pieData = data.devices
+      .filter((d) => !d.deviceName.startsWith('Forecast')) // ❌ ตัด Forecast ออก
+      .map((d) => ({
+        name: d.deviceName,
+        value: d.energy,
+      }));
+  }
+
+  const totalValue = pieData.reduce((sum, item) => sum + item.value, 0);
+  const COLORS = generateRandomColors(pieData.length);
+
   return (
     <>
       <ResponsiveContainer width="100%" height={300}>
@@ -63,11 +76,16 @@ export default function EnergyPieChart() {
             label={renderSimpleLabel}
             labelLine={false}
           >
-            {pieData.map((entry, index) => (
+            {pieData.map((_, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index]} />
             ))}
           </Pie>
-          <Tooltip formatter={(value, name) => [`${value} kWh`, name]} />
+          <Tooltip
+            formatter={(value, name) => {
+              const percent = ((value / totalValue) * 100).toFixed(0);
+              return [`${percent}%`, name];
+            }}
+          />
         </PieChart>
       </ResponsiveContainer>
 

@@ -10,6 +10,8 @@ import EnergyPieChart from "./EnergyPieChart";
 import EnergyTrendChart from "./EnergyChart";
 import RevenueBarChart from "./RevenueBarChart";
 import Tooltip from "@mui/material/Tooltip";
+import { getSummaryOverviewList , getSummaryEnergyHistory ,getSummaryEnergyRevenue } from "@/utils/api";
+import { useEffect } from "react";
 dayjs.extend(customParseFormat);
 
 const { MonthPicker } = DatePicker;
@@ -89,67 +91,137 @@ const DatePickerByRange = ({ range, value, onChange }) => {
 export default function Summary() {
   const [energyRange, setEnergyRange] = useState("day");
   const [energyDate, setEnergyDate] = useState(dayjs());
-
   const [revenueRange, setRevenueRange] = useState("month");
   const [revenueDate, setRevenueDate] = useState(dayjs());
+  const [showLoading, setLoading] = useState(false);
+  const [summaryOverviewData, setSummaryOverviewData] = useState([]);
+  const [energyHistoryData, setEnergyHistoryData] = useState([]);
+  const [revenueHistoryData, setRevenueHistoryData] = useState([]);
+  useEffect(() => {
+    // Fetch data when the component mounts
+    GetSummaryOverview();
+  }, []);
 
-  // const handleClick = (id) => {
-  //   setEnergyRange(id);
-  // };
+  useEffect(() => {
+    // Fetch data when the component mounts
+    GetEnergyHistory();
+  }, [energyDate, energyRange]);
 
-  // const renderDatePicker = () => {
-  //   if (energyRange === "lifetime") {
-  //     return <DatePicker disabled className="ml-4" />;
-  //   }
+useEffect(() => {
+  // Fetch data when the component mounts
+  GetEnergyRevenue();
+}, [revenueDate, revenueRange]);
 
-  //   if (energyRange === "year") {
-  //     return (
-  //       <DatePicker
-  //         picker="year"
-  //         format="YYYY"
-  //         value={selectedDate}
-  //         onChange={(date) => setSelectedDate(date)}
-  //         className="ml-4"
-  //         allowClear={false}
-  //       />
-  //     );
-  //   }
+const GetSummaryOverview = async () => {
+    // const paramsNav = {
+    //   siteId: siteIdRef.current,
+    //   groupId: groupIdRef.current,
+    // };
 
-  //   if (energyRange === "month") {
-  //     return (
-  //       <DatePicker
-  //         picker="month"
-  //         format="YYYY/MM"
-  //         value={selectedDate}
-  //         onChange={(date) => setSelectedDate(date)}
-  //         className="ml-4"
-  //         allowClear={false}
-  //       />
-  //     );
-  //   }
+    // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
-  //   // Default: day
-  //   return (
-  //     <DatePicker
-  //       format="YYYY/MM/DD"
-  //       value={selectedDate}
-  //       onChange={(date) => setSelectedDate(date)}
-  //       className="ml-4"
-  //       allowClear={false}
-  //     />
-  //   );
-  // };
-  const data = {
-    currentPower: { value: "254.14", unit: "kW" },
-    yieldToday: { value: "1.72", unit: "MWh" },
-    revenueToday: { value: "8.48K", unit: "Baht", hasInfo: true },
-    totalYield: { value: "828.91", unit: "MWh", hasInfo: true },
-    inventorRatedPower: { value: "980.00", unit: "kW", hasInfo: true },
-    rateEssCapacity: { value: "0.00", unit: "kWh" },
-    supplyFromGrid: { value: "76.37", unit: "kWh" },
-    co2Avoided: { value: "2.37", unit: "tons" },
-    treePlanted: { value: "4", unit: "" },
+    try {
+      const result = await getSummaryOverviewList();
+      if (result && result.status === 200) {
+        console.log("Device List Result:", result);
+        setSummaryOverviewData(result.data);
+      } else {
+        setSummaryOverviewData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching device list:", error);
+    } finally {
+      // if (showLoading) {
+      //   setTimeout(() => setLoading(false), 1000);
+      // }
+    }
   };
+  
+  const GetEnergyHistory = async () => {
+    const paramsNav = {
+      siteId: 6,
+      date: energyDate.format("YYYY/MM/DD"),
+      groupBy : energyRange,
+    };
+
+    // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+
+    try {
+      const result = await getSummaryEnergyHistory(paramsNav);
+      if (result && result.status === 200) {
+        console.log("Summary History:", result);
+        setEnergyHistoryData(result.data);
+      } else {
+        setEnergyHistoryData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching Summary History:", error);
+    } finally {
+      // if (showLoading) {
+      //   setTimeout(() => setLoading(false), 1000);
+      // }
+    }
+  };
+
+  const GetEnergyRevenue = async () => {
+    const paramsNav = {
+      siteId: 6,
+      date: revenueDate.format("YYYY/MM/DD"),
+      groupBy : revenueRange,
+    };
+
+    // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+
+    try {
+      const result = await getSummaryEnergyRevenue(paramsNav);
+      if (result && result.status === 200) {
+        console.log("Summary Revenue:", result);
+        setRevenueHistoryData(result.data);
+      } else {
+        setRevenueHistoryData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching Summary Revenue:", error);
+    } finally {
+      // if (showLoading) {
+      //   setTimeout(() => setLoading(false), 1000);
+      // }
+    }
+  };
+
+  function formatNumber(num) {
+    if (typeof num !== 'number' || isNaN(num)) {
+      return '-';
+    }
+    return num.toLocaleString('en-US');
+  }
+  
+  function formatNumberWithK(num) {
+    if (typeof num !== 'number' || isNaN(num)) {
+      return '-';
+    }
+  
+    if (num >= 1000) {
+      const value = num / 1000;
+      // ตัดทศนิยมถ้าเป็นเลขกลม เช่น 1000 -> 1k, 1500 -> 1.5k
+      return Number.isInteger(value) ? `${value}K` : `${parseFloat(value.toFixed(1))}K`;
+    }
+  
+    return num.toLocaleString('en-US'); // หรือจะใช้ num.toString() ก็ได้
+  }
+    
+  
+  // const data = {
+  //   currentPower: { value: "254.14", unit: "kW" },
+  //   yieldToday: { value: "1.72", unit: "MWh" },
+  //   revenueToday: { value: "8.48K", unit: "Baht", hasInfo: true },
+  //   totalYield: { value: "828.91", unit: "MWh", hasInfo: true },
+  //   inventorRatedPower: { value: "980.00", unit: "kW", hasInfo: true },
+  //   rateEssCapacity: { value: "0.00", unit: "kWh" },
+  //   supplyFromGrid: { value: "76.37", unit: "kWh" },
+  //   co2Avoided: { value: "2.37", unit: "tons" },
+  //   treePlanted: { value: "4", unit: "" },
+  // };
   console.log("Summary component loaded");
 
   return (
@@ -157,33 +229,34 @@ export default function Summary() {
       <div className="mt-5">
         <span className="text-xl font-bold">Plant KPI</span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 mt-2">
-          <Card title="Current power" {...data.currentPower} />
-          <Card title="Yield today" {...data.yieldToday} />
+          <Card title="Current power" value={formatNumber(summaryOverviewData?.kpi?.currentPower)} unit="kW" />
+          <Card title="Yield today" value={formatNumber(summaryOverviewData?.kpi?.currentPower)} unit="MWh" />
           <Card
             title="Revenue today"
             tootipword={"Yield today * Revenue rate"}
-            {...data.revenueToday}
+            value={formatNumberWithK(summaryOverviewData?.kpi?.yieldToday)} unit="Baht"
+          hasInfo={true}
           />
           <Card
             title="Total yield"
             tootipword={"Total energy yield of the plant since installation."}
-            {...data.totalYield}
+            value={formatNumber(summaryOverviewData?.kpi?.yieldTotal)} unit="MWh" hasInfo={true}
           />
           <Card
             title="Inverter rated power"
             tootipword={
               "The rated power data refers to the capacity of the inverters installed in this plant"
             }
-            {...data.inventorRatedPower}
+            value={formatNumber(summaryOverviewData?.kpi?.inverterRatedPower)} unit="kW" hasInfo={true}
           />
-          <Card title="Rate ESS capacity" {...data.rateEssCapacity} />
-          <Card title="Purchased from grid" {...data.supplyFromGrid} />
+          <Card title="Rate ESS capacity" value={formatNumber(summaryOverviewData?.kpi?.rateEssCapacity)} unit="KWh" />
+          <Card title="Purchased from grid" value={formatNumber(summaryOverviewData?.kpi?.purchasedEnergy)} unit="KWh"  />
         </div>
 
         <span className="text-xl font-bold mb-4">Environmental Benefits</span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 mt-2">
-          <Card title="CO₂ avoided" {...data.co2Avoided} />
-          <Card title="Equivalent tree planted" {...data.treePlanted} />
+          <Card title="CO₂ avoided" value={formatNumber(summaryOverviewData?.environmental?.carbonAvoided)} unit="tons"  />
+          <Card title="Equivalent tree planted" value={formatNumber(summaryOverviewData?.environmental?.equivalentTrees)} unit=""/>
         </div>
       </div>
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200">
@@ -194,6 +267,13 @@ export default function Summary() {
               title="Values above the zero line represent production power, while values below represent consumption power."
               arrow
               placement="top"
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    fontSize: '14px', // ปรับขนาดฟอนต์
+                  },
+                },
+              }}
             >
               <InfoOutlinedIcon
                 className="text-[#33BFBF] ml-1 cursor-pointer"
@@ -223,17 +303,24 @@ export default function Summary() {
 
         <div className="text-lg mb-4">
           <span className="font-base text-sm">Yield: </span>
-          <span className="font-bold text-xl">25.24</span> kWh
+          <span className="font-bold text-xl">{energyHistoryData?.yield}</span> kWh
           <span className="ml-6 font-base text-sm">Consumption: </span>
-          <span className="font-bold text-xl">101.61</span> kWh
+          <span className="font-bold text-xl">{energyHistoryData?.consumption}</span> kWh
         </div>
 
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="w-full lg:w-2/3 h-80 flex flex-col items-center justify-center">
-            <EnergyTrendChart type={energyRange} />
+          <EnergyTrendChart
+  type={energyRange}
+  dataProp={energyHistoryData?.history} // apiData คือ object ที่ได้จาก API
+/>
+
           </div>
           <div className="w-full lg:w-1/3 h-80  flex flex-col items-center justify-center">
-            <EnergyPieChart />
+            <EnergyPieChart  data={[
+    { name: 'Energy from Grid', value:  energyHistoryData?.yield},
+    { name: 'Energy from PV', value: energyHistoryData?.netConsumption },
+  ]}/>
           </div>
         </div>
       </div>
@@ -243,16 +330,6 @@ export default function Summary() {
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center">
             <span className="text-xl font-bold">Revenue Trend</span>
-            <Tooltip
-              title="More information about this metric"
-              arrow
-              placement="top"
-            >
-              <InfoOutlinedIcon
-                className="text-[#33BFBF] ml-1 cursor-pointer"
-                fontSize="small"
-              />
-            </Tooltip>
           </div>
 
           {/* Revenue Section */}
@@ -276,11 +353,11 @@ export default function Summary() {
 
         <div className="text-lg mb-4">
           <span className="font-base text-sm">Total Revenue: </span>
-          <span className="font-bold text-xl">25.24</span> ฿
+          <span className="font-bold text-xl">{formatNumberWithK(revenueHistoryData?.revenue)}</span> ฿
         </div>
 
         <div className="flex flex-col lg:flex-row gap-4">
-          <RevenueBarChart />
+          <RevenueBarChart history={revenueHistoryData?.history}/>
         </div>
       </div>
     </>

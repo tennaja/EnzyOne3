@@ -1,19 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { ResponsiveContainer, Surface, Rectangle } from 'recharts';
 import dayjs from 'dayjs';
 
-const hours = Array.from({ length: 24 }, (_, i) =>
-  `${i.toString().padStart(2, '0')}:00`
-);
-
-const getDaysInMonth = (year, month) => {
-  return Array.from(
-    { length: dayjs(`${year}-${month}-01`).daysInMonth() },
-    (_, i) => (i + 1).toString().padStart(2, '0')
-  );
-};
-
 const getColor = (value, min, max) => {
-  const percent = (value - min) / (max - min || 1);
+  if (min === max) return '#006d5b';
+  const percent = (value - min) / (max - min);
   if (percent < 0.2) return '#006d5b';
   if (percent < 0.4) return '#61ad89';
   if (percent < 0.6) return '#cbe385';
@@ -21,140 +12,165 @@ const getColor = (value, min, max) => {
   return '#f95b3c';
 };
 
-export default function HeatmapPage({ externalData, year, month, sourceType }) {
-  const days = getDaysInMonth(year, month);
-  const [data, setData] = useState([]);
+export default function HeatmapPage({ data = { timestamp: [], value: [] } }) {
+  const [gridData, setGridData] = useState({ rows: [], days: [] });
   const [min, setMin] = useState(0);
   const [max, setMax] = useState(100);
   const [hoverInfo, setHoverInfo] = useState(null);
+  const containerRef = useRef(null);
 
-  const cellWidth = 41;
-  const cellHeight = 18;
-  const leftPadding = 60;
-  const bottomPadding = 30;
+  const cellHeight = 20;
+  const paddingLeft = 40;
+  const minCellWidth = 30;
 
   useEffect(() => {
-    const filteredData = externalData.filter(
-      (entry) =>
-        entry.year === year &&
-        entry.month === month &&
-        (sourceType === 'All' || entry.sourceType === sourceType)
-    );
+    if (!Array.isArray(data.timestamp) || !Array.isArray(data.value) || !data.timestamp.length || !data.value.length) {
+      setGridData({ rows: [], days: [] });
+      return;
+    }
 
-    const rows = hours.map((hour) => {
-      const row = { hour };
-      days.forEach((day) => {
-        const matchedEntry = filteredData.find(
-          (entry) => entry.hour === hour && entry[day] !== undefined
-        );
-        row[day] = matchedEntry ? matchedEntry[day] : 0;
-      });
-      return row;
+    const raw = data.timestamp.map((ts, i) => ({
+      day: dayjs(ts).format('DD'),
+      fullDate: dayjs(ts).format('YYYY/MM/DD'),
+      hour: parseInt(dayjs(ts).format('H')),
+      value: parseFloat(data.value[i]),
+    }));
+
+    const values = raw.map(d => d.value);
+    setMin(Math.min(...values));
+    setMax(Math.max(...values));
+
+    const grouped = {};
+    raw.forEach(({ day, hour, value, fullDate }) => {
+      if (!grouped[day]) grouped[day] = {};
+      grouped[day][hour] = { value, fullDate };
     });
 
-    const allValues = rows.flatMap((row) => days.map((day) => row[day]));
-    setMin(Math.min(...allValues));
-    setMax(Math.max(...allValues));
-    setData(rows);
-  }, [year, month, sourceType, externalData]);
+    const days = Object.keys(grouped).sort();
+    const rows = [];
 
-  const reversedData = [...data].reverse();
-  const svgWidth = days.length * cellWidth + leftPadding + 10;
-  const svgHeight = reversedData.length * cellHeight + bottomPadding;
+    for (let hour = 0; hour < 24; hour++) {
+      const row = { hour };
+      days.forEach(day => {
+        row[day] = grouped[day][hour] ?? null;
+      });
+      rows.push(row);
+    }
+
+    setGridData({ rows, days });
+  }, [data]);
+
+  const hasNoData =
+    !Array.isArray(data.timestamp) ||
+    !Array.isArray(data.value) ||
+    !data.timestamp.length ||
+    !data.value.length ||
+    !gridData.rows.length ||
+    !gridData.days.length;
+
+  if (hasNoData) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '400px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 16,
+          color: '#888',
+          // background: '#f9f9f9',
+          borderRadius: 12,
+          border: '1px solid #ddd',
+        }}
+      >
+        No data available
+      </div>
+    );
+  }
+
+  const dayCount = gridData.days.length;
+  const containerWidth = containerRef.current?.offsetWidth || 1000;
+  const cellWidth = Math.max((containerWidth - paddingLeft) / dayCount, minCellWidth);
+  const graphWidth = cellWidth * dayCount + paddingLeft;
+  const height = 24 * cellHeight + 40;
 
   return (
-    <div style={{ width: '100%', position: 'relative' }}>
-      {/* Heatmap */}
-      <div style={{ overflowX: 'auto', marginTop: 0 }}>
-        <svg width={svgWidth} height={svgHeight}>
-          {/* Grid lines */}
-          {reversedData.map((_, rowIndex) => (
-            <line
-              key={`h-line-${rowIndex}`}
-              x1={leftPadding}
-              y1={rowIndex * cellHeight}
-              x2={days.length * cellWidth + leftPadding}
-              y2={rowIndex * cellHeight}
-              stroke="#ccc"
-              strokeWidth={0.5}
-            />
-          ))}
-          {days.map((_, colIndex) => (
-            <line
-              key={`v-line-${colIndex}`}
-              x1={colIndex * cellWidth + leftPadding}
-              y1={0}
-              x2={colIndex * cellWidth + leftPadding}
-              y2={reversedData.length * cellHeight}
-              stroke="#ccc"
-              strokeWidth={0.5}
-            />
-          ))}
+    <div
+      ref={containerRef}
+      style={{
+        width: '100%',
+        overflowX: 'auto',
+        position: 'relative',
+      }}
+    >
+      <div style={{ width: graphWidth }}>
+        <ResponsiveContainer width="100%" height={height}>
+          <Surface>
+            {/* Y-Axis (Hours) */}
+            {gridData.rows.map((row, rowIndex) => (
+              <text
+                key={`hour-label-${rowIndex}`}
+                x={0}
+                y={rowIndex * cellHeight + 15}
+                fontSize={10}
+                fill="#444"
+              >
+                {row.hour}:00
+              </text>
+            ))}
 
-          {/* Rectangles */}
-          {reversedData.map((row, rowIndex) =>
-            days.map((day, colIndex) => {
-              const value = row[day];
-              const x = colIndex * cellWidth + leftPadding;
-              const y = rowIndex * cellHeight;
+            {/* Grid Cells */}
+            {gridData.rows.map((row, rowIndex) =>
+              gridData.days.map((day, colIndex) => {
+                const cell = row[day];
+                const value = cell?.value ?? null;
+                const fullDate = cell?.fullDate;
+                const color = value != null ? getColor(value, min, max) : '#eee';
 
-              return (
-                <rect
-                  key={`${row.hour}-${day}`}
-                  x={x}
-                  y={y}
-                  width={cellWidth}
-                  height={cellHeight}
-                  fill={getColor(value, min, max)}
-                  stroke="#fff"
-                  onMouseEnter={(e) => {
-                    const bounds = e.currentTarget.ownerSVGElement.getBoundingClientRect();
-                    const svgLeft = bounds.left;
-                    const svgTop = bounds.top;
-                    setHoverInfo({
-                      x: e.clientX - svgLeft,
-                      y: e.clientY - svgTop,
-                      hour: row.hour,
-                      day,
-                      value,
-                    });
-                  }}
-                  onMouseLeave={() => setHoverInfo(null)}
-                />
-              );
-            })
-          )}
+                const x = colIndex * cellWidth + paddingLeft;
+                const y = rowIndex * cellHeight;
 
-          {/* Y-axis labels */}
-          {reversedData.map((row, rowIndex) => (
-            <text
-              key={`y-label-${row.hour}`}
-              x={leftPadding - 6}
-              y={rowIndex * cellHeight + cellHeight / 2 + 4}
-              textAnchor="end"
-              fontSize="11"
-              fill="currentColor"
-              className="text-black dark:text-white"
-            >
-              {row.hour}
-            </text>
-          ))}
+                return (
+                  <Rectangle
+                    key={`cell-${rowIndex}-${colIndex}`}
+                    x={x}
+                    y={y}
+                    width={cellWidth}
+                    height={cellHeight}
+                    fill={color}
+                    stroke="#fff"
+                    onMouseEnter={(e) => {
+                      const bounds = e.currentTarget.ownerSVGElement.getBoundingClientRect();
+                      setHoverInfo({
+                        x: e.clientX - bounds.left + 10,
+                        y: e.clientY - bounds.top + 10,
+                        value,
+                        hour: row.hour,
+                        day: fullDate,
+                      });
+                    }}
+                    onMouseLeave={() => setHoverInfo(null)}
+                  />
+                );
+              })
+            )}
 
-          {/* X-axis labels */}
-          {days.map((day, colIndex) => (
-            <text
-              key={`x-label-${day}`}
-              x={colIndex * cellWidth + leftPadding + cellWidth / 2}
-              y={reversedData.length * cellHeight + 15}
-              textAnchor="middle"
-              fontSize="11"
-              fill="currentColor"
-              className="text-black dark:text-white"
-            >
-              {day}
-            </text>
-          ))}
-        </svg>
+            {/* X-Axis (Days) */}
+            {gridData.days.map((day, colIndex) => (
+              <text
+                key={`day-label-${day}`}
+                x={colIndex * cellWidth + paddingLeft + cellWidth / 2}
+                y={24 * cellHeight + 10}
+                fontSize={10}
+                textAnchor="middle"
+                fill="#444"
+              >
+                {day}
+              </text>
+            ))}
+          </Surface>
+        </ResponsiveContainer>
       </div>
 
       {/* Tooltip */}
@@ -162,20 +178,21 @@ export default function HeatmapPage({ externalData, year, month, sourceType }) {
         <div
           style={{
             position: 'absolute',
-            left: hoverInfo.x + 10,
-            top: hoverInfo.y + 10,
-            background: 'rgba(255, 255, 255, 0.95)',
-            border: '1px solid #ccc',
-            borderRadius: 4,
+            left: hoverInfo.x,
+            top: hoverInfo.y,
+            background: 'white',
             padding: '4px 8px',
             fontSize: 12,
+            borderRadius: 4,
+            border: '1px solid #ccc',
+            boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
             pointerEvents: 'none',
-            whiteSpace: 'nowrap',
             zIndex: 10,
+            whiteSpace: 'nowrap',
           }}
         >
-          <div><strong>Hour:</strong> {hoverInfo.hour}</div>
           <div><strong>Day:</strong> {hoverInfo.day}</div>
+          <div><strong>Hour:</strong> {hoverInfo.hour}:00</div>
           <div><strong>Value:</strong> {hoverInfo.value}</div>
         </div>
       )}

@@ -16,116 +16,110 @@ import {
   CartesianGrid,
 } from 'recharts';
 
-const rawData = [];
+const distinctColors = [
+  '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+  '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe',
+  '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000',
+  '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080'
+];
 
-for (let day = 1; day <= 3; day++) {
-  const time = `${day.toString().padStart(2, '0')}`;
+export default function EnergyTrendChart2({ type = 'day', data = {} }) {
+  const { devices = [], timestamp = [] } = data;
 
-  rawData.push({
-    day: time,
-    gen1: 40 + Math.floor(Math.random() * 50),
-    gen2: 50 + Math.floor(Math.random() * 50),
-    gen3: 30 + Math.floor(Math.random() * 50),
-    forecastGen1: 45 + Math.floor(Math.random() * 40),
-    forecastGen2: 55 + Math.floor(Math.random() * 30),
-    forecastGen3: 35 + Math.floor(Math.random() * 30),
+  // map ข้อมูล chart โดยใช้ timestamp จริง
+  const chartData = timestamp.map((time, index) => {
+    const point = { time }; // ใช้ timestamp ดิบเป็นแกน X
+    devices.forEach((device, i) => {
+      point[`gen${i + 1}`] = device.history?.[index] ?? 0;
+    });
+    return point;
   });
-}
 
-const data = rawData.map(item => ({
-  ...item,
-}));
-
-const maxY = Math.max(
-  ...data.flatMap(item => [
-    item.gen1,
-    item.gen2,
-    item.gen3,
-    item.forecastGen1,
-    item.forecastGen2,
-    item.forecastGen3,
-  ])
-);
-
-export default function EnergyTrendChart2({ type }) {
-  const renderUnitLabel = () => (
-    <text
-  x={40}
-  y={15}
-  fontSize={15}
-  fontWeight="bold"
-  fill="currentColor"
-  className="text-black dark:text-white"
->
-  kWh
-</text>
-
+  const maxY = Math.max(
+    ...chartData.flatMap(item =>
+      devices.map((_, i) => item[`gen${i + 1}`] ?? 0)
+    )
   );
 
+  const renderUnitLabel = () => (
+    <text
+      x={40}
+      y={15}
+      fontSize={15}
+      fontWeight="bold"
+      fill="currentColor"
+      className="text-black dark:text-white"
+    >
+      kWh
+    </text>
+  );
+
+  // ใช้ ComposedChart สำหรับกราฟรวมข้อมูลทุกเครื่อง
   if (type === 'month' || type === 'year' || type === 'lifetime') {
     return (
       <ResponsiveContainer width="100%" height={300}>
-        <ComposedChart data={data} barCategoryGap={10} margin={{ top: 40 }}>
+        <ComposedChart data={chartData} margin={{ top: 40 }}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="day" />
+          <XAxis
+            dataKey="time"
+            tick={{ fontSize: 8 }}
+            angle={-45}
+            textAnchor="end"
+            height={60}
+            interval={0}
+          />
           <YAxis domain={[0, maxY]} />
           <Tooltip />
           <Legend />
           <ReferenceLine y={0} stroke="gray" strokeDasharray="3 3" />
           {renderUnitLabel()}
-
-          {/* Stacked Bar with stackId */}
-          <Bar dataKey="gen1" stackId="a" name="Gen 1" fill="#FFB74D" />
-          <Bar dataKey="gen2" stackId="a" name="Gen 2" fill="#81C784" />
-          <Bar dataKey="gen3" stackId="a" name="Gen 3" fill="#4FC3F7" />
-
-          <Brush dataKey="day" height={30} stroke="#8884d8" />
+          {devices.map((device, i) => (
+            <Bar
+              key={`bar-gen${i + 1}`}
+              dataKey={`gen${i + 1}`}
+              name={device.deviceName || `Gen ${i + 1}`}
+              fill={distinctColors[i % distinctColors.length]}
+              stackId="a"
+            />
+          ))}
+          <Brush dataKey="time" height={30} stroke="#8884d8" />
         </ComposedChart>
       </ResponsiveContainer>
     );
   }
 
+  // สำหรับ type === 'day'
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data} margin={{ top: 40 }}>
+      <LineChart data={chartData} margin={{ top: 40 }}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="day" />
+        <XAxis
+          dataKey="time"
+          tick={{ fontSize: 8 }}
+          angle={-45}
+          textAnchor="end"
+          height={60}
+          interval={0}
+        />
         <YAxis domain={[0, maxY]} />
         <Tooltip />
         <Legend wrapperStyle={{ marginBottom: -20 }} />
         <ReferenceLine y={0} stroke="gray" strokeDasharray="3 3" />
         {renderUnitLabel()}
-
-        <Line type="monotone" dataKey="gen1" stroke="#FB8C00" strokeWidth={2} name="Gen 1" />
-        <Line type="monotone" dataKey="gen2" stroke="#008001" strokeWidth={2} name="Gen 2" />
-        <Line type="monotone" dataKey="gen3" stroke="#03A9F4" strokeWidth={2} name="Gen 3" />
-
-        <Line
-          type="monotone"
-          dataKey="forecastGen1"
-          stroke="#4FC3F7"
-          strokeWidth={2}
-          name="Forecast Gen 1"
-          strokeDasharray="5 5"
-        />
-        <Line
-          type="monotone"
-          dataKey="forecastGen2"
-          stroke="#FFEB3B"
-          strokeWidth={2}
-          name="Forecast Gen 2"
-          strokeDasharray="5 5"
-        />
-        <Line
-          type="monotone"
-          dataKey="forecastGen3"
-          stroke="#BA68C8"
-          strokeWidth={2}
-          name="Forecast Gen 3"
-          strokeDasharray="5 5"
-        />
-
-        <Brush dataKey="day" height={30} stroke="#8884d8" />
+        {devices.map((device, i) => (
+          <Line
+            key={`line-gen${i + 1}`}
+            type="monotone"
+            dataKey={`gen${i + 1}`}
+            stroke={distinctColors[i % distinctColors.length]}
+            strokeWidth={2}
+            name={device.deviceName || `Gen ${i + 1}`}
+            strokeDasharray={
+              device.deviceName?.toLowerCase().includes('forecast') ? '5 5' : ''
+            }
+          />
+        ))}
+        <Brush dataKey="time" height={30} stroke="#8884d8" />
       </LineChart>
     </ResponsiveContainer>
   );

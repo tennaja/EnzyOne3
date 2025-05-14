@@ -2117,8 +2117,141 @@ export async function getChargeHeadList(chargerId) {
   }
 }
 
+//Energy Analytics-----------------------------------------------
+export async function getSummaryOverviewList() {
+  try {
+    const url =
+      "https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/summary/overview?siteId=1";
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
 
+export async function getSummaryEnergyHistory(req) {
+  const siteId = req.siteId;
+  const date = req.date
+  const groupBy = req.groupBy;
 
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/summary/energy-history?groupBy=${groupBy}&date=${date}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getSummaryEnergyRevenue(req) {
+  const siteId = req.siteId;
+  const date = req.date
+  const groupBy = req.groupBy;
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/summary/revenue-history?groupBy=${groupBy}&date=${date}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getProductEnergyDeviceList(siteId) { 
+ 
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/production/summary?siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getProductEnergyHistory(req) {  
+  const siteId = req.siteId;
+  const date = req.date
+  const groupBy = req.groupBy;
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/production/energy-history?groupBy=${groupBy}&date=${date}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getProductRevenueHistory(req) {  
+  const siteId = req.siteId;
+  const date = req.date
+  const groupBy = req.groupBy;
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/production/revenue-history?groupBy=${groupBy}&date=${date}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getProductDeviceList(siteId) {
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/production/device-list?siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  }
+  catch (error) {
+    return error;
+  }
+}
+
+export async function getProductionHeatmap(req) {  
+  const siteId = req.siteId;
+  const date = req.date
+  const deviceId = req.deviceId;
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/production/heatmap?date=${date}&deviceId=${deviceId}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
 
 
 
