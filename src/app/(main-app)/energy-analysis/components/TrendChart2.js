@@ -16,55 +16,73 @@ import {
   CartesianGrid,
 } from 'recharts';
 
-const rawData = [];
-
-for (let day = 1; day <= 3; day++) {
-  const time = `${day.toString().padStart(2, '0')}`;
-
-  rawData.push({
-    day: time,
-    gen1: 40 + Math.floor(Math.random() * 50),
-    gen2: 50 + Math.floor(Math.random() * 50),
-    gen3: 30 + Math.floor(Math.random() * 50),
-    forecastGen1: 45 + Math.floor(Math.random() * 40),
-    forecastGen2: 55 + Math.floor(Math.random() * 30),
-    forecastGen3: 35 + Math.floor(Math.random() * 30),
-  });
-}
-
-const data = rawData.map(item => ({ ...item }));
-
-const maxY = Math.max(
-  ...data.flatMap(item => [
-    item.gen1,
-    item.gen2,
-    item.gen3,
-    item.forecastGen1,
-    item.forecastGen2,
-    item.forecastGen3,
-  ])
-);
-
-export default function EnergyTrendChart3({ type }) {
+export default function EnergyTrendChart3({ type, data }) {
   const isSummaryType = type === 'month' || type === 'year' || type === 'lifetime';
+
+  const { devices = [], timestamp = [] } = data;
+  if (!timestamp.length || !devices.length) {
+    return (
+      <div
+      style={{
+        width: '100%',
+        height: '300px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 16,
+        color: '#888',
+        borderRadius: 12,
+        border: '1px solid #ddd',
+      }}
+    >
+      No data available
+    </div>
+    );
+  }
+
+  // 🔁 แปลงข้อมูลให้อยู่ในรูปแบบ Array พร้อม actual & baseline ต่อ device
+  const chartData = timestamp.map((time, index) => {
+    const point = { day: time };
+
+    devices.forEach((device, dIndex) => {
+      const deviceKey = device.deviceName;
+      point[deviceKey] = device.history?.[index] ?? null;
+
+      // baseline ของแต่ละ device -> ตั้งชื่อแยก key
+      if (isSummaryType && Array.isArray(device.baseline)) {
+        point[`baseline_${deviceKey}`] = device.baseline[index] ?? null;
+      }
+    });
+
+    return point;
+  });
+
+  // 🔍 คำนวณ maxY เพื่อขยาย Y-axis
+  const allValues = chartData.flatMap(obj =>
+    Object.values(obj).filter(v => typeof v === 'number')
+  );
+  const maxY = Math.max(...allValues);
+
+  const colorList = ['#FB8C00', '#008001', '#03A9F4', '#AB47BC', '#FF7043'];
+  const baselineColorList = ['#FFD54F', '#AED581', '#81D4FA', '#CE93D8', '#FFAB91'];
 
   const renderUnitLabel = () => (
     <text
-    x={40}
-    y={15}
-    fontSize={15}
-    fontWeight="bold"
-    fill="currentColor"
-    className="text-black dark:text-white"
-  >
-    kWh
-  </text>
+      x={40}
+      y={15}
+      fontSize={15}
+      fontWeight="bold"
+      fill="currentColor"
+      className="text-black dark:text-white"
+    >
+      kWh
+    </text>
   );
 
   if (isSummaryType) {
     return (
       <ResponsiveContainer width="100%" height={300}>
-        <ComposedChart data={data} barCategoryGap={10} margin={{ top: 40 }}>
+        <ComposedChart data={chartData} barCategoryGap={10} margin={{ top: 40 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="day" />
           <YAxis domain={[0, maxY]} />
@@ -73,15 +91,30 @@ export default function EnergyTrendChart3({ type }) {
           <ReferenceLine y={0} stroke="gray" strokeDasharray="3 3" />
           {renderUnitLabel()}
 
-          {/* Load Bars */}
-          <Bar dataKey="gen1" stackId="load" name="Load 1" fill="#FFB74D" />
-          <Bar dataKey="gen2" stackId="load" name="Load 2" fill="#81C784" />
-          <Bar dataKey="gen3" stackId="load" name="Load 3" fill="#4FC3F7" />
+          {/* 🟠 Actual */}
+          {devices.map((device, index) => (
+            <Bar
+              key={`actual-${device.deviceName}`}
+              dataKey={device.deviceName}
+              stackId="actual"
+              name={device.deviceName}
+              fill={colorList[index % colorList.length]}
+            />
+          ))}
 
-          {/* Baseline Load Bars */}
-          <Bar dataKey="forecastGen1" stackId="baseline" name="Baseline Load A" fill="#FFD54F" />
-          <Bar dataKey="forecastGen2" stackId="baseline" name="Baseline Load B" fill="#AED581" />
-          <Bar dataKey="forecastGen3" stackId="baseline" name="Baseline Load C" fill="#81D4FA" />
+          {/* 🟡 Baseline */}
+          {devices.map((device, index) => {
+            const baselineKey = `baseline_${device.deviceName}`;
+            return (
+              <Bar
+                key={`baseline-${device.deviceName}`}
+                dataKey={baselineKey}
+                stackId="baseline"
+                name={`Baseline ${device.deviceName}`}
+                fill={baselineColorList[index % baselineColorList.length]}
+              />
+            );
+          })}
 
           <Brush dataKey="day" height={30} stroke="#8884d8" />
         </ComposedChart>
@@ -89,9 +122,10 @@ export default function EnergyTrendChart3({ type }) {
     );
   }
 
+  // 🔵 แบบ LineChart สำหรับ non-summary
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data} margin={{ top: 40 }}>
+      <LineChart data={chartData} margin={{ top: 40 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="day" />
         <YAxis domain={[0, maxY]} />
@@ -100,10 +134,16 @@ export default function EnergyTrendChart3({ type }) {
         <ReferenceLine y={0} stroke="gray" strokeDasharray="3 3" />
         {renderUnitLabel()}
 
-        {/* Only Load Lines */}
-        <Line type="monotone" dataKey="gen1" stroke="#FB8C00" strokeWidth={2} name="Load 1" />
-        <Line type="monotone" dataKey="gen2" stroke="#008001" strokeWidth={2} name="Load 2" />
-        <Line type="monotone" dataKey="gen3" stroke="#03A9F4" strokeWidth={2} name="Load 3" />
+        {devices.map((device, index) => (
+          <Line
+            key={device.deviceName}
+            type="monotone"
+            dataKey={device.deviceName}
+            stroke={colorList[index % colorList.length]}
+            strokeWidth={2}
+            name={device.deviceName}
+          />
+        ))}
 
         <Brush dataKey="day" height={30} stroke="#8884d8" />
       </LineChart>

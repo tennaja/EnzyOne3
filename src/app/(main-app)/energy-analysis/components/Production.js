@@ -10,13 +10,13 @@ import RevenueBarChart2 from "./BarChart";
 import { Select, Space } from "antd";
 import HeatmapPage from "./Heatmap";
 import {
-  getProductEnergyDeviceList,
+  getProductSummary,
   getProductEnergyHistory,
   getProductRevenueHistory,
   getProductDeviceList,
   getProductionHeatmap
 } from "@/utils/api";
-
+import Loading from "./Loading";
 const { Option } = Select;
 
 const allTabs = [
@@ -88,22 +88,7 @@ const DatePickerByRange = ({ range, value, onChange }) => {
   );
 };
 
-const loadData = [
-  {
-    id: 1,
-    source: "Gen 1",
-    powerGeneration: "120.50",
-    energyGeneration: "300.50",
-    revenue: "100.00",
-  },
-  {
-    id: 2,
-    source: "Gen 2",
-    powerGeneration: "110.10",
-    energyGeneration: "280.00",
-    revenue: "90.00",
-  },
-];
+
 
 export default function Production() {
   const [searchLoad, setSearchLoad] = useState("");
@@ -114,15 +99,11 @@ export default function Production() {
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
   const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
-
   const [year, setYear] = useState(currentYear.toString());
   const [month, setMonth] = useState(currentMonth);
   const [externalData, setExternalData] = useState([]);
   const yearMonth = `${year}/${month}`;
-
-  
   const [sourceType, setSourceType] = useState(0); // ใช้ number 0 สำหรับ All
-
   const [productDeviceList, setProductDeviceList] = useState([]);
   const [dropdownDeviceList, setDropdownDeviceList] = useState([]);
   const [energyHistoryData, setEnergyHistoryData] = useState([]);
@@ -132,6 +113,7 @@ export default function Production() {
     energy: "0.00",
     revenue: "0.00",
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     GetEnergyProductDeviceList();
@@ -150,9 +132,9 @@ export default function Production() {
 
   const GetEnergyProductDeviceList = async () => {
     const siteId = 6;
-
+    setLoading(true)
     try {
-      const result = await getProductEnergyDeviceList(siteId);
+      const result = await getProductSummary(siteId);
       if (result && result.status === 200) {
         const data = result.data;
 
@@ -180,11 +162,13 @@ export default function Production() {
       console.error("Error fetching Summary History:", error);
       setProductDeviceList([]);
       setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
+    }finally {
+      setLoading(false)
     }
   };
   const GetDropdownDeviceList = async () => {
     const siteId = 6;
-
+    setLoading(true)
     try {
       const result = await getProductDeviceList(siteId);
       if (result && result.status === 200) {
@@ -197,6 +181,8 @@ export default function Production() {
       console.error("Error fetching Summary History:", error);
       setProductDeviceList([]);
       setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
+    }finally {
+      setLoading(false)
     }
   };
   const GetEnergyHistory = async () => {
@@ -205,7 +191,7 @@ export default function Production() {
       date: energyDate.format("YYYY/MM/DD"),
       groupBy: energyRange,
     };
-
+    setLoading(true)
     // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
     try {
@@ -219,6 +205,7 @@ export default function Production() {
     } catch (error) {
       console.error("Error fetching Summary History:", error);
     } finally {
+      setLoading(false)
       // if (showLoading) {
       //   setTimeout(() => setLoading(false), 1000);
       // }
@@ -231,6 +218,7 @@ export default function Production() {
       date: revenueDate.format("YYYY/MM/DD"),
       groupBy : revenueRange,
     };
+    setLoading(true)
 
     // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
     try {
@@ -244,6 +232,7 @@ export default function Production() {
     } catch (error) {
       console.error("Error fetching Summary Revenue:", error);
     } finally {
+      setLoading(false)
       // if (showLoading) {
       //   setTimeout(() => setLoading(false), 1000);
       // }
@@ -282,7 +271,6 @@ export default function Production() {
       }))
       .filter(
         (item) =>
-          item.name.toLowerCase().includes(search.toLowerCase()) ||
           item.name.toString().includes(search.toLowerCase()) ||
           item.power.toString().includes(search.toLowerCase()) ||
           item.energy.toString().includes(search.toLowerCase()) ||
@@ -317,11 +305,14 @@ export default function Production() {
   
     if (num >= 1000) {
       const value = num / 1000;
-      // ตัดทศนิยมถ้าเป็นเลขกลม เช่น 1000 -> 1k, 1500 -> 1.5k
-      return Number.isInteger(value) ? `${value}K` : `${parseFloat(value.toFixed(1))}K`;
+      // format number with commas, ถ้าเป็น integer แสดงไม่ต้องมีทศนิยม
+      const formattedValue = Number.isInteger(value)
+        ? value.toLocaleString('en-US')
+        : parseFloat(value.toFixed(1)).toLocaleString('en-US');
+      return `${formattedValue}K`;
     }
   
-    return num.toLocaleString('en-US'); // หรือจะใช้ num.toString() ก็ได้
+    return num.toLocaleString('en-US'); // ใส่ลูกน้ำให้ตัวเลขที่น้อยกว่า 1000
   }
  
   const handleYearChange = (newYear) => {
@@ -548,7 +539,7 @@ export default function Production() {
 
   {dropdownDeviceList.map((item) => (
     <Option key={item.id} value={item.id}>
-      {item.devId}
+      {item.name}
     </Option>
   ))}
 </Select>
@@ -560,6 +551,7 @@ export default function Production() {
         <div className="w-full flex items-center justify-center mt-5"></div>
           <HeatmapPage data={externalData} />
       </div>
+      {loading && <Loading/>}  
     </>
   );
 }

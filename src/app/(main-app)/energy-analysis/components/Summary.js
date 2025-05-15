@@ -12,6 +12,7 @@ import RevenueBarChart from "./RevenueBarChart";
 import Tooltip from "@mui/material/Tooltip";
 import { getSummaryOverviewList , getSummaryEnergyHistory ,getSummaryEnergyRevenue } from "@/utils/api";
 import { useEffect } from "react";
+import Loading from "./Loading";
 dayjs.extend(customParseFormat);
 
 const { MonthPicker } = DatePicker;
@@ -93,7 +94,7 @@ export default function Summary() {
   const [energyDate, setEnergyDate] = useState(dayjs());
   const [revenueRange, setRevenueRange] = useState("month");
   const [revenueDate, setRevenueDate] = useState(dayjs());
-  const [showLoading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [summaryOverviewData, setSummaryOverviewData] = useState([]);
   const [energyHistoryData, setEnergyHistoryData] = useState([]);
   const [revenueHistoryData, setRevenueHistoryData] = useState([]);
@@ -117,7 +118,7 @@ const GetSummaryOverview = async () => {
     //   siteId: siteIdRef.current,
     //   groupId: groupIdRef.current,
     // };
-
+    setLoading(true)
     // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
     try {
@@ -131,6 +132,7 @@ const GetSummaryOverview = async () => {
     } catch (error) {
       console.error("Error fetching device list:", error);
     } finally {
+      setLoading(false)
       // if (showLoading) {
       //   setTimeout(() => setLoading(false), 1000);
       // }
@@ -143,7 +145,7 @@ const GetSummaryOverview = async () => {
       date: energyDate.format("YYYY/MM/DD"),
       groupBy : energyRange,
     };
-
+    setLoading(true)
     // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
     try {
@@ -157,6 +159,7 @@ const GetSummaryOverview = async () => {
     } catch (error) {
       console.error("Error fetching Summary History:", error);
     } finally {
+      setLoading(false)
       // if (showLoading) {
       //   setTimeout(() => setLoading(false), 1000);
       // }
@@ -169,7 +172,7 @@ const GetSummaryOverview = async () => {
       date: revenueDate.format("YYYY/MM/DD"),
       groupBy : revenueRange,
     };
-
+    setLoading(true)
     // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
     try {
@@ -183,6 +186,7 @@ const GetSummaryOverview = async () => {
     } catch (error) {
       console.error("Error fetching Summary Revenue:", error);
     } finally {
+      setLoading(false)
       // if (showLoading) {
       //   setTimeout(() => setLoading(false), 1000);
       // }
@@ -203,12 +207,17 @@ const GetSummaryOverview = async () => {
   
     if (num >= 1000) {
       const value = num / 1000;
-      // ตัดทศนิยมถ้าเป็นเลขกลม เช่น 1000 -> 1k, 1500 -> 1.5k
-      return Number.isInteger(value) ? `${value}K` : `${parseFloat(value.toFixed(1))}K`;
+      // format number with commas, ถ้าเป็น integer แสดงไม่ต้องมีทศนิยม
+      const formattedValue = Number.isInteger(value)
+        ? value.toLocaleString('en-US')
+        : parseFloat(value.toFixed(1)).toLocaleString('en-US');
+      return `${formattedValue}K`;
     }
   
-    return num.toLocaleString('en-US'); // หรือจะใช้ num.toString() ก็ได้
+    return num.toLocaleString('en-US'); // ใส่ลูกน้ำให้ตัวเลขที่น้อยกว่า 1000
   }
+  
+  
     
   
   // const data = {
@@ -302,11 +311,26 @@ const GetSummaryOverview = async () => {
         </div>
 
         <div className="text-lg mb-4">
-          <span className="font-base text-sm">Yield: </span>
-          <span className="font-bold text-xl">{energyHistoryData?.yield}</span> kWh
-          <span className="ml-6 font-base text-sm">Consumption: </span>
-          <span className="font-bold text-xl">{energyHistoryData?.consumption}</span> kWh
-        </div>
+  <span className="font-base text-sm">Yield: </span>
+  <span className="font-bold text-xl">
+    {formatNumberWithK(
+      energyHistoryData?.yield > 1000 
+        ? energyHistoryData.yield / 1000 
+        : energyHistoryData?.yield
+    )}
+  </span> {energyHistoryData?.yield > 1000 ? 'MWh' : 'kWh'}
+
+  <span className="ml-6 font-base text-sm">Consumption: </span>
+  <span className="font-bold text-xl">
+    {formatNumberWithK(
+      energyHistoryData?.consumption > 1000 
+        ? energyHistoryData.consumption / 1000 
+        : energyHistoryData?.consumption
+    )}
+  </span> {energyHistoryData?.consumption > 1000 ? 'MWh' : 'kWh'}
+</div>
+
+
 
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="w-full lg:w-2/3 h-80 flex flex-col items-center justify-center">
@@ -360,6 +384,7 @@ const GetSummaryOverview = async () => {
           <RevenueBarChart history={revenueHistoryData?.history}/>
         </div>
       </div>
+      {loading && <Loading/>}  
     </>
   );
 }

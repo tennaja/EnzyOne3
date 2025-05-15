@@ -44,7 +44,7 @@ const renderSimpleLabel = ({ cx, cy, midAngle, outerRadius, percent }) => {
 
 export default function EnergyPieChart({ data }) {
   let pieData = [];
-
+console.log('EnergyPieChart data:', data);
   if (Array.isArray(data)) {
     // ✅ กรณีรับแบบ [{ name: 'Energy from Grid', value: 45 }, ...]
     pieData = data;
@@ -81,11 +81,13 @@ export default function EnergyPieChart({ data }) {
             ))}
           </Pie>
           <Tooltip
-            formatter={(value, name) => {
-              const percent = ((value / totalValue) * 100).toFixed(0);
-              return [`${percent}%`, name];
-            }}
-          />
+  formatter={(value, name) => {
+    const percent = ((value / totalValue) * 100).toFixed(2);
+    return [`${percent}%`, name];
+  }}
+/>
+
+
         </PieChart>
       </ResponsiveContainer>
 

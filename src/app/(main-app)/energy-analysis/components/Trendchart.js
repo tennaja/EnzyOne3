@@ -25,6 +25,25 @@ const distinctColors = [
 
 export default function EnergyTrendChart2({ type = 'day', data = {} }) {
   const { devices = [], timestamp = [] } = data;
+  if (!timestamp.length || !devices.length) {
+    return (
+      <div
+      style={{
+        width: '100%',
+        height: '300px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 16,
+        color: '#888',
+        borderRadius: 12,
+        border: '1px solid #ddd',
+      }}
+    >
+      No data available
+    </div>
+    );
+  }
 
   // map ข้อมูล chart โดยใช้ timestamp จริง
   const chartData = timestamp.map((time, index) => {

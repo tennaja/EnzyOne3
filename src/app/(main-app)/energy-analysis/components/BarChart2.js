@@ -14,38 +14,58 @@ import {
   Brush,
 } from 'recharts';
 
-const data = [];
+export default function RevenueChart3({ data }) {
+  if (!data || !data.timestamp?.length || !data.devices?.length) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '400px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 16,
+          color: '#888',
+          borderRadius: 12,
+          border: '1px solid #ddd',
+        }}
+      >
+        No data available
+      </div>
+    );
+  }
 
-for (let day = 1; day <= 18; day++) {
-  const time = `${day.toString().padStart(2, '0')}`;
-  data.push({
-    day: time,
-    gen1: 40 + Math.floor(Math.random() * 50),
-    gen2: 50 + Math.floor(Math.random() * 50),
-    gen3: 30 + Math.floor(Math.random() * 50),
-    baseline1: 60 + Math.floor(Math.random() * 20),
-    baseline2: 70 + Math.floor(Math.random() * 20),
-    baseline3: 50 + Math.floor(Math.random() * 20),
+  const deviceNames = data.devices.map(device => device.deviceName);
+
+  // รวมข้อมูลต่อวัน
+  const chartData = data.timestamp.map((date, index) => {
+    const entry = {
+      day: date.slice(8, 10), // เอาแค่เลขวันที่
+      fullDate: date,
+    };
+
+    data.devices.forEach(device => {
+      entry[device.deviceName] = device.history[index] ?? 0;
+    });
+
+    // สมมุติว่า baseline ของ device แรกเป็น baseline รวม
+    entry['baseline'] = data.devices[0]?.baseline[index] ?? 0;
+
+    return entry;
   });
-}
 
-const maxY = Math.max(
-  ...data.flatMap(item => [
-    item.gen1,
-    item.gen2,
-    item.gen3,
-    item.baseline1,
-    item.baseline2,
-    item.baseline3,
-  ])
-);
+  const maxY = Math.max(
+    ...chartData.flatMap(item => [
+      ...deviceNames.map(name => item[name]),
+      item.baseline,
+    ])
+  );
 
-export default function RevenueChart3() {
   return (
     <div style={{ width: '100%', height: 420 }}>
       <ResponsiveContainer width="100%" height={400}>
         <ComposedChart
-          data={data}
+          data={chartData}
           margin={{ top: 40, right: 30, left: 20, bottom: 40 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
@@ -55,41 +75,27 @@ export default function RevenueChart3() {
           <Legend verticalAlign="bottom" height={36} />
           <ReferenceLine y={0} stroke="gray" strokeDasharray="3 3" />
 
-          {/* Bar (Load) */}
-          <Bar dataKey="gen1" stackId="a" fill="#FFB74D" name="Load 1" />
-          <Bar dataKey="gen2" stackId="a" fill="#81C784" name="Load 2" />
-          <Bar dataKey="gen3" stackId="a" fill="#4FC3F7" name="Load 3" />
+          {/* Stack Bars */}
+          {deviceNames.map((name, index) => (
+            <Bar
+              key={name}
+              dataKey={name}
+              stackId="a"
+              fill={["#FFB74D", "#81C784", "#4FC3F7", "#BA68C8", "#F06292"][index % 5]}
+              name={name}
+            />
+          ))}
 
-          {/* Line (Baseline) */}
+          {/* Baseline Line */}
           <Line
             type="monotone"
-            dataKey="baseline1"
+            dataKey="baseline"
             stroke="#D32F2F"
             strokeWidth={2}
             strokeDasharray="5 5"
             dot={false}
             isAnimationActive={false}
-            name="Baseline Load A"
-          />
-          <Line
-            type="monotone"
-            dataKey="baseline2"
-            stroke="#1976D2"
-            strokeWidth={2}
-            strokeDasharray="5 5"
-            dot={false}
-            isAnimationActive={false}
-            name="Baseline Load B"
-          />
-          <Line
-            type="monotone"
-            dataKey="baseline3"
-            stroke="#388E3C"
-            strokeWidth={2}
-            strokeDasharray="5 5"
-            dot={false}
-            isAnimationActive={false}
-            name="Baseline Load C"
+            name="Baseline"
           />
 
           <Brush dataKey="day" height={30} stroke="#8884d8" />

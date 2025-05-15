@@ -2168,7 +2168,7 @@ export async function getSummaryEnergyRevenue(req) {
   }
 }
 
-export async function getProductEnergyDeviceList(siteId) { 
+export async function getProductSummary(siteId) { 
  
   try {
     const url =
@@ -2243,6 +2243,94 @@ export async function getProductionHeatmap(req) {
   try {
     const url =
       `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/production/heatmap?date=${date}&deviceId=${deviceId}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getConsumptionSummary(req) { 
+  const siteId = req.siteId;
+  const deviceType = req.deviceType;
+ 
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/consumption/summary?deviceType=${deviceType}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+export async function getConsumtionDeviceList(siteId) {
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/consumption/device-list?deviceType=load&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  }
+  catch (error) {
+    return error;
+  }
+}
+
+export async function getConsumptionEnergyHistory(req) {
+  const siteId = req.siteId;
+  const deviceType = req.deviceType;
+  const date = req.date
+  const groupBy = req.groupBy;
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/consumption/energy-history?groupBy=${groupBy}&date=${date}&deviceType=${deviceType}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getConsumptionCostHistory(req) {
+  const siteId = req.siteId;
+  const deviceType = req.deviceType;
+  const date = req.date
+  const groupBy = req.groupBy;
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/consumption/cost-history?groupBy=${groupBy}&date=${date}&deviceType=${deviceType}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getConsumptionHeatmap(req) {  
+  const siteId = req.siteId;
+  const date = req.date
+  const deviceId = req.deviceId;
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/consumption/heatmap?date=${date}&deviceId=${deviceId}&siteId=${siteId}`;
     const res = await axios.get(url, {
       withCredentials: true,
       headers: { "Content-Type": "application/json" },

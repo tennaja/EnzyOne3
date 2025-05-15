@@ -13,6 +13,26 @@ import {
 } from 'recharts';
 
 export default function RevenueBarChart({ history }) {
+
+  if (!history?.timestamp?.length || !history?.revenue?.length) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '300px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 16,
+          color: '#888',
+          borderRadius: 12,
+          border: '1px solid #ddd',
+        }}
+      >
+        No data available
+      </div>
+    );
+  }
   // แปลงข้อมูลให้เหมาะกับ Recharts
   const data = history?.timestamp?.map((dateStr, index) => ({
     date: dateStr, // ใช้วันที่เต็ม เช่น '2025/05/01'

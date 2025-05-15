@@ -108,53 +108,55 @@ export default function HeatmapPage({ data = { timestamp: [], value: [] } }) {
         <ResponsiveContainer width="100%" height={height}>
           <Surface>
             {/* Y-Axis (Hours) */}
-            {gridData.rows.map((row, rowIndex) => (
-              <text
-                key={`hour-label-${rowIndex}`}
-                x={0}
-                y={rowIndex * cellHeight + 15}
-                fontSize={10}
-                fill="#444"
-              >
-                {row.hour}:00
-              </text>
-            ))}
+            {/* Y-Axis (Hours) */}
+{gridData.rows.map((row, rowIndex) => (
+  <text
+    key={`hour-label-${rowIndex}`}
+    x={0}
+    y={(24 - 1 - rowIndex) * cellHeight + 15}
+    fontSize={10}
+    fill="#444"
+  >
+    {row.hour}:00
+  </text>
+))}
 
-            {/* Grid Cells */}
-            {gridData.rows.map((row, rowIndex) =>
-              gridData.days.map((day, colIndex) => {
-                const cell = row[day];
-                const value = cell?.value ?? null;
-                const fullDate = cell?.fullDate;
-                const color = value != null ? getColor(value, min, max) : '#eee';
+{/* Grid Cells */}
+{gridData.rows.map((row, rowIndex) =>
+  gridData.days.map((day, colIndex) => {
+    const cell = row[day];
+    const value = cell?.value ?? null;
+    const fullDate = cell?.fullDate;
+    const color = value != null ? getColor(value, min, max) : '#eee';
 
-                const x = colIndex * cellWidth + paddingLeft;
-                const y = rowIndex * cellHeight;
+    const x = colIndex * cellWidth + paddingLeft;
+    const y = (24 - 1 - rowIndex) * cellHeight;
 
-                return (
-                  <Rectangle
-                    key={`cell-${rowIndex}-${colIndex}`}
-                    x={x}
-                    y={y}
-                    width={cellWidth}
-                    height={cellHeight}
-                    fill={color}
-                    stroke="#fff"
-                    onMouseEnter={(e) => {
-                      const bounds = e.currentTarget.ownerSVGElement.getBoundingClientRect();
-                      setHoverInfo({
-                        x: e.clientX - bounds.left + 10,
-                        y: e.clientY - bounds.top + 10,
-                        value,
-                        hour: row.hour,
-                        day: fullDate,
-                      });
-                    }}
-                    onMouseLeave={() => setHoverInfo(null)}
-                  />
-                );
-              })
-            )}
+    return (
+      <Rectangle
+        key={`cell-${rowIndex}-${colIndex}`}
+        x={x}
+        y={y}
+        width={cellWidth}
+        height={cellHeight}
+        fill={color}
+        stroke="#fff"
+        onMouseEnter={(e) => {
+          const bounds = e.currentTarget.ownerSVGElement.getBoundingClientRect();
+          setHoverInfo({
+            x: e.clientX - bounds.left + 10,
+            y: e.clientY - bounds.top + 10,
+            value,
+            hour: row.hour,
+            day: fullDate,
+          });
+        }}
+        onMouseLeave={() => setHoverInfo(null)}
+      />
+    );
+  })
+)}
+
 
             {/* X-Axis (Days) */}
             {gridData.days.map((day, colIndex) => (
