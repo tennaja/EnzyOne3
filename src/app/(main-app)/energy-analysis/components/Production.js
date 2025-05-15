@@ -233,6 +233,7 @@ export default function Production() {
       console.error("Error fetching Summary Revenue:", error);
     } finally {
       setLoading(false)
+      
       // if (showLoading) {
       //   setTimeout(() => setLoading(false), 1000);
       // }
