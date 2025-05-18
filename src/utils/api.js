@@ -2341,6 +2341,41 @@ export async function getConsumptionHeatmap(req) {
   }
 }
 
+export async function getCustomDevice(siteId) {
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/custom/devices?siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getCustomDeviceHistory(req) {
+  const siteId = req.siteId;
+  const deviceId = req.deviceId;
+  const startDate = req.startDate;
+  const endDate = req.endDate;
+  const unit = req.unit;
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/custom/device-history?endDate=${endDate}&startDate=${startDate}&unit=${unit}&deviceId=${deviceId}&siteId=${siteId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+
+
 
 
 

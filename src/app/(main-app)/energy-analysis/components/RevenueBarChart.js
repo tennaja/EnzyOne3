@@ -13,7 +13,6 @@ import {
 } from 'recharts';
 
 export default function RevenueBarChart({ history }) {
-
   if (!history?.timestamp?.length || !history?.revenue?.length) {
     return (
       <div
@@ -33,6 +32,7 @@ export default function RevenueBarChart({ history }) {
       </div>
     );
   }
+
   // แปลงข้อมูลให้เหมาะกับ Recharts
   const data = history?.timestamp?.map((dateStr, index) => ({
     date: dateStr, // ใช้วันที่เต็ม เช่น '2025/05/01'
@@ -47,13 +47,13 @@ export default function RevenueBarChart({ history }) {
           margin={{ top: 40, right: 30, left: 20, bottom: 40 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
-            dataKey="date" 
-            angle={-45} 
-            textAnchor="end" 
-            height={70} 
-            tick={{ fontSize: 10 }} 
-            interval={0}
+          <XAxis
+            dataKey="date"
+            // ปรับขนาดตัวอักษร
+            textAnchor="middle" // ทำให้ข้อความอยู่ตรงกลาง
+            height={40} // ลดความสูงของแกน X
+            interval={5} // แสดงทุก 5 ค่า
+// แสดงเฉพาะวันที่
           />
           <YAxis />
           <Tooltip />
@@ -73,11 +73,11 @@ export default function RevenueBarChart({ history }) {
           </text>
 
           {/* เพิ่ม Brush สำหรับเลือกช่วงเวลา */}
-          <Brush 
-            dataKey="date" 
-            height={30} 
+          <Brush
+            dataKey="date"
+            height={30}
             stroke="#8884d8"
-            startIndex={0} 
+            startIndex={0}
             endIndex={data.length - 1}
           />
         </BarChart>

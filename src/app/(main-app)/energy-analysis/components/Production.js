@@ -14,7 +14,7 @@ import {
   getProductEnergyHistory,
   getProductRevenueHistory,
   getProductDeviceList,
-  getProductionHeatmap
+  getProductionHeatmap,
 } from "@/utils/api";
 import Loading from "./Loading";
 const { Option } = Select;
@@ -88,8 +88,6 @@ const DatePickerByRange = ({ range, value, onChange }) => {
   );
 };
 
-
-
 export default function Production() {
   const [searchLoad, setSearchLoad] = useState("");
   const [energyRange, setEnergyRange] = useState("day");
@@ -127,12 +125,11 @@ export default function Production() {
   }, [revenueDate, revenueRange]);
   useEffect(() => {
     GetProductionHeatmap();
-  }, [year,month, sourceType]);
-
+  }, [year, month, sourceType]);
 
   const GetEnergyProductDeviceList = async () => {
     const siteId = 6;
-    setLoading(true)
+    setLoading(true);
     try {
       const result = await getProductSummary(siteId);
       if (result && result.status === 200) {
@@ -162,17 +159,17 @@ export default function Production() {
       console.error("Error fetching Summary History:", error);
       setProductDeviceList([]);
       setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
-    }finally {
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
   };
   const GetDropdownDeviceList = async () => {
     const siteId = 6;
-    setLoading(true)
+    setLoading(true);
     try {
       const result = await getProductDeviceList(siteId);
       if (result && result.status === 200) {
-        setDropdownDeviceList(result.data)
+        setDropdownDeviceList(result.data);
         console.log("Dropdown Device List:", result.data);
       } else {
         setDropdownDeviceList([]);
@@ -181,8 +178,8 @@ export default function Production() {
       console.error("Error fetching Summary History:", error);
       setProductDeviceList([]);
       setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
-    }finally {
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
   };
   const GetEnergyHistory = async () => {
@@ -191,7 +188,7 @@ export default function Production() {
       date: energyDate.format("YYYY/MM/DD"),
       groupBy: energyRange,
     };
-    setLoading(true)
+    setLoading(true);
     // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
     try {
@@ -205,7 +202,7 @@ export default function Production() {
     } catch (error) {
       console.error("Error fetching Summary History:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
       // if (showLoading) {
       //   setTimeout(() => setLoading(false), 1000);
       // }
@@ -216,9 +213,9 @@ export default function Production() {
     const paramsNav = {
       siteId: 6,
       date: revenueDate.format("YYYY/MM/DD"),
-      groupBy : revenueRange,
+      groupBy: revenueRange,
     };
-    setLoading(true)
+    setLoading(true);
 
     // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
     try {
@@ -232,8 +229,8 @@ export default function Production() {
     } catch (error) {
       console.error("Error fetching Summary Revenue:", error);
     } finally {
-      setLoading(false)
-      
+      setLoading(false);
+
       // if (showLoading) {
       //   setTimeout(() => setLoading(false), 1000);
       // }
@@ -262,8 +259,7 @@ export default function Production() {
       // }
     }
   };
- 
-  
+
   const filterData = (data, search) =>
     data
       .map((item, index) => ({
@@ -280,10 +276,14 @@ export default function Production() {
       );
 
   const highlightText = (text, search) => {
-    if (!search) return text; // หากไม่มีคำค้นให้แสดงข้อความปกติ
-    const parts = text.split(new RegExp(`(${search})`, "gi")); // แบ่งข้อความที่ตรงกับคำค้น
+    const textStr = String(text); // แปลง text เป็น string
+    const searchStr = String(search); // แปลง search เป็น string
+
+    if (!searchStr) return textStr; // หากไม่มีคำค้นให้แสดงข้อความปกติ
+
+    const parts = textStr.split(new RegExp(`(${searchStr})`, "gi")); // แบ่งข้อความที่ตรงกับคำค้น
     return parts.map((part, index) =>
-      part.toLowerCase() === search.toLowerCase() ? (
+      part.toLowerCase() === searchStr.toLowerCase() ? (
         <span key={index} className="bg-yellow-300">
           {part}
         </span>
@@ -293,29 +293,29 @@ export default function Production() {
     );
   };
   function formatNumber(num) {
-    if (typeof num !== 'number' || isNaN(num)) {
-      return '-';
+    if (typeof num !== "number" || isNaN(num)) {
+      return "-";
     }
-    return num.toLocaleString('en-US');
+    return num.toLocaleString("en-US");
   }
-  
+
   function formatNumberWithK(num) {
-    if (typeof num !== 'number' || isNaN(num)) {
-      return '-';
+    if (typeof num !== "number" || isNaN(num)) {
+      return "-";
     }
-  
+
     if (num >= 1000) {
       const value = num / 1000;
       // format number with commas, ถ้าเป็น integer แสดงไม่ต้องมีทศนิยม
       const formattedValue = Number.isInteger(value)
-        ? value.toLocaleString('en-US')
-        : parseFloat(value.toFixed(1)).toLocaleString('en-US');
+        ? value.toLocaleString("en-US")
+        : parseFloat(value.toFixed(1)).toLocaleString("en-US");
       return `${formattedValue}K`;
     }
-  
-    return num.toLocaleString('en-US'); // ใส่ลูกน้ำให้ตัวเลขที่น้อยกว่า 1000
+
+    return num.toLocaleString("en-US"); // ใส่ลูกน้ำให้ตัวเลขที่น้อยกว่า 1000
   }
- 
+
   const handleYearChange = (newYear) => {
     setYear(newYear);
     // Reset month ถ้าเดือนเกินจากเดือนปัจจุบันในปีปัจจุบัน
@@ -364,19 +364,28 @@ export default function Production() {
                   className="border-b border-gray-200"
                 >
                   <td className="py-2">
-                    {highlightText(item.originalIndex.toString(), searchLoad)}
+                    {highlightText(item.originalIndex, searchLoad)}
                   </td>
                   <td className="py-2">
                     {highlightText(item.name, searchLoad)}
                   </td>
                   <td className="py-2">
-                    {highlightText(item.power.toString(), searchLoad)}
+                    {highlightText(
+                      parseFloat(item.power).toFixed(2),
+                      searchLoad
+                    )}
                   </td>
                   <td className="py-2">
-                    {highlightText(item.energy.toString(), searchLoad)}
+                    {highlightText(
+                      parseFloat(item.energy).toFixed(2),
+                      searchLoad
+                    )}
                   </td>
                   <td className="py-2">
-                    {highlightText(item.revenue.toString(), searchLoad)}
+                    {highlightText(
+                      parseFloat(item.revenue).toFixed(2),
+                      searchLoad
+                    )}
                   </td>
                 </tr>
               ))}
@@ -405,7 +414,7 @@ export default function Production() {
               componentsProps={{
                 tooltip: {
                   sx: {
-                    fontSize: '14px', // ปรับขนาดฟอนต์
+                    fontSize: "14px", // ปรับขนาดฟอนต์
                   },
                 },
               }}
@@ -442,10 +451,10 @@ export default function Production() {
 
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="w-full lg:w-2/3 h-80 flex items-center justify-center">
-            <EnergyTrendChart2 type={energyRange} data={energyHistoryData}/>
+            <EnergyTrendChart2 type={energyRange} data={energyHistoryData} />
           </div>
           <div className="w-full lg:w-1/3 h-80  flex flex-col items-center justify-center">
-            <EnergyPieChart data={energyHistoryData}/>
+            <EnergyPieChart data={energyHistoryData} />
           </div>
         </div>
       </div>
@@ -476,11 +485,14 @@ export default function Production() {
 
         <div className="text-lg mb-4">
           <span className="text-sm">Total Revenue: </span>
-          <span className="font-bold text-xl">{formatNumberWithK(revenueHistoryData?.revenue)}</span> ฿
+          <span className="font-bold text-xl">
+            {formatNumberWithK(revenueHistoryData?.revenue)}
+          </span>{" "}
+          ฿
         </div>
 
         <div className="flex flex-col lg:flex-row gap-4">
-          <RevenueBarChart2 data={revenueHistoryData}/>
+          <RevenueBarChart2 data={revenueHistoryData} />
         </div>
       </div>
 
@@ -496,7 +508,7 @@ export default function Production() {
               componentsProps={{
                 tooltip: {
                   sx: {
-                    fontSize: '14px', // ปรับขนาดฟอนต์
+                    fontSize: "14px", // ปรับขนาดฟอนต์
                   },
                 },
               }}
@@ -508,51 +520,53 @@ export default function Production() {
             </Tooltip>
           </div>
           <Space>
-          <Select value={year} onChange={handleYearChange} style={{ width: 100 }}>
-        {[2023, 2024, 2025]
-          .filter((y) => y <= currentYear)
-          .map((y) => (
-            <Option key={y} value={y.toString()}>
-              {y}
-            </Option>
-          ))}
-      </Select>
-
-      <Select value={month} onChange={setMonth} style={{ width: 100 }}>
-        {Array.from({ length: 12 }, (_, i) => {
-          const val = (i + 1).toString().padStart(2, "0");
-          const isDisabled =
-            parseInt(year) === currentYear && val > currentMonth;
-          return (
-            <Option key={val} value={val} disabled={isDisabled}>
-              {val}
-            </Option>
-          );
-        })}
-      </Select>
             <Select
-  value={sourceType}
-  onChange={setSourceType}
-  style={{ width: 200 }}
-  placeholder="Select Source Type"
->
-  <Option value={0}>All</Option>
+              value={year}
+              onChange={handleYearChange}
+              style={{ width: 100 }}
+            >
+              {[2023, 2024, 2025]
+                .filter((y) => y <= currentYear)
+                .map((y) => (
+                  <Option key={y} value={y.toString()}>
+                    {y}
+                  </Option>
+                ))}
+            </Select>
 
-  {dropdownDeviceList.map((item) => (
-    <Option key={item.id} value={item.id}>
-      {item.name}
-    </Option>
-  ))}
-</Select>
+            <Select value={month} onChange={setMonth} style={{ width: 100 }}>
+              {Array.from({ length: 12 }, (_, i) => {
+                const val = (i + 1).toString().padStart(2, "0");
+                const isDisabled =
+                  parseInt(year) === currentYear && val > currentMonth;
+                return (
+                  <Option key={val} value={val} disabled={isDisabled}>
+                    {val}
+                  </Option>
+                );
+              })}
+            </Select>
+            <Select
+              value={sourceType}
+              onChange={setSourceType}
+              style={{ width: 200 }}
+              placeholder="Select Source Type"
+            >
+              <Option value={0}>All</Option>
 
-
+              {dropdownDeviceList.map((item) => (
+                <Option key={item.id} value={item.id}>
+                  {item.name}
+                </Option>
+              ))}
+            </Select>
           </Space>
         </div>
-        
+
         <div className="w-full flex items-center justify-center mt-5"></div>
-          <HeatmapPage data={externalData} />
+        <HeatmapPage data={externalData} />
       </div>
-      {loading && <Loading/>}  
+      {loading && <Loading />}
     </>
   );
 }

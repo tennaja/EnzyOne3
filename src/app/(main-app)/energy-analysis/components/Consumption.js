@@ -173,7 +173,7 @@ export default function Consumption() {
       siteId: 6,
       deviceType: activeTab,
     };
-    setLoading(true)
+    setLoading(true);
     try {
       const result = await getConsumptionSummary(params);
       if (result && result.status === 200) {
@@ -215,8 +215,8 @@ export default function Consumption() {
         onPeak: "0.00",
         offPeak: "0.00",
       });
-    }finally {
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
   };
   const GetEnergyHistory = async () => {
@@ -226,7 +226,7 @@ export default function Consumption() {
       date: energyDate.format("YYYY/MM/DD"),
       groupBy: energyRange,
     };
-    setLoading(true)
+    setLoading(true);
     // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
     try {
@@ -240,7 +240,7 @@ export default function Consumption() {
     } catch (error) {
       console.error("Error fetching Summary History:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
       // if (showLoading) {
       //   setTimeout(() => setLoading(false), 1000);
       // }
@@ -253,7 +253,7 @@ export default function Consumption() {
       date: revenueDate.format("YYYY/MM/DD"),
       groupBy: revenueRange,
     };
-    setLoading(true)
+    setLoading(true);
     // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
     try {
       const result = await getConsumptionCostHistory(paramsNav);
@@ -266,7 +266,7 @@ export default function Consumption() {
     } catch (error) {
       console.error("Error fetching Summary Revenue:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
       // if (showLoading) {
       //   setTimeout(() => setLoading(false), 1000);
       // }
@@ -274,7 +274,7 @@ export default function Consumption() {
   };
   const GetDropdownDeviceList = async () => {
     const siteId = 6;
-    setLoading(true)
+    setLoading(true);
     try {
       const result = await getConsumtionDeviceList(siteId);
       if (result && result.status === 200) {
@@ -287,8 +287,8 @@ export default function Consumption() {
       console.error("Error fetching Summary History:", error);
       setProductDeviceList([]);
       setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
-    }finally {
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -298,7 +298,7 @@ export default function Consumption() {
       date: yearMonth,
       deviceId: sourceType,
     };
-    setLoading(true)
+    setLoading(true);
     try {
       const result = await getConsumptionHeatmap(paramsNav);
       if (result && result.status === 200) {
@@ -311,7 +311,7 @@ export default function Consumption() {
       console.error("Error fetching Production Heatmap:", error);
       setHeatmaplData([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
       // if (showLoading) {
       //   setTimeout(() => setLoading(false), 1000);
       // }
@@ -362,24 +362,23 @@ export default function Consumption() {
       )
     );
   };
-  
+
   function formatNumberWithK(num) {
-    if (typeof num !== 'number' || isNaN(num)) {
-      return '-';
+    if (typeof num !== "number" || isNaN(num)) {
+      return "-";
     }
-  
+
     if (num >= 1000) {
       const value = num / 1000;
       // format number with commas, ถ้าเป็น integer แสดงไม่ต้องมีทศนิยม
       const formattedValue = Number.isInteger(value)
-        ? value.toLocaleString('en-US')
-        : parseFloat(value.toFixed(1)).toLocaleString('en-US');
+        ? value.toLocaleString("en-US")
+        : parseFloat(value.toFixed(1)).toLocaleString("en-US");
       return `${formattedValue}K`;
     }
-  
-    return num.toLocaleString('en-US'); // ใส่ลูกน้ำให้ตัวเลขที่น้อยกว่า 1000
+
+    return num.toLocaleString("en-US"); // ใส่ลูกน้ำให้ตัวเลขที่น้อยกว่า 1000
   }
-  
 
   const renderEnergyTrend = (title) => (
     <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
@@ -387,9 +386,16 @@ export default function Consumption() {
         <div className="flex items-center">
           <span className="text-xl font-bold">{title}</span>
           <Tooltip
-            title="More information about this metric"
+            title="Comparing device consumption power (line chart) and total energy consumed (bar chart)."
             arrow
             placement="top"
+            componentsProps={{
+              tooltip: {
+                sx: {
+                  fontSize: "14px", // ปรับขนาดฟอนต์
+                },
+              },
+            }}
           >
             <InfoOutlinedIcon
               className="text-[#33BFBF] ml-1 cursor-pointer"
@@ -437,7 +443,7 @@ export default function Consumption() {
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center">
           <span className="text-xl font-bold">{title}</span>
-          <Tooltip
+          {/* <Tooltip
             title="More information about this metric"
             arrow
             placement="top"
@@ -446,7 +452,7 @@ export default function Consumption() {
               className="text-[#33BFBF] ml-1 cursor-pointer"
               fontSize="small"
             />
-          </Tooltip>
+          </Tooltip> */}
         </div>
 
         <div className="flex items-center">
@@ -469,7 +475,10 @@ export default function Consumption() {
 
       <div className="text-lg mb-4">
         <span className="text-sm">Total Cost: </span>
-        <span className="font-bold text-xl">{formatNumberWithK(costHistoryData?.cost)}</span> ฿
+        <span className="font-bold text-xl">
+          {formatNumberWithK(costHistoryData?.cost)}
+        </span>{" "}
+        ฿
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4">
@@ -532,16 +541,25 @@ export default function Consumption() {
                     </td>
                     <td className="py-2">{highlightText(item.name, search)}</td>
                     <td className="py-2">
-                      {highlightText(item.power, search)}
+                      {highlightText(parseFloat(item.power).toFixed(2), search)}
                     </td>
                     <td className="py-2">
-                      {highlightText(item.energy, search)}
+                      {highlightText(
+                        parseFloat(item.energy).toFixed(2),
+                        search
+                      )}
                     </td>
                     <td className="py-2">
-                      {highlightText(item.onPeak, search)}
+                      {highlightText(
+                        parseFloat(item.onPeak).toFixed(2),
+                        search
+                      )}
                     </td>
                     <td className="py-2">
-                      {highlightText(item.offPeak, search)}
+                      {highlightText(
+                        parseFloat(item.offPeak).toFixed(2),
+                        search
+                      )}
                     </td>
                   </tr>
                 ))
@@ -649,9 +667,16 @@ export default function Consumption() {
         <div className="flex items-center">
           <span className="text-xl font-bold">Heatmap</span>
           <Tooltip
-            title="More information about this metric"
+            title="Visualizes hourly energy consumption patterns over the selected month."
             arrow
             placement="top"
+            componentsProps={{
+              tooltip: {
+                sx: {
+                  fontSize: "14px", // ปรับขนาดฟอนต์
+                },
+              },
+            }}
           >
             <InfoOutlinedIcon
               className="text-[#33BFBF] ml-1 cursor-pointer"
@@ -738,7 +763,13 @@ export default function Consumption() {
             {renderTableLoad(consumptionDeviceList, searchLoad, setSearchLoad)}
           </>
         ) : (
-          <>{renderTableMeter(consumptionDeviceList, searchMeter, setSearchMeter)}</>
+          <>
+            {renderTableMeter(
+              consumptionDeviceList,
+              searchMeter,
+              setSearchMeter
+            )}
+          </>
         )}
       </div>
       {activeTab === "load" ? (
@@ -753,7 +784,7 @@ export default function Consumption() {
         </>
       )}
       {renderHeatmapSection()}
-      {loading && <Loading/>}  
+      {loading && <Loading />}
     </>
   );
 }

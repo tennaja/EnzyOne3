@@ -347,15 +347,29 @@ const Header = () => {
       styles={{
         control: (provided) => ({
           ...provided,
-          height: '2.25rem',
-          borderColor: 'rgb(203 213 225)',
-          borderRadius: '0.375rem',
-          zIndex: 10,  // เพิ่ม z-index ที่ control
+          borderColor: "rgb(203 213 225)", // สีขอบปกติ
+          borderRadius: "0.375rem",
+          zIndex: 10,
+          height: "2.25rem",
         }),
         menu: (provided) => ({
           ...provided,
-          zIndex: 9999,  // เพิ่ม z-index ที่เมนูเลือก
-          position: 'absolute',  // ตั้ง position เป็น absolute
+          zIndex: 9999,
+          position: "absolute",
+        }),
+        option: (provided, state) => ({
+          ...provided,
+          backgroundColor: state.isSelected
+            ? "#33BFBF"
+            : state.isFocused
+            ? "#e0f7fa"
+            : "transparent", // ปรับสีพื้นหลัง
+          color: state.isSelected ? "white" : "black", // สีของข้อความ
+          cursor: "pointer",
+          padding: "8px 16px",
+          "&:active": {
+            backgroundColor: "#33BFBF", // สีเมื่อคลิกเลือก
+          },
         }),
       }}
       classNames={{
@@ -363,7 +377,7 @@ const Header = () => {
         menu: () => "dark:bg-slate-700",
         option: ({ isFocused, isSelected }) =>
           `${isSelected ? "bg-teal-500 text-white" : ""} ${
-            isFocused && !isSelected ? " dark:bg-slate-900" : ""
+            isFocused && !isSelected ? "dark:bg-slate-900" : ""
           } dark:text-white`,
         singleValue: () => "dark:text-white", // <<< ตรงนี้สำคัญสำหรับข้อความที่แสดงผล
         input: () => "dark:text-white",       // <<< สำหรับ text input ตอนค้นหา
@@ -390,15 +404,29 @@ const Header = () => {
       styles={{
         control: (provided) => ({
           ...provided,
-          height: '2.25rem',
-          borderColor: 'rgb(203 213 225)',
-          borderRadius: '0.375rem',
-          zIndex: 10,  // เพิ่ม z-index ที่ control
+          borderColor: "rgb(203 213 225)", // สีขอบปกติ
+          borderRadius: "0.375rem",
+          zIndex: 10,
+          height: "2.25rem",
         }),
         menu: (provided) => ({
           ...provided,
-          zIndex: 9999,  // เพิ่ม z-index ที่เมนูเลือก
-          position: 'absolute',  // ตั้ง position เป็น absolute
+          zIndex: 9999,
+          position: "absolute",
+        }),
+        option: (provided, state) => ({
+          ...provided,
+          backgroundColor: state.isSelected
+            ? "#33BFBF"
+            : state.isFocused
+            ? "#e0f7fa"
+            : "transparent", // ปรับสีพื้นหลัง
+          color: state.isSelected ? "white" : "black", // สีของข้อความ
+          cursor: "pointer",
+          padding: "8px 16px",
+          "&:active": {
+            backgroundColor: "#33BFBF", // สีเมื่อคลิกเลือก
+          },
         }),
       }}
       classNames={{

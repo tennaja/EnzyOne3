@@ -37,10 +37,10 @@ export default function RevenueChart3({ data }) {
 
   const deviceNames = data.devices.map(device => device.deviceName);
 
-  // รวมข้อมูลต่อวัน
+  // ใช้ timestamp โดยตรง
   const chartData = data.timestamp.map((date, index) => {
     const entry = {
-      day: date.slice(8, 10), // เอาแค่เลขวันที่
+      day: date, // ใช้ timestamp โดยตรง
       fullDate: date,
     };
 
@@ -69,7 +69,7 @@ export default function RevenueChart3({ data }) {
           margin={{ top: 40, right: 30, left: 20, bottom: 40 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="day" />
+          <XAxis dataKey="day" /> {/* ใช้ timestamp โดยตรง */}
           <YAxis domain={[0, maxY]} />
           <Tooltip />
           <Legend verticalAlign="bottom" height={36} />

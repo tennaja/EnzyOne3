@@ -28,20 +28,20 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
   if (!timestamp.length || !devices.length) {
     return (
       <div
-      style={{
-        width: '100%',
-        height: '300px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 16,
-        color: '#888',
-        borderRadius: 12,
-        border: '1px solid #ddd',
-      }}
-    >
-      No data available
-    </div>
+        style={{
+          width: '100%',
+          height: '300px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 16,
+          color: '#888',
+          borderRadius: 12,
+          border: '1px solid #ddd',
+        }}
+      >
+        No data available
+      </div>
     );
   }
 
@@ -81,11 +81,9 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="time"
-            tick={{ fontSize: 8 }}
-            angle={-45}
-            textAnchor="end"
-            height={60}
-            interval={0}
+            textAnchor="middle"
+            height={40}
+            interval={5}
           />
           <YAxis domain={[0, maxY]} />
           <Tooltip />
@@ -114,11 +112,11 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="time"
-          tick={{ fontSize: 8 }}
-          angle={-45}
-          textAnchor="end"
-          height={60}
-          interval={0}
+         
+          textAnchor="middle"
+          height={40}
+          interval={5}
+        
         />
         <YAxis domain={[0, maxY]} />
         <Tooltip />
