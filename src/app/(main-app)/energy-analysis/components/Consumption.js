@@ -153,27 +153,55 @@ export default function Consumption() {
 
   useEffect(() => {
     GetConsumptionDeviceList();
+    const interval = setInterval(() => {
+      GetConsumptionDeviceList(false);
+      }, 300000); 
+    
+    return () => clearInterval(interval);
   }, [activeTab]);
+
   useEffect(() => {
     GetEnergyHistory();
+    const interval = setInterval(() => {
+      GetEnergyHistory(false);
+      }, 300000); 
+    
+    return () => clearInterval(interval);
   }, [activeTab, energyDate, energyRange]);
+
   useEffect(() => {
     GetCostHistory();
+    const interval = setInterval(() => {
+      GetCostHistory(false);
+      }, 300000); 
+    
+    return () => clearInterval(interval);
   }, [activeTab, revenueDate, revenueRange]);
 
   useEffect(() => {
     GetDropdownDeviceList();
+    const interval = setInterval(() => {
+      GetDropdownDeviceList(false);
+      }, 300000); 
+    
+    return () => clearInterval(interval);
   }, []);
+  
   useEffect(() => {
     GetConsumptionnHeatmap();
+    const interval = setInterval(() => {
+      GetConsumptionnHeatmap(false);
+      }, 300000); 
+    
+    return () => clearInterval(interval);
   }, [year, month, sourceType]);
 
-  const GetConsumptionDeviceList = async () => {
+  const GetConsumptionDeviceList = async (showLoading = true) => {
     const params = {
       siteId: 6,
       deviceType: activeTab,
     };
-    setLoading(true);
+    if (showLoading) setLoading(true);
     try {
       const result = await getConsumptionSummary(params);
       if (result && result.status === 200) {
@@ -216,18 +244,20 @@ export default function Consumption() {
         offPeak: "0.00",
       });
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
-  const GetEnergyHistory = async () => {
+  const GetEnergyHistory = async (showLoading = true) => {
     const paramsNav = {
       siteId: 6,
       deviceType: activeTab,
       date: energyDate.format("YYYY/MM/DD"),
       groupBy: energyRange,
     };
-    setLoading(true);
-    // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+    
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
     try {
       const result = await getConsumptionEnergyHistory(paramsNav);
@@ -240,21 +270,19 @@ export default function Consumption() {
     } catch (error) {
       console.error("Error fetching Summary History:", error);
     } finally {
-      setLoading(false);
-      // if (showLoading) {
-      //   setTimeout(() => setLoading(false), 1000);
-      // }
+      if (showLoading) {
+         setLoading(false);
+      }
     }
   };
-  const GetCostHistory = async () => {
+  const GetCostHistory = async (showLoading = true) => {
     const paramsNav = {
       siteId: 6,
       deviceType: activeTab,
       date: revenueDate.format("YYYY/MM/DD"),
       groupBy: revenueRange,
     };
-    setLoading(true);
-    // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
     try {
       const result = await getConsumptionCostHistory(paramsNav);
       if (result && result.status === 200) {
@@ -266,15 +294,14 @@ export default function Consumption() {
     } catch (error) {
       console.error("Error fetching Summary Revenue:", error);
     } finally {
-      setLoading(false);
-      // if (showLoading) {
-      //   setTimeout(() => setLoading(false), 1000);
-      // }
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
-  const GetDropdownDeviceList = async () => {
+  const GetDropdownDeviceList = async (showLoading = true) => {
     const siteId = 6;
-    setLoading(true);
+    if (showLoading) setLoading(true);
     try {
       const result = await getConsumtionDeviceList(siteId);
       if (result && result.status === 200) {
@@ -288,17 +315,19 @@ export default function Consumption() {
       setProductDeviceList([]);
       setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
-  const GetConsumptionnHeatmap = async () => {
+  const GetConsumptionnHeatmap = async (showLoading = true) => {
     const paramsNav = {
       siteId: 6,
       date: yearMonth,
       deviceId: sourceType,
     };
-    setLoading(true);
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
     try {
       const result = await getConsumptionHeatmap(paramsNav);
       if (result && result.status === 200) {
@@ -311,10 +340,9 @@ export default function Consumption() {
       console.error("Error fetching Production Heatmap:", error);
       setHeatmaplData([]);
     } finally {
-      setLoading(false);
-      // if (showLoading) {
-      //   setTimeout(() => setLoading(false), 1000);
-      // }
+      if (showLoading) {
+         setLoading(false);
+      }
     }
   };
 

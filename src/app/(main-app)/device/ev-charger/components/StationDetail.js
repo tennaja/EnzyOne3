@@ -59,6 +59,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
     { label: "Day", value: "day" },
     { label: "Month", value: "month" },
   ];
+  
   const GetStationbyId = async (id,showLoading = true) => {
     if (showLoading) setLoading(true); 
     try {
@@ -90,8 +91,9 @@ const [endDate, setEndDate] = useState(todayFormatted);
             }
     }
   };
-  const GetStationStatic = async (id) => {
+  const GetStationStatic = async (id,showLoading = true) => {
     console.log("station Id:", id);
+    if (showLoading)setLoading(true);
     try {
       const result = await getStationsStatics(id);
       console.log("Today:", result?.data?.today);
@@ -111,16 +113,19 @@ const [endDate, setEndDate] = useState(todayFormatted);
       }
     } catch (error) {
       console.error("Error fetching station data:", error);
+    }finally {
+      if (showLoading)setLoading(false);
     }
   };
 
-  const GetStationHistoryStatistics = async (id) => {
+  const GetStationHistoryStatistics = async (id,showLoading = true) => {
     const Param = {
       stationId: id,
       groupBy: timeUnit,
       endDate: endDate,
       startDate: startDate,
     };
+    if (showLoading)setLoading(true);
     try {
       const result = await getStationHistoryStatistics(Param);
 
@@ -130,10 +135,14 @@ const [endDate, setEndDate] = useState(todayFormatted);
       }
     } catch (error) {
       console.error("Error fetching graph data:", error);
+    }finally {
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
-  const getChageHeadList = async (id) => {
+  const GetChageHeadList = async (id) => {
     console.log("Device Id:", id);
     try {
       const result = await getChargeHeadList(id);
@@ -151,30 +160,47 @@ const [endDate, setEndDate] = useState(todayFormatted);
   };
 
   useEffect(() => {
-    // ดึงข้อมูลจาก Local Storage
-
+    // Fetch Station by ID ทุกๆ // 5 นาที
     if (StationId) {
       GetStationbyId(StationId);
-      GetStationStatic(StationId);
+  
+      const interval = setInterval(() => {
+        console.log("⏳ Fetching Station by ID...");
+        GetStationbyId(StationId, false);
+      }, 300000); // 5 นาที
+  
+      return () => clearInterval(interval); // Cleanup interval เมื่อ component ถูก unmount
     }
-  }, []);
-
-  useEffect(() => {
-    if (StationId ) {
-      GetStationHistoryStatistics(StationId);
-    }
-  }, [endDate, startDate, timeUnit,StationId]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("⏳ Refreshing data every 2 minutes from Redux...");
-      Promise.all([GetStationbyId(StationId,false)]);
-      GetStationStatic(StationId);
-      GetStationHistoryStatistics(StationId);
-    }, 300000);
-
-    return () => clearInterval(interval);
   }, [StationId]);
+  
+  useEffect(() => {
+    // Fetch Station Static ทุกๆ // 5 นาที
+    if (StationId) {
+      GetStationStatic(StationId);
+  
+      const interval = setInterval(() => {
+        console.log("⏳ Fetching Station Static...");
+        GetStationStatic(StationId, false);
+      }, 300000); // 5 นาที
+  
+      return () => clearInterval(interval); // Cleanup interval เมื่อ component ถูก unmount
+    }
+  }, [StationId]);
+  
+  useEffect(() => {
+    // Fetch Station History Statistics ทุกๆ // 5 นาที
+    if (StationId) {
+      GetStationHistoryStatistics(StationId);
+  
+      const interval = setInterval(() => {
+        console.log("⏳ Fetching Station History Statistics...");
+        GetStationHistoryStatistics(StationId, false);
+      }, 300000); // 5 นาที
+  
+      return () => clearInterval(interval); // Cleanup interval เมื่อ component ถูก unmount
+    }
+  }, [StationId, endDate, startDate, timeUnit]);
+  
 
   const handleChargerClick = (chargerId, chargerName) => {
     localStorage.setItem("chargerId", chargerId);
@@ -776,7 +802,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
                             </td>
                             <td
                               className="px-2 py-1 text-center text-[#33BFBF] underline cursor-pointer hover:text-[#28A9A9] dark:text-[#33BFBF] dark:hover:text-[#28A9A9]"
-                              onClick={() => getChageHeadList(record.id)}
+                              onClick={() => GetChageHeadList(record.id)}
                             >
                               {highlightText(record.chargeHeadCount)}
                             </td>

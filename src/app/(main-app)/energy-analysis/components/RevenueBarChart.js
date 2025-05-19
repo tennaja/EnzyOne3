@@ -52,7 +52,7 @@ export default function RevenueBarChart({ history }) {
             // ปรับขนาดตัวอักษร
             textAnchor="middle" // ทำให้ข้อความอยู่ตรงกลาง
             height={40} // ลดความสูงของแกน X
-            interval={5} // แสดงทุก 5 ค่า
+            
 // แสดงเฉพาะวันที่
           />
           <YAxis />

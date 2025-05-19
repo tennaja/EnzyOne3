@@ -98,28 +98,49 @@ export default function Summary() {
   const [summaryOverviewData, setSummaryOverviewData] = useState([]);
   const [energyHistoryData, setEnergyHistoryData] = useState([]);
   const [revenueHistoryData, setRevenueHistoryData] = useState([]);
+  
   useEffect(() => {
-    // Fetch data when the component mounts
+    // Fetch initial data for Summary Overview
     GetSummaryOverview();
+  
+    // Set interval to refresh Summary Overview every 5 minutes
+    const interval = setInterval(() => {
+      GetSummaryOverview(false);
+    }, 300000); // 300,000 ms = 5 minutes
+  
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
   }, []);
-
+  
   useEffect(() => {
-    // Fetch data when the component mounts
+    // Fetch initial data for Energy History
     GetEnergyHistory();
+  
+    // Set interval to refresh Energy History every 5 minutes
+    const interval = setInterval(() => {
+      GetEnergyHistory(false);
+    }, 300000); // 300,000 ms = 5 minutes
+  
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
   }, [energyDate, energyRange]);
+  
+  useEffect(() => {
+    // Fetch initial data for Energy Revenue
+    GetEnergyRevenue();
+  
+    // Set interval to refresh Energy Revenue every 5 minutes
+    const interval = setInterval(() => {
+      GetEnergyRevenue(false);
+    }, 300000); // 300,000 ms = 5 minutes
+  
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, [revenueDate, revenueRange]);
 
-useEffect(() => {
-  // Fetch data when the component mounts
-  GetEnergyRevenue();
-}, [revenueDate, revenueRange]);
-
-const GetSummaryOverview = async () => {
-    // const paramsNav = {
-    //   siteId: siteIdRef.current,
-    //   groupId: groupIdRef.current,
-    // };
-    setLoading(true)
-    // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+const GetSummaryOverview = async (showLoading = true) => {
+   
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
     try {
       const result = await getSummaryOverviewList();
@@ -132,21 +153,20 @@ const GetSummaryOverview = async () => {
     } catch (error) {
       console.error("Error fetching device list:", error);
     } finally {
-      setLoading(false)
-      // if (showLoading) {
-      //   setTimeout(() => setLoading(false), 1000);
-      // }
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
   
-  const GetEnergyHistory = async () => {
+  const GetEnergyHistory = async (showLoading = true) => {
     const paramsNav = {
       siteId: 6,
       date: energyDate.format("YYYY/MM/DD"),
       groupBy : energyRange,
     };
-    setLoading(true)
-    // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+    
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
     try {
       const result = await getSummaryEnergyHistory(paramsNav);
@@ -159,21 +179,20 @@ const GetSummaryOverview = async () => {
     } catch (error) {
       console.error("Error fetching Summary History:", error);
     } finally {
-      setLoading(false)
-      // if (showLoading) {
-      //   setTimeout(() => setLoading(false), 1000);
-      // }
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
-  const GetEnergyRevenue = async () => {
+  const GetEnergyRevenue = async (showLoading = true) => {
     const paramsNav = {
       siteId: 6,
       date: revenueDate.format("YYYY/MM/DD"),
       groupBy : revenueRange,
     };
-    setLoading(true)
-    // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+    
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
     try {
       const result = await getSummaryEnergyRevenue(paramsNav);
@@ -186,10 +205,9 @@ const GetSummaryOverview = async () => {
     } catch (error) {
       console.error("Error fetching Summary Revenue:", error);
     } finally {
-      setLoading(false)
-      // if (showLoading) {
-      //   setTimeout(() => setLoading(false), 1000);
-      // }
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 

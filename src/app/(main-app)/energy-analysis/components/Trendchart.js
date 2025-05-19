@@ -83,7 +83,6 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
             dataKey="time"
             textAnchor="middle"
             height={40}
-            interval={5}
           />
           <YAxis domain={[0, maxY]} />
           <Tooltip />
@@ -115,7 +114,7 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
          
           textAnchor="middle"
           height={40}
-          interval={5}
+        
         
         />
         <YAxis domain={[0, maxY]} />

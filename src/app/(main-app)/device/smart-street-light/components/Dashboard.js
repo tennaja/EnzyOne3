@@ -124,7 +124,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
       console.error("Error fetching device list:", error);
     } finally {
       if (showLoading) {
-        setTimeout(() => setLoading(false), 1000);
+         setLoading(false);
       }
     }
   };

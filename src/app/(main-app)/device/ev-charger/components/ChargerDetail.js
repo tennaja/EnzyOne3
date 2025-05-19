@@ -94,8 +94,9 @@ const ChargerDetail = ({ onNavigate }) => {
         }
     }
   };
-  const GetStationStatic = async (id) => {
+  const GetStationStatic = async (id,showLoading = true) => {
     console.log("station Id:", id);
+    if (showLoading)setLoading(true);
     try {
       const result = await getChargersStatics(id);
       console.log("Today:", result?.data?.today);
@@ -115,16 +116,21 @@ const ChargerDetail = ({ onNavigate }) => {
       }
     } catch (error) {
       console.error("Error fetching station data:", error);
+    }finally {
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
-  const GetChargerHistoryStatistics = async (id) => {
+  const GetChargerHistoryStatistics = async (id,showLoading = true) => {
     const Param = {
       chargerId: id,
       groupBy: timeUnit,
       endDate: endDate,
       startDate: startDate,
     };
+    if (showLoading)setLoading(true);
     try {
       const result = await getChargerHistoryStatistics(Param);
       if (result) {
@@ -133,34 +139,54 @@ const ChargerDetail = ({ onNavigate }) => {
       }
     } catch (error) {
       console.error("Error fetching graph data:", error);
+    }finally {
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    // ดึงข้อมูลจาก Local Storage
-
+    // Fetch Charger by ID ทุกๆ 5 นาที 
     if (ChargerId) {
       GetStationbyId(ChargerId);
-      GetStationStatic(ChargerId);
+  
+      const interval = setInterval(() => {
+        console.log("⏳ Fetching Charger by ID...");
+        GetStationbyId(ChargerId, false);
+      }, 300000); // 5 นาที
+  
+      return () => clearInterval(interval); // Cleanup interval เมื่อ component ถูก unmount
     }
-  }, []);
-
+  }, [ChargerId]);
+  
   useEffect(() => {
+    // Fetch Charger Static ทุกๆ // 5 นาที
+    if (ChargerId) {
+      GetStationStatic(ChargerId);
+  
+      const interval = setInterval(() => {
+        console.log("⏳ Fetching Charger Static...");
+        GetStationStatic(ChargerId, false);
+      }, 300000); // 5 นาที
+  
+      return () => clearInterval(interval); // Cleanup interval เมื่อ component ถูก unmount
+    }
+  }, [ChargerId]);
+  
+  useEffect(() => {
+    // Fetch Charger History Statistics ทุกๆ // 5 นาที
     if (ChargerId) {
       GetChargerHistoryStatistics(ChargerId);
+  
+      const interval = setInterval(() => {
+        console.log("⏳ Fetching Charger History Statistics...");
+        GetChargerHistoryStatistics(ChargerId, false);
+      }, 300000); // 5 นาที
+  
+      return () => clearInterval(interval); // Cleanup interval เมื่อ component ถูก unmount
     }
-  }, [endDate, startDate, timeUnit,ChargerId]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("⏳ Refreshing data every 2 minutes from Redux...");
-      Promise.all([GetStationbyId(ChargerId,false)]);
-      GetStationStatic(ChargerId);
-      GetChargerHistoryStatistics(ChargerId);
-    }, 300000);
-
-    return () => clearInterval(interval);
-  }, [ChargerId]);
+  }, [ChargerId, endDate, startDate, timeUnit]);
 
   // const handleChargerClick = (chargerId, chargerName) => {
   //   localStorage.setItem("chargerId", chargerId);

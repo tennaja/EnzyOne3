@@ -77,6 +77,75 @@ const Dashboard = ({ onNavigate }) => {
   const [selectedSite, setSelectedSite] = useState("");
   const [selectedStation, setSelectedStation] = useState("");
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true); // เปิดสถานะ loading ก่อนเริ่ม fetch
+
+      try {
+        // ใช้ Promise.all เพื่อรอให้ทุกคำสั่ง fetch เสร็จพร้อมกัน
+        await Promise.all([
+          GetStationList(siteIdRedux),
+          GetChargingHistory(siteIdRedux, stationIdRedux),
+          GetCountByStatusList(siteIdRedux, stationIdRedux),
+        ]);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false); // ปิดสถานะ loading หลังจาก fetch เสร็จ
+      }
+    };
+
+    fetchData(); // เรียกฟังก์ชัน fetchData ครั้งแรก
+  }, []); // ทำงานครั้งแรกครั้งเดียว
+
+  useEffect(() => {
+    getSiteDropdown();
+    // GetCountByStatusList();
+  }, []);
+
+  // useEffect(() => {
+  //   GetChargingHistory(siteid, stationid);
+  // }, [startDate, endDate]);
+
+  useEffect(() => {
+    // Fetch initial data for Station List
+    GetStationList(siteIdRedux);
+
+    // Set interval to refresh Station List every 5 minutes
+    const interval = setInterval(() => {
+      GetStationList(siteIdRedux, false);
+    }, 300000); // 300,000 ms = 5 minutes
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, [siteIdRedux, stationid]);
+
+  useEffect(() => {
+    // Fetch initial data for Charging History
+    GetChargingHistory(siteIdRedux, stationIdRedux);
+
+    // Set interval to refresh Charging History every 5 minutes
+    const interval = setInterval(() => {
+      GetChargingHistory(siteIdRedux, stationIdRedux, false);
+    }, 300000); // 300,000 ms = 5 minutes
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, [siteIdRedux, stationIdRedux, startDate, endDate]);
+
+  useEffect(() => {
+    // Fetch initial data for Count By Status List
+    GetCountByStatusList(siteIdRedux, stationIdRedux);
+
+    // Set interval to refresh Count By Status List every 5 minutes
+    const interval = setInterval(() => {
+      GetCountByStatusList(siteIdRedux, stationIdRedux, false);
+    }, 300000); // 300,000 ms = 5 minutes
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, [siteIdRedux, stationIdRedux]);
+
   //Get siteDropdown
   const getSiteDropdown = async () => {
     const result = await getDropdownSite();
@@ -99,6 +168,7 @@ const Dashboard = ({ onNavigate }) => {
         setIsfirst(false); // เซ็ตให้เป็น false หลังจากใช้งานครั้งแรก
       } else {
         // setSiteid(siteId);
+        GetStationList(siteId);
         setSelectedSiteId(siteId);
         setSelectedSiteName(result[0].name);
       }
@@ -127,6 +197,7 @@ const Dashboard = ({ onNavigate }) => {
       } else {
         setStatonid(firstGroupId);
         setSelectedStationId(firstGroupId);
+        dispatch(setStationId(firstGroupId));
         setSelectedStationName(result[0]?.name || "");
         console.log(result[0]?.name || "");
       }
@@ -135,47 +206,53 @@ const Dashboard = ({ onNavigate }) => {
       setGrouplist([]); // ตั้งค่า grouplist เป็นว่างถ้าไม่มีข้อมูล
     }
   };
+
   //Get stationList
-  const GetStationList = async (site,showLoading = true) => {
-    if (showLoading) setLoading(true); 
+  const GetStationList = async (site, showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const result = await getStationList(site);
       console.log("Station List:", result);
 
-      if (!stationid || stationid === "0") {
-        // ถ้า stationid เป็น null หรือ "0" ให้แสดงทุกรายการ
-        setStationList(result?.length > 0 ? result : []);
-      } else {
-        // ถ้า stationid มีค่า ให้แสดงเฉพาะที่ stationid ตรงกัน
-        const filteredList = result.filter(
-          (station) => station.id === parseInt(stationid)
-        );
-        console.log("Filtered Station List:", filteredList);
+      setStationList((prevList) => {
+        let updatedList = result;
 
-        // ถ้าไม่มีรายการที่ตรงกับ stationid ให้แสดงรายการทั้งหมด
-        if (filteredList.length > 0) {
-          setStationList(filteredList);
-        } else {
-          console.warn("No matching station found for stationid:", stationid);
-          setStationList(result?.length > 0 ? result : []);
+        // ถ้า stationid มีค่า ให้กรองข้อมูล
+        if (stationid && stationid !== "0") {
+          updatedList = result.filter(
+            (station) => station.id === parseInt(stationid)
+          );
+          console.log("Filtered Station List:", updatedList);
         }
-      }
+
+        // ถ้าไม่มีรายการที่ตรงกับ stationid ให้คืนค่ารายการเดิม
+        if (updatedList.length === 0) {
+          console.warn("No matching station found for stationid:", stationid);
+          return prevList;
+        }
+
+        return updatedList; // คืนค่ารายการที่กรองแล้ว
+      });
     } catch (error) {
       console.error("Error fetching station list:", error);
     } finally {
       if (showLoading) {
-      setLoading(false);
+        setLoading(false);
       }
     }
   };
 
   //Get countbystatusList
-  const GetCountByStatusList = async (siteIdParam, stationIdParam) => {
+  const GetCountByStatusList = async (
+    siteIdParam,
+    stationIdParam,
+    showLoading = true
+  ) => {
     const paramsNav = {
       siteId: siteIdParam,
       stationId: stationIdParam,
     };
-    // setLoading(true);
+    if (showLoading) setLoading(true);
     try {
       const result = await getChargeHeadsCountByStatus(paramsNav);
       console.log("Charer List:", result.data.lastUpdated);
@@ -183,37 +260,36 @@ const Dashboard = ({ onNavigate }) => {
     } catch (error) {
       console.error("Error fetching schedule list:", error);
     } finally {
-      // setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
   //Get Charging History
-  const GetChargingHistory = async (siteIdParam, stationIdParam) => {
+  const GetChargingHistory = async (
+    siteIdParam,
+    stationIdParam,
+    showLoading = true
+  ) => {
     const Param = {
       siteId: siteIdParam,
       stationId: stationIdParam,
       endDate: endDate,
       startDate: startDate,
     };
-    const res = await getChargingHistory(Param);
-
-    if (res.status === 200) {
+    if (showLoading) setLoading(true);
+    try {
+      const res = await getChargingHistory(Param);
       setChargingList(res.data);
-      console.log("เข้าาาาาาาาาาาาาาาาา", res.data);
-    } else {
-      console.log("ไม่เข้าาาาาาาาาาาาาาาาา");
+    } catch (error) {
+      console.error("Error fetching schedule list:", error);
+    } finally {
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
-  useEffect(() => {
-    getSiteDropdown();
-    GetCountByStatusList();
-  }, []);
-
-  useEffect(() => {
-   
-      GetChargingHistory(siteid, stationid);
-    
-  }, [startDate, endDate]);
   // สร้าง icon map สำหรับ status
   const statusIcons = {
     "In-Use": <RiBatteryChargeLine fontSize="30px" />,
@@ -233,7 +309,7 @@ const Dashboard = ({ onNavigate }) => {
   //   if (typeof window !== "undefined") {
   //     // เช็คว่าเป็นการรีเฟรชหน้า
   //     const navType = window.performance.navigation.type;
-  
+
   //     if (navType === 1) {
   //       // ถ้าเป็นการรีเฟรช, เคลียร์ Redux และเก็บค่าใน sessionStorage ว่ารีเฟรชแล้ว
   //       dispatch(clearAll()); // เคลียร์ Redux
@@ -244,67 +320,52 @@ const Dashboard = ({ onNavigate }) => {
   //     }
   //   }
   // }, []);  // ใช้เมื่อหน้าโหลดครั้งแรก
-  
+
   // useEffect(() => {
   //   // เมื่อเข้ามาหน้าก่อนและไม่ต้องการให้เคลียร์ Redux
   //   const hasPageRefreshed = sessionStorage.getItem("hasPageRefreshed");
-  
+
   //   // ถ้าไม่มีการรีเฟรชหน้า จะไม่ทำการเคลียร์
   //   if (hasPageRefreshed) {
   //     console.log("Already refreshed before, skipping state reset.");
   //   } else {
   //     console.log("Not refreshed yet, Redux state will not be cleared.");
   //   }
-  
+
   //   // เมื่อ component จะ unmount, ลบค่า sessionStorage
   //   return () => {
   //     sessionStorage.removeItem("hasPageRefreshed");
   //   };
   // }, []);  // ตรวจสอบเฉพาะตอนที่ component mount ครั้งแรก
-  
-  
 
   useEffect(() => {
-      const storedSite = siteNameRedux;
-      if (storedSite && siteDropdwonlist?.length > 0) {
-        const matchedSite = siteDropdwonlist.find(
-          (site) => site.name === storedSite
-        );
-        if (matchedSite) {
-          setSiteid(matchedSite.id);
-          setSelectedSiteId(matchedSite.id);
-          dispatch(setSiteId(matchedSite.id));
-          dispatch(setStationId(stationid));
-          setSelectedSiteName(matchedSite.name);
-          setSelectedSite(matchedSite.name);
-          setSiteName(matchedSite.name);
-          getStationDropdown(matchedSite.id);
-          GetStationList(matchedSite.id); // โหลด Station List ตาม Site ที่เลือกไว้
-          GetCountByStatusList(matchedSite.id, stationid); // โหลด Count By Status List ตาม Site ที่เลือกไว้);
-          GetChargingHistory(matchedSite.id, stationid);
-          console.log("Selected site from localStorage:", matchedSite.name);
-        } else {
-          console.warn("No matching site found for storedSite:", storedSite);
-        }
-      } else if (!storedSite) {
-        console.warn("No selectedSite found in localStorage.");
-      } else if (!siteDropdwonlist?.length) {
-        console.warn("siteDropdwonlist is empty.");
+    const storedSite = siteNameRedux;
+    if (storedSite && siteDropdwonlist?.length > 0) {
+      const matchedSite = siteDropdwonlist.find(
+        (site) => site.name === storedSite
+      );
+      if (matchedSite) {
+        setSiteid(matchedSite.id);
+        setSelectedSiteId(matchedSite.id);
+        dispatch(setSiteId(matchedSite.id));
+        dispatch(setStationId(stationid));
+        setSelectedSiteName(matchedSite.name);
+        setSelectedSite(matchedSite.name);
+        setSiteName(matchedSite.name);
+        getStationDropdown(matchedSite.id);
+        GetStationList(matchedSite.id); // โหลด Station List ตาม Site ที่เลือกไว้
+        GetCountByStatusList(matchedSite.id, stationid); // โหลด Count By Status List ตาม Site ที่เลือกไว้);
+        GetChargingHistory(matchedSite.id, stationid);
+        console.log("Selected site from localStorage:", matchedSite.name);
+      } else {
+        console.warn("No matching site found for storedSite:", storedSite);
       }
-    
+    } else if (!storedSite) {
+      console.warn("No selectedSite found in localStorage.");
+    } else if (!siteDropdwonlist?.length) {
+      console.warn("siteDropdwonlist is empty.");
+    }
   }, [siteDropdwonlist]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("⏳ Refreshing data every 2 minutes from Redux...");
-
-      Promise.all([GetStationList(siteIdRedux,false)]);
-      GetChargingHistory(siteIdRedux, stationIdRedux);
-      GetCountByStatusList(siteIdRedux, stationIdRedux);
-    }, 300000);
-
-    return () => clearInterval(interval);
-  }, [siteIdRedux, stationIdRedux]);
 
   const handleStationChange = (event) => {
     console.log("Station ID:", event.target.value);
@@ -324,12 +385,10 @@ const Dashboard = ({ onNavigate }) => {
   const handleSearchquery = (e) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1); // Reset current page to 1 when searching
-   
   };
   const handleSearchChargingquery = (e) => {
     setSearchChargingQuery(e.target.value);
     setChargingCurrentPage(1); // Reset current page to 1 when searching
-    
   };
 
   const handleSearch = () => {
@@ -569,7 +628,9 @@ const Dashboard = ({ onNavigate }) => {
 
   const stationOptions = (stationDropdwonlist ?? []).map((station) => ({
     value: station.id ?? "0",
-    label: station.siteName ? `${station.siteName} - ${station.name}` : station.name,
+    label: station.siteName
+      ? `${station.siteName} - ${station.name}`
+      : station.name,
   }));
 
   return (
@@ -579,66 +640,66 @@ const Dashboard = ({ onNavigate }) => {
           <div className="flex items-center gap-2">
             <span className="text-sm">Site: </span>
             <Select
-  className="w-48"
-  options={siteOptions}
-  value={
-    siteid
-      ? siteOptions.find((option) => option.value === siteid)
-      : siteOptions[0]
-  }
-  onChange={(selectedOption) => {
-    const selectedValue = selectedOption?.value ?? "0";
-    const selectedLabel = selectedOption?.label ?? "";
+              className="w-48"
+              options={siteOptions}
+              value={
+                siteid
+                  ? siteOptions.find((option) => option.value === siteid)
+                  : siteOptions[0]
+              }
+              onChange={(selectedOption) => {
+                const selectedValue = selectedOption?.value ?? "0";
+                const selectedLabel = selectedOption?.label ?? "";
 
-    setSelectedSiteId(selectedValue);
-    getStationDropdown(selectedValue);
-    setSelectedSite(selectedLabel);
-    localStorage.setItem("selectedSite", selectedLabel);
-    setSelectedSiteName(selectedLabel);
-  }}
-  isSearchable
-  styles={{
-    control: (provided) => ({
-      ...provided,
-      borderColor: "rgb(203 213 225)",
-      borderRadius: "0.375rem",
-      zIndex: 10,
-      height: "2.25rem",
-      backgroundColor: "white",
-    }),
-    menu: (provided) => ({
-      ...provided,
-      zIndex: 9999,
-      position: "absolute",
-      backgroundColor: "white",
-    }),
-    option: (provided, state) => ({
-      ...provided,
-      backgroundColor: state.isSelected
-        ? "#33BFBF"
-        : state.isFocused
-        ? "#e0f7fa"
-        : "transparent",
-      color: state.isSelected ? "white" : "black",
-      cursor: "pointer",
-      padding: "8px 16px",
-      "&:active": {
-        backgroundColor: "#33BFBF",
-      },
-    }),
-  }}
-  classNames={{
-    control: () => "dark:bg-slate-900 dark:text-white dark:border-slate-600",
-    menu: () => "dark:bg-slate-700",
-    option: ({ isFocused, isSelected }) =>
-      `${isSelected ? "bg-teal-500 text-white" : ""} ${
-        isFocused && !isSelected ? "dark:bg-slate-900" : ""
-      } dark:text-white`,
-    singleValue: () => "dark:text-white", // <<< ตรงนี้สำคัญสำหรับข้อความที่แสดงผล
-    input: () => "dark:text-white",       // <<< สำหรับ text input ตอนค้นหา
-  }}
-/>
-
+                setSelectedSiteId(selectedValue);
+                getStationDropdown(selectedValue);
+                setSelectedSite(selectedLabel);
+                localStorage.setItem("selectedSite", selectedLabel);
+                setSelectedSiteName(selectedLabel);
+              }}
+              isSearchable
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  borderColor: "rgb(203 213 225)",
+                  borderRadius: "0.375rem",
+                  zIndex: 10,
+                  height: "2.25rem",
+                  backgroundColor: "white",
+                }),
+                menu: (provided) => ({
+                  ...provided,
+                  zIndex: 9999,
+                  position: "absolute",
+                  backgroundColor: "white",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  backgroundColor: state.isSelected
+                    ? "#33BFBF"
+                    : state.isFocused
+                    ? "#e0f7fa"
+                    : "transparent",
+                  color: state.isSelected ? "white" : "black",
+                  cursor: "pointer",
+                  padding: "8px 16px",
+                  "&:active": {
+                    backgroundColor: "#33BFBF",
+                  },
+                }),
+              }}
+              classNames={{
+                control: () =>
+                  "dark:bg-slate-900 dark:text-white dark:border-slate-600",
+                menu: () => "dark:bg-slate-700",
+                option: ({ isFocused, isSelected }) =>
+                  `${isSelected ? "bg-teal-500 text-white" : ""} ${
+                    isFocused && !isSelected ? "dark:bg-slate-900" : ""
+                  } dark:text-white`,
+                singleValue: () => "dark:text-white", // <<< ตรงนี้สำคัญสำหรับข้อความที่แสดงผล
+                input: () => "dark:text-white", // <<< สำหรับ text input ตอนค้นหา
+              }}
+            />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm">Station: </span>
@@ -688,14 +749,15 @@ const Dashboard = ({ onNavigate }) => {
                 }),
               }}
               classNames={{
-                control: () => "dark:bg-slate-900 dark:text-white dark:border-slate-600",
+                control: () =>
+                  "dark:bg-slate-900 dark:text-white dark:border-slate-600",
                 menu: () => "dark:bg-slate-700",
                 option: ({ isFocused, isSelected }) =>
                   `${isSelected ? "bg-teal-500 text-white" : ""} ${
                     isFocused && !isSelected ? "dark:bg-slate-900" : ""
                   } dark:text-white`,
                 singleValue: () => "dark:text-white", // <<< ตรงนี้สำคัญสำหรับข้อความที่แสดงผล
-                input: () => "dark:text-white",       // <<< สำหรับ text input ตอนค้นหา
+                input: () => "dark:text-white", // <<< สำหรับ text input ตอนค้นหา
               }}
             />
           </div>
@@ -1692,7 +1754,7 @@ const Dashboard = ({ onNavigate }) => {
           </div>
         </div>
       </div>
-      
+
       {loading && <Loading />}
       {/* <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
       <EnergyMirrorChart/>

@@ -116,20 +116,45 @@ export default function Production() {
   useEffect(() => {
     GetEnergyProductDeviceList();
     GetDropdownDeviceList();
+    const interval = setInterval(() => {
+    GetEnergyProductDeviceList(false);
+    GetDropdownDeviceList(false);
+    }, 300000); // 300,000 ms = 5 minutes
+    return () => clearInterval(interval);
   }, []);
+  
   useEffect(() => {
     GetEnergyHistory();
+    const interval = setInterval(() => {
+      GetEnergyHistory(false);
+      }, 300000); 
+    
+    return () => clearInterval(interval);
   }, [energyDate, energyRange]);
+  
   useEffect(() => {
     GetEnergyRevenue();
+    const interval = setInterval(() => {
+      GetEnergyRevenue(false);
+      }, 300000); 
+    
+    return () => clearInterval(interval);
+    
   }, [revenueDate, revenueRange]);
+  
   useEffect(() => {
     GetProductionHeatmap();
+    const interval = setInterval(() => {
+      GetProductionHeatmap(false);
+      }, 300000); 
+    
+    return () => clearInterval(interval);
+    
   }, [year, month, sourceType]);
 
-  const GetEnergyProductDeviceList = async () => {
+  const GetEnergyProductDeviceList = async (showLoading = true) => {
     const siteId = 6;
-    setLoading(true);
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
     try {
       const result = await getProductSummary(siteId);
       if (result && result.status === 200) {
@@ -160,12 +185,14 @@ export default function Production() {
       setProductDeviceList([]);
       setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
-  const GetDropdownDeviceList = async () => {
+  const GetDropdownDeviceList = async (showLoading = true) => {
     const siteId = 6;
-    setLoading(true);
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
     try {
       const result = await getProductDeviceList(siteId);
       if (result && result.status === 200) {
@@ -179,17 +206,18 @@ export default function Production() {
       setProductDeviceList([]);
       setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
-  const GetEnergyHistory = async () => {
+  const GetEnergyHistory = async (showLoading = true) => {
     const paramsNav = {
       siteId: 6,
       date: energyDate.format("YYYY/MM/DD"),
       groupBy: energyRange,
     };
-    setLoading(true);
-    // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
     try {
       const result = await getProductEnergyHistory(paramsNav);
@@ -202,22 +230,19 @@ export default function Production() {
     } catch (error) {
       console.error("Error fetching Summary History:", error);
     } finally {
-      setLoading(false);
-      // if (showLoading) {
-      //   setTimeout(() => setLoading(false), 1000);
-      // }
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
-  const GetEnergyRevenue = async () => {
+  const GetEnergyRevenue = async (showLoading = true) => {
     const paramsNav = {
       siteId: 6,
       date: revenueDate.format("YYYY/MM/DD"),
       groupBy: revenueRange,
     };
-    setLoading(true);
-
-    // if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
     try {
       const result = await getProductRevenueHistory(paramsNav);
       if (result && result.status === 200) {
@@ -229,19 +254,18 @@ export default function Production() {
     } catch (error) {
       console.error("Error fetching Summary Revenue:", error);
     } finally {
-      setLoading(false);
-
-      // if (showLoading) {
-      //   setTimeout(() => setLoading(false), 1000);
-      // }
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
-  const GetProductionHeatmap = async () => {
+  const GetProductionHeatmap = async (showLoading = true) => {
     const paramsNav = {
       siteId: 6,
       date: yearMonth,
       deviceId: sourceType,
     };
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
     try {
       const result = await getProductionHeatmap(paramsNav);
       if (result && result.status === 200) {
@@ -254,9 +278,9 @@ export default function Production() {
       console.error("Error fetching Production Heatmap:", error);
       setExternalData([]);
     } finally {
-      // if (showLoading) {
-      //   setTimeout(() => setLoading(false), 1000);
-      // }
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 

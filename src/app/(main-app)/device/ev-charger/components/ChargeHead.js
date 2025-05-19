@@ -75,8 +75,9 @@ const ChargerHeadDetail = ({ onNavigate }) => {
         }
     }
   };
-  const GetStationStatic = async (id) => {
+  const GetStationStatic = async (id,showLoading = true) => {
     console.log("station Id:", id);
+    if (showLoading)setLoading(true);
     try {
       const result = await getChargeHeadStatics(id);
       console.log("Today:", result?.data?.today);
@@ -96,16 +97,21 @@ const ChargerHeadDetail = ({ onNavigate }) => {
       }
     } catch (error) {
       console.error("Error fetching station data:", error);
+    }finally {
+      if (showLoading) {
+        setLoading(false);
+        }
     }
   };
 
-  const GetChargerHistoryStatistics = async (id) => {
+  const GetChargerHistoryStatistics = async (id,showLoading = true) => {
     const Param = {
       chargeHeadId: id,
       groupBy: timeUnit,
       endDate: endDate,
       startDate: startDate,
     };
+    if (showLoading)setLoading(true);
     try {
       const result = await getChargeHeadHistoryStatistics(Param);
       if (result) {
@@ -114,34 +120,54 @@ const ChargerHeadDetail = ({ onNavigate }) => {
       }
     } catch (error) {
       console.error("Error fetching graph data:", error);
+    }finally {
+      if (showLoading) {
+        setLoading(false);
+        }
     }
   };
 
   useEffect(() => {
-    // ดึงข้อมูลจาก Local Storage
-
+    // Fetch Charge Head by ID ทุกๆ // 5 นาที
     if (ChargerHeadId) {
       GetStationbyId(ChargerHeadId);
-      GetStationStatic(ChargerHeadId);
+  
+      const interval = setInterval(() => {
+        console.log("⏳ Fetching Charge Head by ID...");
+        GetStationbyId(ChargerHeadId, false);
+      }, 300000); // 5 นาที
+  
+      return () => clearInterval(interval); // Cleanup interval เมื่อ component ถูก unmount
     }
-  }, []);
-
+  }, [ChargerHeadId]);
+  
   useEffect(() => {
+    // Fetch Charge Head Static ทุกๆ // 5 นาที
+    if (ChargerHeadId) {
+      GetStationStatic(ChargerHeadId);
+  
+      const interval = setInterval(() => {
+        console.log("⏳ Fetching Charge Head Static...");
+        GetStationStatic(ChargerHeadId, false);
+      }, 300000); // 5 นาที
+  
+      return () => clearInterval(interval); // Cleanup interval เมื่อ component ถูก unmount
+    }
+  }, [ChargerHeadId]);
+  
+  useEffect(() => {
+    // Fetch Charge Head History Statistics ทุกๆ // 5 นาที
     if (ChargerHeadId) {
       GetChargerHistoryStatistics(ChargerHeadId);
+  
+      const interval = setInterval(() => {
+        console.log("⏳ Fetching Charge Head History Statistics...");
+        GetChargerHistoryStatistics(ChargerHeadId, false);
+      }, 300000); // 5 นาที
+  
+      return () => clearInterval(interval); // Cleanup interval เมื่อ component ถูก unmount
     }
-  }, [endDate, startDate, timeUnit,ChargerHeadId]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("⏳ Refreshing data every 2 minutes from Redux...");
-      Promise.all([GetStationbyId(ChargerHeadId,false)]);
-      GetStationStatic(ChargerHeadId);
-      GetChargerHistoryStatistics(ChargerHeadId);
-    }, 300000);
-
-    return () => clearInterval(interval);
-  }, [ChargerHeadId]);
+  }, [ChargerHeadId, endDate, startDate, timeUnit]);
 
   const calculateDefaultDateRange = (groupBy) => {
     const today = dayjs(); // วันปัจจุบัน
