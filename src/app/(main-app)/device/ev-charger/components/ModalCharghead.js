@@ -13,7 +13,7 @@ const ChargeHeadModal = ({ chargers, opened, onClose }) => {
     direction: 'asc',
   });
   const [chargingCurrentPage, setChargingCurrentPage] = useState(1);
-  const [chargingRowsPerPage, setChargingRowsPerPage] = useState(10);
+  const [chargingRowsPerPage, setChargingRowsPerPage] = useState(20);
 
   // Handle Search Input
   const handleSearchChargingquery = (e) => {
@@ -101,7 +101,7 @@ const handleSortCharging = (column) => {
   }
   , [chargers]);
   useEffect(() => {
-    setChargingRowsPerPage(10); // Reset rows per page when chargers change
+    setChargingRowsPerPage(20); // Reset rows per page when chargers change
   }, [chargers]);
   useEffect(() => {
     setSearchChargingQuery(''); // Reset search query when chargers change
@@ -130,13 +130,25 @@ const handleSortCharging = (column) => {
         <span className="text-xs font-semibold">
         {chargers?.length ?? 0} records
         </span>
-        <input
-          type="text"
-          placeholder="ค้นหา"
-          value={searchChargingQuery}
-          onChange={handleSearchChargingquery}
-          className="border border-gray-300 p-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
-        />
+        <div className="relative w-56">
+  <input
+    type="text"
+    placeholder="ค้นหา"
+    value={searchChargingQuery}
+    onChange={handleSearchChargingquery}
+    className="w-full border border-gray-300 p-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+  />
+  {searchChargingQuery && (
+    <button
+      type="button"
+      onClick={() => setSearchChargingQuery('')}
+      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+    >
+      ✕
+    </button>
+  )}
+</div>
+
       </div>
       <div className="overflow-x-auto mt-3">
         <table className="min-w-full table-auto text-sm dark:text-white">
@@ -260,7 +272,7 @@ const handleSortCharging = (column) => {
                     colSpan="10"
                     className="px-2 py-4 text-center text-gray-500 dark:text-gray-400"
                   >
-                    Data not found
+                    Charge head not found
                   </td>
                 </tr>
               ) : (

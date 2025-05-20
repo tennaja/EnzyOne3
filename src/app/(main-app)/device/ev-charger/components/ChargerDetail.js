@@ -38,9 +38,9 @@ const ChargerDetail = ({ onNavigate }) => {
   const [staticsToday, setStaticsToday] = useState({});
   const [staticsTotal, setStaticsTotal] = useState({});
   const [chargersHead, setChargersHead] = useState([]);
-  const [startDate, setStartDate] = useState(dayjs().subtract(7, 'days').format("YYYY/MM/DD"));
+  const [startDate, setStartDate] = useState(dayjs().subtract(1, 'month').format("YYYY/MM/DD"));
   const [endDate, setEndDate] = useState(todayFormatted);
-  const [timeUnit, setTimeUnit] = useState("hour");
+  const [timeUnit, setTimeUnit] = useState("day");
   const [graphData, setGraphData] = useState();
   const [loading, setLoading] = useState(false);
   const [mapZoomLevel, setMapZoomLevel] = useState(15);
@@ -351,7 +351,7 @@ const ChargerDetail = ({ onNavigate }) => {
         <div className="flex items-center gap-4">
           <ArrowBackIosNewIcon
             style={{
-              fontSize: "20px",
+              fontSize: "30px",
               color: "#33BFBF",
               cursor: "pointer",
               "&:hover": {
@@ -362,7 +362,7 @@ const ChargerDetail = ({ onNavigate }) => {
           />
 
           <div className="flex flex-col">
-            <strong>{ChargerName}</strong>
+            <strong className="text-lg">{ChargerName}</strong>
             <div className="flex items-center space-x-1 gap-1">
               <span
                 onClick={() => onNavigate("dashboard")}
@@ -416,82 +416,77 @@ const ChargerDetail = ({ onNavigate }) => {
 
           <div className="w-full lg:w-60 flex-1">
             <div className="flex-1 ml-6">
-              <table className="w-full mt-5 text-sm">
-                <tbody>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Charger Name</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.name}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Brand Name</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {station?.brandName}
-                    </td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Charger Type</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.type}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Power Type</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {station?.powerType}
-                    </td>
-                  </tr>
-                  {/* <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Station Status</strong>
-                    </td>
-                    <td
-                      className={`px-4 py-2 font-bold ${
-                        station?.status === "open"
-                          ? "text-[#12B981]"
-                          : "text-[#FF3D4B]"
-                      }`}
-                    >
-                      {station?.status}
-                    </td>
-                  </tr> */}
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Charger Price (per kWh)</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.price}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>SimultaneousCharging</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {station?.simultaneousCharge}
-                    </td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>StationName</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {station?.stationName}
-                    </td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Latitude / Longitude</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {station?.latitude},{station?.longitude}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="overflow-x-auto">
+  <table className="w-full mt-5 text-sm">
+    <tbody>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Charger Name</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.name}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Brand Name</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.brandName}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Charger Type</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.type}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Power Type</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.powerType}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Charger Price (per kWh)</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.price}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Simultaneous Charging</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.simultaneousCharge}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Station Name</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.stationName}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Latitude / Longitude</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.latitude}, {station?.longitude}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
             </div>
           </div>
         </div>
@@ -506,9 +501,10 @@ const ChargerDetail = ({ onNavigate }) => {
           <div className="w-full lg:w-60 flex-1">
             <div className="flex-1">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-semibold">
-                  {chargersHead.length} Chargers
-                </span>
+              <span className="text-xs font-semibold">
+  {chargersHead.length} Charger{chargersHead.length !== 1 ? 's' : ''}
+</span>
+
                 <input
                   type="text"
                   placeholder="ค้นหา"
@@ -818,7 +814,7 @@ const ChargerDetail = ({ onNavigate }) => {
                           colSpan="10"
                           className="px-2 py-4 text-center text-gray-500 dark:text-gray-400"
                         >
-                          Charging Session History not found
+                          Charge head not found
                         </td>
                       </tr>
                     ) : (
@@ -847,7 +843,7 @@ const ChargerDetail = ({ onNavigate }) => {
                           <tr
                             key={record.id || record.displayIndex} // ใช้ record.id หรือ displayIndex เป็น key
                             className={`hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                              record.displayIndex % 2 === 0
+                              index % 2 === 0
                                 ? "bg-white dark:bg-gray-800"
                                 : "bg-gray-100 dark:bg-gray-900"
                             }`}
@@ -1030,12 +1026,12 @@ const ChargerDetail = ({ onNavigate }) => {
           <div className="mt-5">
             <BarChartComponent
               data={graphData}
-              type="hour"
+              type={timeUnit}
               timestampKey="timestamp"
               valueKeys={["session"]}
               yAxisLabel="Sessions"
               legendLabels={{
-                session: "Session",
+                session: "Sessions",
               }}
               decimalPlaces={0} 
             />
@@ -1043,7 +1039,7 @@ const ChargerDetail = ({ onNavigate }) => {
           <div className="mt-5">
             <BarChartComponent
               data={graphData}
-              type="hour"
+              type={timeUnit}
               timestampKey="timestamp"
               valueKeys={["electricityAmount"]}
               yAxisLabel="Energy (kWh)"
@@ -1056,7 +1052,7 @@ const ChargerDetail = ({ onNavigate }) => {
           <div className="mt-5">
             <BarChartComponent
               data={graphData}
-              type="hour"
+              type={timeUnit}
               timestampKey="timestamp"
               valueKeys={["revenue"]}
               yAxisLabel="Revenue"

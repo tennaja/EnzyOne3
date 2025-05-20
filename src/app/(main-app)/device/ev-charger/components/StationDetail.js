@@ -35,9 +35,9 @@ const StationDetail = ({ onNavigate }) => {
   const [staticsToday, setStaticsToday] = useState({});
   const [staticsTotal, setStaticsTotal] = useState({});
   const [chargers, setChargers] = useState([]);
-  const [startDate, setStartDate] = useState(dayjs().subtract(7, 'days').format("YYYY/MM/DD"));
-const [endDate, setEndDate] = useState(todayFormatted);
-  const [timeUnit, setTimeUnit] = useState("hour");
+  const [startDate, setStartDate] = useState(dayjs().subtract(1, 'month').format("YYYY/MM/DD"));
+  const [endDate, setEndDate] = useState(todayFormatted);
+  const [timeUnit, setTimeUnit] = useState("day");
   const [graphData, setGraphData] = useState();
   const [loading, setLoading] = useState(false);
   const [chargeHeadList, setChargeHeadList] = useState();
@@ -201,6 +201,11 @@ const [endDate, setEndDate] = useState(todayFormatted);
     }
   }, [StationId, endDate, startDate, timeUnit]);
   
+  useEffect(() => {
+    const { startDate, endDate } = calculateDefaultDateRange(timeUnit);
+    setStartDate(startDate);
+    setEndDate(endDate);
+  }, []);
 
   const handleChargerClick = (chargerId, chargerName) => {
     localStorage.setItem("chargerId", chargerId);
@@ -217,6 +222,8 @@ const [endDate, setEndDate] = useState(todayFormatted);
     setSearchChargingQuery(e.target.value);
     setChargingCurrentPage(1);
   };
+
+
   const filteredChargingList = chargers
     ?.map((item, index) => ({ ...item, displayIndex: index + 1 })) // เพิ่มลำดับเลขให้แต่ละ item
     .filter(
@@ -287,6 +294,18 @@ const [endDate, setEndDate] = useState(todayFormatted);
     setChargingRowsPerPage(Number(e.target.value));
     setChargingCurrentPage(1);
   };
+  const maxEndDate1 = useMemo(() => {
+    switch (timeUnit) {
+      case "hour":
+        return dayjs(); // กรณี Hour: ใช้วันปัจจุบัน
+      case "day":
+        return dayjs(); // กรณี Day: ใช้วันปัจจุบัน
+      case "month":
+        return dayjs(); // กรณี Month: ใช้วันปัจจุบัน
+      default:
+        return dayjs(); // ค่าเริ่มต้นเป็นวันปัจจุบัน
+    }
+  }, [timeUnit]);
 
   const calculateDefaultDateRange = (groupBy) => {
     const today = dayjs(); // วันปัจจุบัน
@@ -332,24 +351,9 @@ const [endDate, setEndDate] = useState(todayFormatted);
     }
   };
 
-  const maxEndDate1 = useMemo(() => {
-    switch (timeUnit) {
-      case "hour":
-        return dayjs(); // กรณี Hour: ใช้วันปัจจุบัน
-      case "day":
-        return dayjs(); // กรณี Day: ใช้วันปัจจุบัน
-      case "month":
-        return dayjs(); // กรณี Month: ใช้วันปัจจุบัน
-      default:
-        return dayjs(); // ค่าเริ่มต้นเป็นวันปัจจุบัน
-    }
-  }, [timeUnit]);
+  
 
-  useEffect(() => {
-    const { startDate, endDate } = calculateDefaultDateRange(timeUnit);
-    setStartDate(startDate);
-    setEndDate(endDate);
-  }, []);
+  
 
   const getDisplayTime = (open, close) => {
     if (open === null && close === null) return "Closed";
@@ -382,7 +386,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
         <div className="flex items-center gap-4">
           <ArrowBackIosNewIcon
             style={{
-              fontSize: "20px",
+              fontSize: "30px",
               color: "#33BFBF",
               cursor: "pointer",
               "&:hover": {
@@ -393,7 +397,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
           />
 
           <div className="flex flex-col">
-            <strong>{StationName}</strong>
+            <strong className="text-lg">{StationName}</strong>
             <span
               onClick={() => onNavigate("dashboard")}
               className="text-sm text-gray-500 hover:text-[#1aa7a7] hover:underline transition-colors duration-200 cursor-pointer"
@@ -437,99 +441,112 @@ const [endDate, setEndDate] = useState(todayFormatted);
 
           <div className="w-full lg:w-60 flex-1">
             <div className="flex-1 ml-6">
-              <table className="w-full mt-5 text-sm">
-                <tbody>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Station Name</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.name}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Description</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {station?.description}
-                    </td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Brand Name</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.brand}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Currency</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.currency}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Station Status</strong>
-                    </td>
-                    <td
-                      className={`px-4 py-2 font-bold ${
-                        station?.status === "open"
-                          ? "text-[#12B981]"
-                          : "text-[#FF3D4B]"
-                      }`}
-                    >
-                      {station?.status}
-                    </td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Address</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.address}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Country</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.country}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Province</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">{station?.province}</td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Postal Code</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {station?.postalCode}
-                    </td>
-                  </tr>
-                  <tr className="text-xs  border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white">
-                      <strong>Latitude / Longitude</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {station?.latitude},{station?.longitude}
-                    </td>
-                  </tr>
-                  <tr className="text-xs border-b border-gray-200">
-                    <td className="px-4 py-2 bg-[#F2FAFA] align-top dark:bg-gray-900 dark:text-white">
-                      <strong>Opening Hours</strong>
-                    </td>
-                    <td className="px-4 py-2 font-bold">
-                      {openingHours.map(({ label, time }) => (
-                        <div className="flex items-center gap-2" key={label}>
-                          <span className="w-10">{label}</span>{" "}
-                          {/* กำหนดขนาดของวันให้เล็กลง */}
-                          <span className="ml-2">{time}</span>{" "}
-                          {/* ลดระยะห่างระหว่างวันและเวลา */}
-                        </div>
-                      ))}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="overflow-x-auto">
+  <table className="w-full mt-5 text-sm">
+    <tbody>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Station Name</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.name}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Description</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.description}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Brand Name</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.brand}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Currency</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.currency}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Station Status</strong>
+        </td>
+        <td
+          className={`px-4 py-2 font-bold break-words whitespace-pre-line ${
+            station?.status === "open"
+              ? "text-[#12B981]"
+              : "text-[#FF3D4B]"
+          }`}
+        >
+          {station?.status}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Address</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.address}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Country</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.country}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Province</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.province}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Postal Code</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.postalCode}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Latitude / Longitude</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {station?.latitude}, {station?.longitude}
+        </td>
+      </tr>
+      <tr className="text-xs border-b border-gray-200">
+        <td className="px-4 py-2 bg-[#F2FAFA] align-top dark:bg-gray-900 dark:text-white whitespace-nowrap">
+          <strong>Opening Hours</strong>
+        </td>
+        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+          {openingHours.map(({ label, time }) => (
+            <div className="flex items-center gap-2" key={label}>
+              <span className="w-10">{label}</span>
+              <span className="ml-2">{time}</span>
+            </div>
+          ))}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
             </div>
           </div>
         </div>
@@ -544,16 +561,29 @@ const [endDate, setEndDate] = useState(todayFormatted);
           <div className="w-full lg:w-60 flex-1">
             <div className="flex-1">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-semibold">
-                  {chargers.length} Chargers
-                </span>
-                <input
-                  type="text"
-                  placeholder="ค้นหา"
-                  value={searchChargingQuery}
-                  onChange={handleSearchChargingquery}
-                  className="border border-gray-300 p-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
-                />
+              <span className="text-xs font-semibold">
+  {chargers.length} Charger{chargers.length !== 1 ? 's' : ''}
+</span>
+
+                <div className="relative w-56">
+  <input
+    type="text"
+    placeholder="ค้นหา"
+    value={searchChargingQuery}
+    onChange={handleSearchChargingquery}
+    className="w-full border border-gray-300 p-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+  />
+  {searchChargingQuery && (
+    <button
+      type="button"
+      onClick={() => handleSearchChargingquery({ target: { value: '' } })}
+      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+    >
+      ✕
+    </button>
+  )}
+</div>
+
               </div>
               <div className="overflow-x-auto mt-3">
                 <table className="min-w-full table-auto text-sm">
@@ -596,7 +626,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-left"
+                        className="px-2 py-1 text-left cursor-pointer"
                         onClick={() => handleSortCharging("name")}
                       >
                         Name
@@ -632,7 +662,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-left"
+                        className="px-2 py-1 text-left cursor-pointer"
                         onClick={() => handleSortCharging("brand")}
                       >
                         Brand
@@ -668,7 +698,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-left"
+                        className="px-2 py-1 text-left cursor-pointer"
                         onClick={() => handleSortCharging("type")}
                       >
                         Type
@@ -704,7 +734,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-center"
+                        className="px-2 py-1 text-center cursor-pointer"
                         onClick={() => handleSortCharging("chargeHeadCount")}
                       >
                         Count of Charge Head
@@ -748,7 +778,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
                           colSpan="10"
                           className="px-2 py-4 text-center text-gray-500 dark:text-gray-400"
                         >
-                          Charging Session History not found
+                          Charger not found
                         </td>
                       </tr>
                     ) : (
@@ -777,7 +807,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
                           <tr
                             key={record.id || record.displayIndex} // ใช้ record.id หรือ displayIndex เป็น key
                             className={`hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                              record.displayIndex % 2 === 0
+                              index % 2 === 0
                                 ? "bg-white dark:bg-gray-800"
                                 : "bg-gray-100 dark:bg-gray-900"
                             }`}
@@ -905,14 +935,21 @@ const [endDate, setEndDate] = useState(todayFormatted);
             <div className="flex gap-2 mt-5 items-center">
               <span className="text-sm">Date :</span>
               <DatePicker
-                className="w-48 p-2 bg-white border shadow-default 
-          dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
-                value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
-                onChange={handleStartDateChange}
-                disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
-                format="YYYY/MM/DD"
-                allowClear={false}
-              />
+  className="w-48 p-2 bg-white border shadow-default 
+    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
+  value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
+  onChange={handleStartDateChange}
+  disabledDate={(current) => {
+    return (
+      current &&
+      (current > today || // ห้ามเลือกวันในอนาคต
+        (endDate && current.isAfter(dayjs(endDate, "YYYY/MM/DD"), "day"))) // ห้ามมากกว่า endDate
+    );
+  }}
+  format="YYYY/MM/DD"
+  allowClear={false}
+/>
+
               <p>-</p>
               <DatePicker
                 className="w-48 p-2 bg-white border shadow-default 
@@ -937,12 +974,12 @@ const [endDate, setEndDate] = useState(todayFormatted);
           <div className="mt-5">
             <BarChartComponent
               data={graphData}
-              type="hour"
+              type={timeUnit}
               timestampKey="timestamp"
               valueKeys={["session"]}
               yAxisLabel="Sessions"
               legendLabels={{
-                session: "Session",
+                session: "Sessions",
               }}
               decimalPlaces={0} 
             />
@@ -950,7 +987,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
           <div className="mt-5">
             <BarChartComponent
               data={graphData}
-              type="hour"
+              type={timeUnit}
               timestampKey="timestamp"
               valueKeys={["electricityAmount"]}
               yAxisLabel="Energy (kWh)"
@@ -963,7 +1000,7 @@ const [endDate, setEndDate] = useState(todayFormatted);
           <div className="mt-5">
             <BarChartComponent
               data={graphData}
-              type="hour"
+              type={timeUnit}
               timestampKey="timestamp"
               valueKeys={["revenue"]}
               yAxisLabel="Revenue"

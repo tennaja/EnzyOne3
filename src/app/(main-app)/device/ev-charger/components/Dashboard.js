@@ -459,18 +459,20 @@ const Dashboard = ({ onNavigate }) => {
           ?.toString()
           .toLowerCase()
           .includes(searchChargingQuery.toLowerCase()) ||
-        item.electricityAmount
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
+          item.electricityAmount != null &&
+          Number(item.electricityAmount)
+            .toFixed(2)
+            .toLowerCase()
+            .includes(searchChargingQuery.toLowerCase()) ||
         item.endTime
           ?.toString()
           .toLowerCase()
           .includes(searchChargingQuery.toLowerCase()) ||
-        item.price
-          ?.toString()
-          .toLowerCase()
-          .includes(searchChargingQuery.toLowerCase()) ||
+        item.price != null &&
+          Number(item.price)
+            .toFixed(2)
+            .toLowerCase()
+            .includes(searchChargingQuery.toLowerCase()) ||        
         item.startTime
           ?.toString()
           .toLowerCase()
@@ -781,7 +783,7 @@ const Dashboard = ({ onNavigate }) => {
             {siteName} | {stationName}
           </p>
           <p className="text-sm ">
-            Lasted Updated {countbystatusList?.lastUpdated}
+            Lasted Updated on {countbystatusList?.lastUpdated}
           </p>
         </div>
       </div>
@@ -863,13 +865,25 @@ const Dashboard = ({ onNavigate }) => {
                 <span className="text-xs font-semibold">
                   {filteredStationList.length} Stations
                 </span>
-                <input
-                  type="text"
-                  placeholder="ค้นหา"
-                  value={searchQuery}
-                  onChange={handleSearchquery}
-                  className="border border-gray-300 p-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
-                />
+                <div className="relative w-56">
+                  <input
+                    type="text"
+                    placeholder="ค้นหา"
+                    value={searchQuery}
+                    onChange={handleSearchquery}
+                    className="w-full border border-gray-300 p-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() =>
+                        handleSearchquery({ target: { value: "" } })
+                      }
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full table-auto text-sm">
@@ -1024,7 +1038,7 @@ const Dashboard = ({ onNavigate }) => {
                       </th>
 
                       <th
-                        className="px-2 py-1 text-center"
+                        className="px-2 py-1 text-center cursor-pointer"
                         onClick={() => handleSortStation("status")}
                       >
                         Status
@@ -1248,13 +1262,25 @@ const Dashboard = ({ onNavigate }) => {
                     allowClear={false}
                   />
                 </div>
-                <input
-                  type="text"
-                  placeholder="ค้นหา"
-                  value={searchChargingQuery}
-                  onChange={handleSearchChargingquery}
-                  className="border border-gray-300 p-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
-                />
+                <div className="relative w-56">
+                  <input
+                    type="text"
+                    placeholder="ค้นหา"
+                    value={searchChargingQuery}
+                    onChange={handleSearchChargingquery}
+                    className="w-full border border-gray-300 p-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+                  />
+                  {searchChargingQuery && (
+                    <button
+                      onClick={() =>
+                        handleSearchChargingquery({ target: { value: "" } })
+                      }
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="overflow-x-auto mt-3">
                 <table className="min-w-full table-auto text-sm">
@@ -1409,7 +1435,7 @@ const Dashboard = ({ onNavigate }) => {
                       </th>
 
                       <th
-                        className="px-2 py-1 text-left"
+                        className="px-2 py-1 text-left cursor-pointer"
                         onClick={() => handleSortCharging("chargerName")}
                       >
                         Charger Name
@@ -1445,7 +1471,7 @@ const Dashboard = ({ onNavigate }) => {
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-left"
+                        className="px-2 py-1 text-left cursor-pointer"
                         onClick={() => handleSortCharging("chargeHeadName")}
                       >
                         Charge Head Name
@@ -1481,7 +1507,7 @@ const Dashboard = ({ onNavigate }) => {
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-right"
+                        className="px-2 py-1 text-right cursor-pointer"
                         onClick={() => handleSortCharging("electricityAmount")}
                       >
                         Electricity Amount
@@ -1519,7 +1545,7 @@ const Dashboard = ({ onNavigate }) => {
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-right"
+                        className="px-2 py-1 text-right cursor-pointer"
                         onClick={() => handleSortCharging("price")}
                       >
                         Price
@@ -1555,7 +1581,7 @@ const Dashboard = ({ onNavigate }) => {
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-left"
+                        className="px-2 py-1 text-left cursor-pointer"
                         onClick={() => handleSortCharging("startTime")}
                       >
                         Start Time
@@ -1591,7 +1617,7 @@ const Dashboard = ({ onNavigate }) => {
                         </div>
                       </th>
                       <th
-                        className="px-2 py-1 text-left"
+                        className="px-2 py-1 text-left cursor-pointer"
                         onClick={() => handleSortCharging("endTime")}
                       >
                         End Time
@@ -1664,7 +1690,7 @@ const Dashboard = ({ onNavigate }) => {
                           <tr
                             key={record.id || record.displayIndex} // ใช้ record.id หรือ displayIndex เป็น key
                             className={`hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                              record.displayIndex % 2 === 0
+                              index % 2 === 0
                                 ? "bg-gray-100 dark:bg-gray-900"
                                 : "bg-white dark:bg-gray-800"
                             }`}
@@ -1689,11 +1715,12 @@ const Dashboard = ({ onNavigate }) => {
                               {highlightText(record.chargeHeadName)}
                             </td>
                             <td className="px-2 py-1 text-right dark:text-white">
-                              {highlightText(record.electricityAmount)}
-                            </td>
-                            <td className="px-2 py-1 text-right dark:text-white">
-                              {highlightText(record.price)}
-                            </td>
+  {highlightText(Number(record.electricityAmount).toFixed(2))}
+</td>
+<td className="px-2 py-1 text-right dark:text-white">
+  {highlightText(Number(record.price).toFixed(2))}
+</td>
+
                             <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.startTime)}
                             </td>

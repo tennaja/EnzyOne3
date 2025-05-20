@@ -55,7 +55,7 @@ const formatData = (data, valueKeys, decimalPlaces = 2) => {
 
 const BarChartComponent = ({
   data,
-  type = "hour",
+  type = "day",
   timestampKey = "timestamp",
   valueKeys = ["kwh"],
   yAxisLabel = "kwh",
@@ -93,25 +93,26 @@ console.log("BarChartComponent", data);
       console.error(`Invalid Date format: ${time}`);
       return {};
     }
-
+  
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     const hour = String(date.getHours()).padStart(2, "0");
-    const dayAbbreviation = getDayAbbreviation(date);
-
+  
     const result = {
       fullTime: `${year}/${month}/${day} ${hour}:00`,
-      day: `${dayAbbreviation} ${year}/${month}/${day}`,
-      month: `${year}/${month}`,
+      day: `${year}/${month}/${day}`,     // ✅ ตัดชื่อวัน + เวลาออก
+      month: `${year}/${month}`,         // ✅ ไม่มีเวลา
     };
-
+  
     valueKeys.forEach((key) => {
       result[key] = data[key]?.[index] ?? 0;
     });
-
+  
     return result;
   });
+  
+  
 
   const formattedData = formatData(rawData, valueKeys, decimalPlaces);
 
@@ -120,6 +121,7 @@ console.log("BarChartComponent", data);
     day: "day",
     month: "month",
   }[type] || "fullTime";
+  
 
   let chartData = aggregateData(formattedData, xAxisKey, valueKeys);
 
