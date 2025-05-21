@@ -267,7 +267,7 @@ const GetSummaryOverview = async (showLoading = true) => {
           <Card
             title="Total yield"
             tootipword={"Total energy yield of the plant since installation."}
-            value={formatNumber(summaryOverviewData?.kpi?.yieldTotal)} unit="MWh" hasInfo={true}
+            value={formatNumber(summaryOverviewData?.kpi?.yieldTotal)} unit="kWh" hasInfo={true}
           />
           <Card
             title="Inverter rated power"

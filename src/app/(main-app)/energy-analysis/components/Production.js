@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Tooltip from "@mui/material/Tooltip";
 import dayjs from "dayjs";
@@ -16,6 +16,10 @@ import {
   getProductDeviceList,
   getProductionHeatmap,
 } from "@/utils/api";
+import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import ArrowForwardIosOutlinedIcon from "@mui/icons-material/ArrowForwardIosOutlined";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import Loading from "./Loading";
 const { Option } = Select;
 
@@ -106,50 +110,83 @@ export default function Production() {
   const [dropdownDeviceList, setDropdownDeviceList] = useState([]);
   const [energyHistoryData, setEnergyHistoryData] = useState([]);
   const [revenueHistoryData, setRevenueHistoryData] = useState([]);
+  const [rowsPerPage, setRowsPerPage] = useState(20); // default 10
+
   const [totalSummary, setTotalSummary] = useState({
     power: "0.00",
     energy: "0.00",
     revenue: "0.00",
   });
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
+  const [loadingData2, setLoadingData2] = useState(false);
+  const [loadingData3, setLoadingData3] = useState(false);
+  const [loadingData4, setLoadingData4] = useState(false);
+  const [loadingData5, setLoadingData5] = useState(false);
+  
+  
+  // useEffect(() => {
+  //   const firstLoad = async () => {
+  //     console.log("Start loading...");
+  //     setLoading(true);
+  //     try {
+  //       await Promise.all([
+  //         GetEnergyProductDeviceList().then(() => console.log("GetEnergyProductDeviceList done")),
+  //         GetDropdownDeviceList().then(() => console.log("GetDropdownDeviceList done")),
+  //         GetEnergyHistory().then(() => console.log("GetEnergyHistory done")),
+  //         GetEnergyRevenue().then(() => console.log("GetEnergyRevenue done")),
+  //         GetProductionHeatmap().then(() => console.log("GetProductionHeatmap done"))
+  //       ]);
+  //       console.log("All done");
+  
+  //       await new Promise(resolve => setTimeout(resolve, 10000));
+  //     } catch (error) {
+  //       console.error("Error in loading:", error);
+  //     } finally {
+  //       setLoading(false);
+  //       console.log("setLoading(false)");
+  //     }
+  //   };
+  
+  //   firstLoad();
+  // }, []);
+  
 
   useEffect(() => {
     GetEnergyProductDeviceList();
     GetDropdownDeviceList();
     const interval = setInterval(() => {
-    GetEnergyProductDeviceList(false);
-    GetDropdownDeviceList(false);
+      GetEnergyProductDeviceList(false);
+      GetDropdownDeviceList(false);
     }, 300000); // 300,000 ms = 5 minutes
     return () => clearInterval(interval);
   }, []);
-  
+
   useEffect(() => {
     GetEnergyHistory();
     const interval = setInterval(() => {
       GetEnergyHistory(false);
-      }, 300000); 
-    
+    }, 300000);
+
     return () => clearInterval(interval);
   }, [energyDate, energyRange]);
-  
+
   useEffect(() => {
     GetEnergyRevenue();
     const interval = setInterval(() => {
       GetEnergyRevenue(false);
-      }, 300000); 
-    
+    }, 300000);
+
     return () => clearInterval(interval);
-    
   }, [revenueDate, revenueRange]);
-  
+
   useEffect(() => {
     GetProductionHeatmap();
     const interval = setInterval(() => {
       GetProductionHeatmap(false);
-      }, 300000); 
-    
+    }, 300000);
+
     return () => clearInterval(interval);
-    
   }, [year, month, sourceType]);
 
   const GetEnergyProductDeviceList = async (showLoading = true) => {
@@ -299,6 +336,42 @@ export default function Production() {
           item.originalIndex.toString().includes(search) // ค้นหาด้วย originalIndex
       );
 
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
+  const handleSort = (key) => {
+    setSortConfig((prev) => {
+      const direction =
+        prev.key === key && prev.direction === "asc" ? "desc" : "asc";
+      return { key, direction };
+    });
+  };
+  const sortedData = useMemo(() => {
+    const data = filterData(productDeviceList, searchLoad);
+    if (!sortConfig.key) return data;
+
+    return [...data].sort((a, b) => {
+      const valA = a[sortConfig.key];
+      const valB = b[sortConfig.key];
+
+      if (typeof valA === "number") {
+        return sortConfig.direction === "asc" ? valA - valB : valB - valA;
+      }
+
+      return sortConfig.direction === "asc"
+        ? String(valA).localeCompare(String(valB))
+        : String(valB).localeCompare(String(valA));
+    });
+  }, [productDeviceList, searchLoad, sortConfig]);
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return sortedData.slice(start, start + rowsPerPage);
+  }, [sortedData, currentPage, rowsPerPage]);
+
+  const totalPages = Math.ceil(sortedData.length / rowsPerPage);
+
   const highlightText = (text, search) => {
     const textStr = String(text); // แปลง text เป็น string
     const searchStr = String(search); // แปลง search เป็น string
@@ -372,17 +445,59 @@ export default function Production() {
 
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm text-left">
-            <thead className="border-y border-gray-200 bg-gray-50 dark:bg-gray-900 ">
-              <tr className="text-gray-700 dark:text-white">
-                <th className="py-2">#</th>
-                <th className="py-2">Source</th>
-                <th className="py-2">Power Generation (kW)</th>
-                <th className="py-2">Energy Generation (kWh)</th>
-                <th className="py-2">Revenue (Bath)</th>
+            <thead className="border-y border-gray-200 bg-gray-50 dark:bg-gray-900">
+              <tr className="text-gray-700 dark:text-white text-sm">
+                {/* <th className="px-2 py-2">#</th> */}
+
+                {[
+                  { key: "originalIndex", label: "#" },
+                  { key: "name", label: "Source" },
+                  { key: "power", label: "Power Generation (kW)" },
+                  { key: "energy", label: "Energy Generation (kWh)" },
+                  { key: "revenue", label: "Revenue (Bath)" },
+                ].map((col) => (
+                  <th
+                    key={col.key}
+                    className="px-2 py-2 cursor-pointer text-left"
+                    onClick={() => handleSort(col.key)}
+                  >
+                    {col.label}
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        flexDirection: "column",
+                        marginLeft: "4px",
+                      }}
+                    >
+                      <ArrowDropUpIcon
+                        style={{
+                          fontSize: "14px",
+                          opacity:
+                            sortConfig.key === col.key &&
+                            sortConfig.direction === "asc"
+                              ? 1
+                              : 0.3,
+                          marginBottom: "-2px",
+                        }}
+                      />
+                      <ArrowDropDownIcon
+                        style={{
+                          fontSize: "14px",
+                          opacity:
+                            sortConfig.key === col.key &&
+                            sortConfig.direction === "desc"
+                              ? 1
+                              : 0.3,
+                          marginTop: "-2px",
+                        }}
+                      />
+                    </div>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {filterData(productDeviceList, searchLoad).map((item) => (
+              {paginatedData.map((item) => (
                 <tr
                   key={item.originalIndex}
                   className="border-b border-gray-200"
@@ -424,6 +539,48 @@ export default function Production() {
               </tr>
             </tbody>
           </table>
+
+          {/* Pagination */}
+          <div className="flex justify-between items-center mt-4">
+            <div>
+              <span className="text-sm mr-1">Rows per page:</span>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1); // reset page กลับหน้าแรกเมื่อเปลี่ยน rowsPerPage
+                }}
+                className="border border-gray-300 text-sm rounded-lg"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+              >
+                <ArrowBackIosNewIcon style={{ fontSize: "12px" }} />
+              </button>
+              <span className="text-sm">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(p + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+              >
+                <ArrowForwardIosOutlinedIcon style={{ fontSize: "12px" }} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       {/* Energy Trend Section */}

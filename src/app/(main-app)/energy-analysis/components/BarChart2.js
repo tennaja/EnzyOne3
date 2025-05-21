@@ -60,18 +60,38 @@ export default function RevenueChart3({ data }) {
       item.baseline,
     ])
   );
-
+  
+  // 🧠 เผื่อคุณใช้ค่าลบด้วย → ใช้ Math.abs()
+  const maxAbsY = Math.max(
+    ...chartData.flatMap(item => [
+      ...deviceNames.map(name => Math.abs(item[name])),
+      Math.abs(item.baseline),
+    ])
+  );
+  
+  // 🧮 คำนวณ left margin ตาม maxAbsY
+  const getTextWidth = (text, font = '12px Roboto') => {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    context.font = font;
+    return context.measureText(text).width;
+  };
+  
+  const leftMargin = Math.ceil(getTextWidth(maxAbsY.toLocaleString()) + 10);
   return (
     <div style={{ width: '100%', height: 420 }}>
       <ResponsiveContainer width="100%" height={400}>
         <ComposedChart
           data={chartData}
-          margin={{ top: 40, right: 30, left: 20, bottom: 40 }}
+          margin={{ top: 40, right: 0, left: leftMargin, bottom: 0 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="day" /> {/* ใช้ timestamp โดยตรง */}
           <YAxis domain={[0, maxY]} />
-          <Tooltip />
+          <Tooltip
+  formatter={(value, name) => [`${Number(value).toLocaleString()} ฿`, name]}
+/>
+
           <Legend verticalAlign="bottom" height={36} />
           <ReferenceLine y={0} stroke="gray" strokeDasharray="3 3" />
 
@@ -101,7 +121,7 @@ export default function RevenueChart3({ data }) {
           <Brush dataKey="day" height={30} stroke="#8884d8" />
 
           <text
-            x={70}
+            x={120}
             y={18}
             fill="currentColor"
             className="text-black dark:text-white"

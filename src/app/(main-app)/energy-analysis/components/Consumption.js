@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect,useMemo } from "react";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Tooltip from "@mui/material/Tooltip";
 import dayjs from "dayjs";
@@ -16,6 +16,10 @@ import {
   getConsumptionHeatmap,
   getConsumtionDeviceList,
 } from "@/utils/api";
+import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import ArrowForwardIosOutlinedIcon from "@mui/icons-material/ArrowForwardIosOutlined";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import Loading from "./Loading";
 
 const { Option } = Select;
@@ -125,8 +129,8 @@ const meterData = [
 
 export default function Consumption() {
   const [activeTab, setActiveTab] = useState("load");
-  const [searchLoad, setSearchLoad] = useState("");
-  const [searchMeter, setSearchMeter] = useState("");
+  // const [searchLoad, setSearchLoad] = useState("");
+  // const [searchMeter, setSearchMeter] = useState("");
   const [energyRange, setEnergyRange] = useState("day");
   const [energyDate, setEnergyDate] = useState(dayjs());
   const [revenueRange, setRevenueRange] = useState("month");
@@ -143,6 +147,17 @@ export default function Consumption() {
   const [energyHistoryData, setEnergyHistoryData] = useState([]);
   const [costHistoryData, setCostHistoryData] = useState([]);
   const [dropdownDeviceList, setDropdownDeviceList] = useState([]);
+  const [searchLoad, setSearchLoad] = useState("");
+  const [sortByLoad, setSortByLoad] = useState("");
+  const [sortDirectionLoad, setSortDirectionLoad] = useState("asc");
+  const [currentPageLoad, setCurrentPageLoad] = useState(1);
+  const [rowsPerPageLoad, setRowsPerPageLoad] = useState(20);
+  // State สำหรับ Meter table
+  const [searchMeter, setSearchMeter] = useState("");
+  const [sortByMeter, setSortByMeter] = useState("");
+  const [sortDirectionMeter, setSortDirectionMeter] = useState("asc");
+  const [currentPageMeter, setCurrentPageMeter] = useState(1);
+  const [rowsPerPageMeter, setRowsPerPageMeter] = useState(20);
   const [totalSummary, setTotalSummary] = useState({
     power: "0.00",
     energy: "0.00",
@@ -372,6 +387,53 @@ export default function Consumption() {
           item?.offPeak?.toString().includes(search.toLowerCase()) ||
           item?.originalIndex?.toString().includes(search.toLowerCase())
       );
+     
+      const onSortLoad = (key) => {
+        if (sortByLoad === key) {
+          setSortDirectionLoad(sortDirectionLoad === "asc" ? "desc" : "asc");
+        } else {
+          setSortByLoad(key);
+          setSortDirectionLoad("asc");
+        }
+      };
+    
+      // ฟังก์ชันเปลี่ยน sort สำหรับ Meter
+      const onSortMeter = (key) => {
+        if (sortByMeter === key) {
+          setSortDirectionMeter(sortDirectionMeter === "asc" ? "desc" : "asc");
+        } else {
+          setSortByMeter(key);
+          setSortDirectionMeter("asc");
+        }
+      };
+      const sortData = (data, sortBy, sortDirection) => {
+        if (!sortBy || !sortDirection) return data;
+      
+        return [...data].sort((a, b) => {
+          const valA = a[sortBy];
+          const valB = b[sortBy];
+      
+          // ถ้าค่าใดเป็น null หรือ undefined ให้ย้ายไปท้าย
+          if (valA == null) return 1;
+          if (valB == null) return -1;
+      
+          // ถ้าเป็นตัวเลข
+          const numA = parseFloat(valA);
+          const numB = parseFloat(valB);
+          const isNumber = !isNaN(numA) && !isNaN(numB);
+      
+          if (isNumber) {
+            return sortDirection === 'asc' ? numA - numB : numB - numA;
+          }
+      
+          // ถ้าเป็นข้อความ
+          return sortDirection === 'asc'
+            ? String(valA).localeCompare(String(valB))
+            : String(valB).localeCompare(String(valA));
+        });
+      };
+      
+      
 
   const highlightText = (text, search) => {
     const textStr = String(text); // แปลง text เป็น string
@@ -515,9 +577,66 @@ export default function Consumption() {
     </div>
   );
 
-  const renderTableLoad = (data, search, setSearch) => {
+  const renderSortHeader = (label, key, sortBy, sortDirection, onSort) => (
+    <div
+      className="flex items-center gap-1 cursor-pointer select-none"
+      onClick={() => onSort(key)}
+    >
+      {label}
+      <div className="flex flex-col">
+        <ArrowDropUpIcon
+          style={{
+            fontSize: "14px",
+            marginBottom: "-2px",
+            opacity: sortBy === key && sortDirection === 'asc' ? 1 : 0.3,
+          }}
+        />
+        <ArrowDropDownIcon
+          style={{
+            fontSize: "14px",
+            marginTop: -2,
+            opacity: sortBy === key && sortDirection === 'desc' ? 1 : 0.3,
+          }}
+        />
+      </div>
+    </div>
+  );
+  
+  const renderTableLoad = (
+    data,
+    search,
+    setSearch,
+    sortBy,
+    sortDirection,
+    onSort,
+    totalSummary,
+    currentPage,
+    setCurrentPage,
+    rowsPerPage,
+    setRowsPerPage
+  ) => {
     const filteredData = filterData(data, search);
+    const sortedData = sortData(filteredData, sortBy, sortDirection);
+  
+    // คำนวณ pagination
+    const totalPages = Math.ceil(sortedData.length / rowsPerPage);
+  const pagedData = sortedData.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
 
+  const handleChangePage = (page) => {
+    if (page < 1) page = 1;
+    else if (page > totalPages) page = totalPages;
+    setCurrentPage(page);
+  };
+
+  const handleRowsPerPageChange = (e) => {
+    setRowsPerPage(Number(e.target.value));
+    setCurrentPage(1); // reset page เมื่อเปลี่ยน rows per page
+  };
+  
+  
     return (
       <>
         <div className="flex justify-between mb-4">
@@ -528,28 +647,61 @@ export default function Consumption() {
               placeholder="Search"
               className="border rounded px-3 py-1 text-sm"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1); // reset page ถ้ามี search ใหม่
+              }}
             />
             <span className="text-sm text-gray-500 dark:text-white">
               Last Updated on DD/MM/YYYY 00:00
             </span>
           </div>
         </div>
-
+  
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm text-left">
             <thead className="border-y border-gray-200 bg-gray-50 dark:bg-gray-900">
               <tr className="text-gray-700 dark:text-white">
-                <th className="py-2">#</th>
-                <th className="py-2">Source</th>
-                <th className="py-2">Current Power (kWh)</th>
-                <th className="py-2">Energy Consumption (kWh)</th>
-                <th className="py-2">On - Peak (kWh)</th>
-                <th className="py-2">Off - Peak</th>
+                <th className="py-2">
+                  {renderSortHeader(
+                    "#",
+                    "originalIndex",
+                    sortBy,
+                    sortDirection,
+                    onSortLoad
+                  )}
+                </th>
+                <th className="py-2">
+                  {renderSortHeader("Source", "name", sortBy, sortDirection, onSort)}
+                </th>
+                <th className="py-2">
+                  {renderSortHeader(
+                    "Current Power (kWh)",
+                    "power",
+                    sortBy,
+                    sortDirection,
+                    onSort
+                  )}
+                </th>
+                <th className="py-2">
+                  {renderSortHeader(
+                    "Energy Consumption (kWh)",
+                    "energy",
+                    sortBy,
+                    sortDirection,
+                    onSort
+                  )}
+                </th>
+                <th className="py-2">
+                  {renderSortHeader("On - Peak (kWh)", "onPeak", sortBy, sortDirection, onSort)}
+                </th>
+                <th className="py-2">
+                  {renderSortHeader("Off - Peak", "offPeak", sortBy, sortDirection, onSort)}
+                </th>
               </tr>
             </thead>
             <tbody>
-              {filteredData.length === 0 ? (
+              {pagedData.length === 0 ? (
                 <tr>
                   <td
                     className="py-4 text-center text-gray-500 dark:text-gray-400"
@@ -559,41 +711,27 @@ export default function Consumption() {
                   </td>
                 </tr>
               ) : (
-                filteredData.map((item) => (
-                  <tr
-                    key={item.originalIndex}
-                    className="border-b border-gray-200"
-                  >
-                    <td className="py-2">
-                      {highlightText(item.originalIndex, search)}
-                    </td>
+                pagedData.map((item) => (
+                  <tr key={item.originalIndex} className="border-b border-gray-200">
+                    <td className="py-2">{highlightText(item.originalIndex, search)}</td>
                     <td className="py-2">{highlightText(item.name, search)}</td>
                     <td className="py-2">
                       {highlightText(parseFloat(item.power).toFixed(2), search)}
                     </td>
                     <td className="py-2">
-                      {highlightText(
-                        parseFloat(item.energy).toFixed(2),
-                        search
-                      )}
+                      {highlightText(parseFloat(item.energy).toFixed(2), search)}
                     </td>
                     <td className="py-2">
-                      {highlightText(
-                        parseFloat(item.onPeak).toFixed(2),
-                        search
-                      )}
+                      {highlightText(parseFloat(item.onPeak).toFixed(2), search)}
                     </td>
                     <td className="py-2">
-                      {highlightText(
-                        parseFloat(item.offPeak).toFixed(2),
-                        search
-                      )}
+                      {highlightText(parseFloat(item.offPeak).toFixed(2), search)}
                     </td>
                   </tr>
                 ))
               )}
-
-              {filteredData.length > 0 && (
+  
+              {pagedData.length > 0 && (
                 <tr className="font-semibold bg-gray-100 border-t border-gray-200 dark:bg-gray-900 dark:text-white">
                   <td className="py-2" colSpan={2}>
                     Total
@@ -607,13 +745,82 @@ export default function Consumption() {
             </tbody>
           </table>
         </div>
+  
+        {/* Pagination controls */}
+        <div className="flex justify-between items-center mt-4">
+        <div>
+          <span className="text-sm mr-1">Rows per page:</span>
+          <select
+            value={rowsPerPage}
+            onChange={handleRowsPerPageChange}
+            className="border border-gray-300 text-sm rounded-lg"
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => handleChangePage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+          >
+            {/* import ไอคอนมาใช้ เช่นจาก @mui/icons-material */}
+            <ArrowBackIosNewIcon style={{ fontSize: "12px" }} />
+          </button>
+          <span className="text-sm">
+            {currentPage} / {totalPages}
+          </span>
+          <button
+            onClick={() => handleChangePage(currentPage + 1)}
+            disabled={currentPage === totalPages || filteredData.length === 0}
+            className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+          >
+            <ArrowForwardIosOutlinedIcon style={{ fontSize: "12px" }} />
+          </button>
+        </div>
+      </div>
       </>
     );
   };
-
-  const renderTableMeter = (data, search, setSearch) => {
+  
+  // renderTableMeter แบบเดียวกัน
+  const renderTableMeter = (
+    data,
+    search,
+    setSearch,
+    sortBy,
+    sortDirection,
+    onSort,
+    totalSummary,
+    currentPage,
+    setCurrentPage,
+    rowsPerPage,
+    setRowsPerPage
+  ) => {
     const filteredData = filterData(data, search);
+    const sortedData = sortData(filteredData, sortBy, sortDirection);
+  
+    const totalPages = Math.ceil(sortedData.length / rowsPerPage);
+  const pagedData = sortedData.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
 
+  const handleChangePage = (page) => {
+    if (page < 1) page = 1;
+    else if (page > totalPages) page = totalPages;
+    setCurrentPage(page);
+  };
+
+  const handleRowsPerPageChange = (e) => {
+    setRowsPerPage(Number(e.target.value));
+    setCurrentPage(1); // reset page เมื่อเปลี่ยน rows per page
+  };
+  
     return (
       <>
         <div className="flex justify-between mb-4">
@@ -624,26 +831,47 @@ export default function Consumption() {
               placeholder="Search"
               className="border rounded px-3 py-1 text-sm"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
             />
             <span className="text-sm text-gray-500 dark:text-white">
               Last Updated on DD/MM/YYYY 00:00
             </span>
           </div>
         </div>
-
+  
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm text-left">
             <thead className="border-y border-gray-200 bg-gray-50 dark:bg-gray-900">
               <tr className="text-gray-700 dark:text-white">
                 <th className="py-2">#</th>
-                <th className="py-2">Source</th>
-                <th className="py-2">Energy (kW)</th>
-                <th className="py-2">Power (kWh)</th>
+                <th className="py-2">
+                  {renderSortHeader("Source", "source", sortBy, sortDirection, onSort)}
+                </th>
+                <th className="py-2">
+                  {renderSortHeader(
+                    "Energy (kW)",
+                    "energyConsumption",
+                    sortBy,
+                    sortDirection,
+                    onSort
+                  )}
+                </th>
+                <th className="py-2">
+                  {renderSortHeader(
+                    "Power (kW)",
+                    "powerConsumption",
+                    sortBy,
+                    sortDirection,
+                    onSort
+                  )}
+                </th>
               </tr>
             </thead>
             <tbody>
-              {filteredData.length === 0 ? (
+              {pagedData.length === 0 ? (
                 <tr>
                   <td
                     className="py-4 text-center text-gray-500 dark:text-gray-400"
@@ -653,36 +881,73 @@ export default function Consumption() {
                   </td>
                 </tr>
               ) : (
-                filteredData.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-200">
-                    <td className="py-2">{item.id}</td>
-                    <td className="py-2">{item.source}</td>
+                pagedData.map((item) => (
+                  <tr key={item.originalIndex} className="border-b border-gray-200">
+                    <td className="py-2">{highlightText(item.originalIndex, search)}</td>
+                    <td className="py-2">{highlightText(item.source, search)}</td>
                     <td className="py-2">
-                      {parseFloat(item.energyConsumption).toFixed(2)}
+                      {highlightText(parseFloat(item.energyConsumption).toFixed(2), search)}
                     </td>
                     <td className="py-2">
-                      {parseFloat(item.currentPower).toFixed(2)}
+                      {highlightText(parseFloat(item.powerConsumption).toFixed(2), search)}
                     </td>
                   </tr>
                 ))
               )}
-
-              {filteredData.length > 0 && (
+  
+              {pagedData.length > 0 && (
                 <tr className="font-semibold bg-gray-100 border-t border-gray-200 dark:bg-gray-900 dark:text-white">
                   <td className="py-2" colSpan={2}>
                     Total
                   </td>
-                  <td className="py-2">XXX.XX</td>
-                  <td className="py-2">XXX.XX</td>
+                  <td className="py-2">{totalSummary.energyConsumption}</td>
+                  <td className="py-2">{totalSummary.powerConsumption}</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+  
+        {/* Pagination */}
+        <div className="flex justify-between items-center mt-4">
+        <div>
+          <span className="text-sm mr-1">Rows per page:</span>
+          <select
+            value={rowsPerPage}
+            onChange={handleRowsPerPageChange}
+            className="border border-gray-300 text-sm rounded-lg"
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => handleChangePage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+          >
+            {/* import ไอคอนมาใช้ เช่นจาก @mui/icons-material */}
+            <ArrowBackIosNewIcon style={{ fontSize: "12px" }} />
+          </button>
+          <span className="text-sm">
+            {currentPage} / {totalPages}
+          </span>
+          <button
+            onClick={() => handleChangePage(currentPage + 1)}
+            disabled={currentPage === totalPages || filteredData.length === 0}
+            className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+          >
+            <ArrowForwardIosOutlinedIcon style={{ fontSize: "12px" }} />
+          </button>
+        </div>
+      </div>
       </>
     );
   };
-
   // const currentYear = new Date().getFullYear().toString();
   // const currentMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
   // const [year, setYear] = useState(currentYear);
@@ -788,15 +1053,35 @@ export default function Consumption() {
         </div>
         {activeTab === "load" ? (
           <>
-            {renderTableLoad(consumptionDeviceList, searchLoad, setSearchLoad)}
+            {renderTableLoad(
+ consumptionDeviceList,
+ searchLoad,
+ setSearchLoad,
+ sortByLoad,
+ sortDirectionLoad,
+ onSortLoad,
+ totalSummary,
+ currentPageLoad,
+ setCurrentPageLoad,
+ rowsPerPageLoad,       // ส่งเพิ่มเข้าไป
+ setRowsPerPageLoad     // ส่งเพิ่มเข้าไป
+)}
           </>
         ) : (
           <>
             {renderTableMeter(
-              consumptionDeviceList,
-              searchMeter,
-              setSearchMeter
-            )}
+          consumptionDeviceList,
+          searchMeter,
+          setSearchMeter,
+          sortByMeter,
+          sortDirectionMeter,
+          onSortMeter,
+          totalSummary,
+          currentPageMeter,
+          setCurrentPageMeter,
+          rowsPerPageMeter,
+          setRowsPerPageMeter
+        )}
           </>
         )}
       </div>

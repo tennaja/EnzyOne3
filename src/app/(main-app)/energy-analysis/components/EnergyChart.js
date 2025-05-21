@@ -1,6 +1,5 @@
 "use client";
-
-import React from "react";
+import React, { useMemo } from "react";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -19,22 +18,24 @@ import {
 
 export default function EnergyTrendChart({ type, dataProp }) {
   if (!dataProp || !dataProp.timestamp || dataProp.timestamp.length === 0) {
-    return <div
-    style={{
-      width: '100%',
-      height: '400px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: 16,
-      color: '#888',
-      // background: '#f9f9f9',
-      borderRadius: 12,
-      border: '1px solid #ddd',
-    }}
-  >
-    No data available
-  </div>
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "400px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 16,
+          color: "#888",
+          // background: '#f9f9f9',
+          borderRadius: 12,
+          border: "1px solid #ddd",
+        }}
+      >
+        No data available
+      </div>
+    );
   }
 
   // แปลงข้อมูลจาก object เป็น array ของ object ที่เหมาะกับ Recharts
@@ -46,24 +47,38 @@ export default function EnergyTrendChart({ type, dataProp }) {
     energy_base_line: -1 * (dataProp.energyBaseline?.[index] ?? 0),
   }));
 
-  // หาค่า max เพื่อใช้เป็น Y-axis domain
-  const maxY = Math.max(
-    ...(dataProp.consumption ?? []),
-    ...(dataProp.generation ?? []),
-    ...(dataProp.powerFromGrid ?? []),
-    ...(dataProp.energyBaseline ?? [])
-  );
+  const maxY = useMemo(() => {
+    return Math.max(
+      ...(dataProp.consumption ?? []),
+      ...(dataProp.generation ?? []),
+      ...(dataProp.powerFromGrid ?? []),
+      ...(dataProp.energyBaseline ?? []),
+      0 // กันกรณี array ว่างทั้งหมด
+    );
+  }, [dataProp]);
 
+  const getTextWidth = (text, font = "12px sans-serif") => {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    context.font = font;
+    return context.measureText(text).width;
+  };
+  // คำนวณความกว้างของ label แกน Y แล้วปรับ margin.left
+  const leftMargin = useMemo(() => {
+    const longestLabel = (-maxY).toLocaleString(); // เช่น "-12,345.67"
+    const width = getTextWidth(longestLabel, "12px Roboto");
+    return Math.max(40, Math.ceil(width + 10)); // padding 10px
+  }, [maxY]);
   const renderUnitLabel = () => (
     <text
-      x={40}
+      x={80}
       y={15}
       fill="currentColor"
       className="text-black dark:text-white"
       fontSize={15}
       fontWeight="bold"
     >
-      kWh
+      {["month", "year", "lifetime"].includes(type) ? "kWh" : "kW"}
     </text>
   );
 
@@ -74,12 +89,19 @@ export default function EnergyTrendChart({ type, dataProp }) {
           data={data}
           stackOffset="sign"
           barCategoryGap={10}
-          margin={{ top: 40 }}
+          margin={{ top: 40, right: 0, left: leftMargin, bottom: 0 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="day" />
           <YAxis domain={[-maxY, maxY]} tickFormatter={(v) => Math.abs(v)} />
-          <Tooltip formatter={(value) => Math.abs(value)} />
+          <Tooltip
+  formatter={(value, name) => [
+    `${Math.abs(Number(value)).toLocaleString()} kWh`,
+    name,
+  ]}
+/>
+
+
           <Legend />
           <ReferenceLine y={0} stroke="gray" strokeDasharray="" />
 
@@ -122,11 +144,20 @@ export default function EnergyTrendChart({ type, dataProp }) {
   // Default = daily (AreaChart)
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={data} margin={{ top: 40 }}>
+      <AreaChart
+        data={data}
+        margin={{ top: 40, right: 0, left: 40, bottom: 0 }}
+      >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="day" />
         <YAxis domain={[-maxY, maxY]} tickFormatter={(v) => Math.abs(v)} />
-        <Tooltip formatter={(value) => Math.abs(value)} />
+        <Tooltip
+  formatter={(value, name) => [
+    `${Math.abs(Number(value)).toLocaleString()} kW`,
+    name,
+  ]}
+/>
+
         <Legend wrapperStyle={{ marginBottom: -20 }} />
         <ReferenceLine y={0} stroke="gray" strokeDasharray="" />
         {renderUnitLabel()}

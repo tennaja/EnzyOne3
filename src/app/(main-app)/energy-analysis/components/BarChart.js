@@ -58,18 +58,31 @@ export default function RevenueBarChart2({ data }) {
       devices.map((_, i) => item[`gen${i + 1}`] ?? 0)
     )
   );
+  
+  const getTextWidth = (text, font = '12px Roboto') => {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    context.font = font;
+    return context.measureText(text).width;
+  };
+  
+  const leftMargin = Math.ceil(getTextWidth(maxY.toLocaleString()) + 10);
+  
 
   return (
     <div style={{ width: '100%', height: 420 }}>
       <ResponsiveContainer width="100%" height={400}>
         <BarChart
           data={chartData}
-          margin={{ top: 40, right: 30, left: 20, bottom: 40 }}
+          margin={{ top: 40, right: 0, left: leftMargin, bottom: 0 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="time" />
           <YAxis domain={[0, maxY]} />
-          <Tooltip />
+          <Tooltip
+  formatter={(value, name) => [`${Number(value).toLocaleString()} ฿`, name]}
+/>
+
           <Legend verticalAlign="bottom" height={36} />
           <ReferenceLine y={0} stroke="gray" strokeDasharray="3 3" />
 
@@ -88,7 +101,7 @@ export default function RevenueBarChart2({ data }) {
 
           {/* Custom kWh label on Y-axis */}
           <text
-            x={70}
+            x={110}
             y={18}
             fill="currentColor"
             className="text-black dark:text-white"

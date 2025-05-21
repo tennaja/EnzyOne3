@@ -195,7 +195,7 @@ export default function HeatmapPage({ data = { timestamp: [], value: [] } }) {
         >
           <div><strong>Day:</strong> {hoverInfo.day}</div>
           <div><strong>Hour:</strong> {hoverInfo.hour}:00</div>
-          <div><strong>Value:</strong> {hoverInfo.value}</div>
+          <div><strong>Energy Generated:</strong> {hoverInfo.value} kWh</div>
         </div>
       )}
 

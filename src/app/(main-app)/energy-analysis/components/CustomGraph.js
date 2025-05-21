@@ -15,9 +15,11 @@ import {
 import { Checkbox, DatePicker, Button } from "antd";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import "dayjs/locale/en";
 import DeleteIcon from "@mui/icons-material/Delete";
 import IconButton from "@mui/material/IconButton";
+import Tooltips from "@mui/material/Tooltip";
 import {getCustomDevice,getCustomDeviceHistory} from "@/utils/api";
 
 dayjs.extend(customParseFormat);
@@ -325,6 +327,23 @@ const CustomGraph = () => {
             </span>
           ))}
         </div>
+        <Tooltips
+              title="Two types of parameters are allowed to compare at once. To compare more parameters, please add a new custom chart."
+              arrow
+              placement="top"
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    fontSize: '14px', // ปรับขนาดฟอนต์
+                  },
+                },
+              }}
+            >
+              <InfoOutlinedIcon
+                className="text-[#33BFBF] ml-1 cursor-pointer"
+                fontSize="small"
+              />
+            </Tooltips>
       </div>
       <div className="flex items-center gap-4">
         <RangePicker
@@ -395,7 +414,12 @@ const CustomGraph = () => {
   <LineChart data={chart.data || []}>
     <CartesianGrid strokeDasharray="3 3" />
     <XAxis dataKey="time" tickFormatter={(str) => str.slice(5, 16)} />
-    <Tooltip />
+    <Tooltip
+  formatter={(value, name) =>
+    [typeof value === "number" ? value.toFixed(2) : value, name]
+  }
+/>
+
     <Legend />
     <Brush dataKey="time" height={30} stroke="#8884d8" />
 

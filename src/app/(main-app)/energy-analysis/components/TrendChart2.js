@@ -1,6 +1,5 @@
 'use client';
-
-import React from 'react';
+import { useMemo } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -61,33 +60,52 @@ export default function EnergyTrendChart3({ type, data }) {
   const allValues = chartData.flatMap(obj =>
     Object.values(obj).filter(v => typeof v === 'number')
   );
-  const maxY = Math.max(...allValues);
+
+  const getTextWidth = (text, font = '12px sans-serif') => {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    context.font = font;
+    return context.measureText(text).width;
+  };
+  const maxY = Math.max(...allValues.map(v => Math.abs(v)));
+
+  // ✅ คำนวณความกว้างของ maxY แล้วเอาไปใช้กับ margin.left
+  const leftMargin = useMemo(() => {
+    const label = maxY.toLocaleString(); // ex. "9,000"
+    const width = getTextWidth(label, '12px Roboto');
+    return Math.ceil(width + 10); // เผื่อ padding 10px
+  }, [maxY]);
+  
 
   const colorList = ['#FB8C00', '#008001', '#03A9F4', '#AB47BC', '#FF7043'];
   const baselineColorList = ['#FFD54F', '#AED581', '#81D4FA', '#CE93D8', '#FFAB91'];
 
   const renderUnitLabel = () => (
     <text
-      x={40}
+      x={80}
       y={15}
       fontSize={15}
       fontWeight="bold"
       fill="currentColor"
       className="text-black dark:text-white"
     >
-      kWh
+      {isSummaryType ? 'kWh' : 'kW'}
     </text>
   );
 
   if (isSummaryType) {
     return (
       <ResponsiveContainer width="100%" height={300}>
-        <ComposedChart data={chartData} barCategoryGap={10} margin={{ top: 40 }}>
+        <ComposedChart data={chartData} barCategoryGap={10} margin={{ top: 40, right: 0, left: leftMargin, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="day" />
           <YAxis domain={[0, maxY]} />
-          <Tooltip />
-          <Legend />
+          <Tooltip
+  formatter={(value, name) => [`${Number(value).toLocaleString()} kWh`, name]}
+/>
+
+
+          <Legend wrapperStyle={{ marginBottom: -20 }}/>
           <ReferenceLine y={0} stroke="gray" strokeDasharray="3 3" />
           {renderUnitLabel()}
 
@@ -125,11 +143,15 @@ export default function EnergyTrendChart3({ type, data }) {
   // 🔵 แบบ LineChart สำหรับ non-summary
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={chartData} margin={{ top: 40 }}>
+      <LineChart data={chartData} margin={{ top: 40, right: 0, left: leftMargin, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="day" />
         <YAxis domain={[0, maxY]} />
-        <Tooltip />
+        <Tooltip
+  formatter={(value, name) => [`${Number(value).toLocaleString()} kW`, name]}
+/>
+
+
         <Legend wrapperStyle={{ marginBottom: -20 }} />
         <ReferenceLine y={0} stroke="gray" strokeDasharray="3 3" />
         {renderUnitLabel()}

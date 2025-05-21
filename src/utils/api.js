@@ -2374,6 +2374,24 @@ export async function getCustomDeviceHistory(req) {
   }
 }
 
+export async function getCarbonDashboardSummary(req) {
+  const siteId = req.siteId;
+  const date = req.date
+  const deviceId = req.deviceId;
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/dashboard/summary?year={year}&companyId={companyId}&businessUnitId={businessUnitId}&branchId={branchId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
 
 
 

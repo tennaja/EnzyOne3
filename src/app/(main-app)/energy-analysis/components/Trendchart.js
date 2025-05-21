@@ -1,6 +1,5 @@
 'use client';
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -59,17 +58,29 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
       devices.map((_, i) => item[`gen${i + 1}`] ?? 0)
     )
   );
+  const getTextWidth = (text, font = '12px sans-serif') => {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    context.font = font;
+    return context.measureText(text).width;
+  };
+  const leftMargin = useMemo(() => {
+    const maxLabel = maxY.toLocaleString();
+    const width = getTextWidth(maxLabel, '12px Roboto'); // ใส่ฟอนต์ที่ใช้จริง
+    return Math.max(1, width + 10); // padding อีกนิด
+  }, [maxY]);
+  
 
   const renderUnitLabel = () => (
     <text
-      x={40}
+      x={80}
       y={15}
       fontSize={15}
       fontWeight="bold"
       fill="currentColor"
       className="text-black dark:text-white"
     >
-      kWh
+      {["month", "year", "lifetime"].includes(type) ? "kWh" : "kW"}
     </text>
   );
 
@@ -77,7 +88,10 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
   if (type === 'month' || type === 'year' || type === 'lifetime') {
     return (
       <ResponsiveContainer width="100%" height={300}>
-        <ComposedChart data={chartData} margin={{ top: 40 }}>
+         <ComposedChart
+        data={chartData}
+        margin={{ top: 40, right: 0, left: leftMargin, bottom: 0 }}
+      >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="time"
@@ -85,8 +99,11 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
             height={40}
           />
           <YAxis domain={[0, maxY]} />
-          <Tooltip />
-          <Legend />
+          <Tooltip
+  formatter={(value, name) => [`${Number(value).toLocaleString()} kWh`, name]}
+/>
+
+          <Legend wrapperStyle={{ marginBottom: -20 }} />
           <ReferenceLine y={0} stroke="gray" strokeDasharray="3 3" />
           {renderUnitLabel()}
           {devices.map((device, i) => (
@@ -107,7 +124,7 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
   // สำหรับ type === 'day'
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={chartData} margin={{ top: 40 }}>
+      <LineChart data={chartData} margin={{ top: 40, right: 0, left: leftMargin, bottom: 0 }} >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="time"
@@ -118,7 +135,11 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
         
         />
         <YAxis domain={[0, maxY]} />
-        <Tooltip />
+        <Tooltip
+  formatter={(value, name) => [`${Number(value).toLocaleString()} kW`, name]}
+/>
+
+
         <Legend wrapperStyle={{ marginBottom: -20 }} />
         <ReferenceLine y={0} stroke="gray" strokeDasharray="3 3" />
         {renderUnitLabel()}
