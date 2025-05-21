@@ -502,7 +502,7 @@ const ChargerDetail = ({ onNavigate }) => {
             <div className="flex-1">
               <div className="flex justify-between items-center mb-2">
               <span className="text-xs font-semibold">
-  {chargersHead.length} Charger{chargersHead.length !== 1 ? 's' : ''}
+  {chargersHead.length} Charger Head{chargersHead.length !== 1 ? 's' : ''}
 </span>
 
                 <input
@@ -994,14 +994,25 @@ const ChargerDetail = ({ onNavigate }) => {
             <div className="flex gap-2 mt-5 items-center">
               <span className="text-sm">Date :</span>
               <DatePicker
-                className="w-48 p-2 bg-white border shadow-default 
-                    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
-                value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
-                onChange={handleStartDateChange}
-                disabledDate={(current) => current && current > today} // ห้ามเลือกวันในอนาคต
-                format="YYYY/MM/DD"
-                allowClear={false}
-              />
+  className="w-48 p-2 bg-white border shadow-default 
+    dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
+  value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
+  onChange={handleStartDateChange}
+  disabledDate={(current) => {
+    const today = dayjs().endOf("day");
+    const end = endDate ? dayjs(endDate, "YYYY/MM/DD").endOf("day") : null;
+
+    return (
+      current && (
+        current.isAfter(today) || // ห้ามเลือกวันในอนาคต
+        (end && current.isAfter(end, "day")) // ห้ามมากกว่า endDate
+      )
+    );
+  }}
+  format="YYYY/MM/DD"
+  allowClear={false}
+/>
+
               <p>-</p>
               <DatePicker
                 className="w-48 p-2 bg-white border shadow-default 

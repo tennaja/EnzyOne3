@@ -98,7 +98,11 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
             textAnchor="middle"
             height={40}
           />
-          <YAxis domain={[0, maxY]} />
+          <YAxis
+  domain={[0, maxY]}
+  tickFormatter={(v) => v.toLocaleString()}
+/>
+
           <Tooltip
   formatter={(value, name) => [`${Number(value).toLocaleString()} kWh`, name]}
 />
@@ -134,7 +138,11 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
         
         
         />
-        <YAxis domain={[0, maxY]} />
+        <YAxis
+  domain={[0, maxY]}
+  tickFormatter={(v) => v.toLocaleString()}
+/>
+
         <Tooltip
   formatter={(value, name) => [`${Number(value).toLocaleString()} kW`, name]}
 />

@@ -93,7 +93,11 @@ export default function EnergyTrendChart({ type, dataProp }) {
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="day" />
-          <YAxis domain={[-maxY, maxY]} tickFormatter={(v) => Math.abs(v)} />
+          <YAxis
+  domain={[-maxY, maxY]}
+  tickFormatter={(v) => Math.abs(v).toLocaleString()}
+/>
+
           <Tooltip
   formatter={(value, name) => [
     `${Math.abs(Number(value)).toLocaleString()} kWh`,
@@ -150,7 +154,10 @@ export default function EnergyTrendChart({ type, dataProp }) {
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="day" />
-        <YAxis domain={[-maxY, maxY]} tickFormatter={(v) => Math.abs(v)} />
+        <YAxis
+  domain={[-maxY, maxY]}
+  tickFormatter={(v) => Math.abs(v).toLocaleString()}
+/>
         <Tooltip
   formatter={(value, name) => [
     `${Math.abs(Number(value)).toLocaleString()} kW`,

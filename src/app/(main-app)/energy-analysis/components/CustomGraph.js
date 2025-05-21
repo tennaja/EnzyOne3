@@ -416,9 +416,15 @@ const CustomGraph = () => {
     <XAxis dataKey="time" tickFormatter={(str) => str.slice(5, 16)} />
     <Tooltip
   formatter={(value, name) =>
-    [typeof value === "number" ? value.toFixed(2) : value, name]
+    [
+      typeof value === "number"
+        ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : value,
+      name,
+    ]
   }
 />
+
 
     <Legend />
     <Brush dataKey="time" height={30} stroke="#8884d8" />
@@ -427,6 +433,7 @@ const CustomGraph = () => {
     {chart.uniqueUnits[0] && (
       <YAxis
         yAxisId="left"
+        tickFormatter={(v) => v.toLocaleString()}
         label={{
           value: chart.uniqueUnits[0],
           angle: -90,
@@ -440,16 +447,18 @@ const CustomGraph = () => {
     {/* แกน Y ฝั่งขวา */}
     {chart.uniqueUnits[1] && (
       <YAxis
-        yAxisId="right"
-        orientation="right"
-        label={{
-          value: chart.uniqueUnits[1],
-          angle: -90,
-          position: "insideRight",
-          offset: 10,
-          style: { fontSize: 12, fontWeight: "bold" },
-        }}
-      />
+      yAxisId="right"
+      orientation="right"
+      tickFormatter={(v) => v.toLocaleString()}
+      label={{
+        value: chart.uniqueUnits[1],
+        angle: -90,
+        position: "insideRight",
+        offset: 10,
+        style: { fontSize: 12, fontWeight: "bold" },
+      }}
+    />
+    
     )}
 
     {/* เส้นกราฟ */}

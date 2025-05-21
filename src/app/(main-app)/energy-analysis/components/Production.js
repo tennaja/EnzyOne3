@@ -329,7 +329,8 @@ export default function Production() {
       }))
       .filter(
         (item) =>
-          item.name.toString().includes(search.toLowerCase()) ||
+
+          item.name?.toString().toLowerCase().includes(search.toLowerCase()) ||
           item.power.toString().includes(search.toLowerCase()) ||
           item.energy.toString().includes(search.toLowerCase()) ||
           item.revenue.toString().includes(search.toLowerCase()) ||

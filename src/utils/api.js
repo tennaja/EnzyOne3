@@ -2375,13 +2375,14 @@ export async function getCustomDeviceHistory(req) {
 }
 
 export async function getCarbonDashboardSummary(req) {
-  const siteId = req.siteId;
-  const date = req.date
-  const deviceId = req.deviceId;
+const siteId = req.siteId;
+const businessUnitId = req.businessUnitId;
+const companyId = req.companyId;
+const year = req.year;  
 
   try {
     const url =
-      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/dashboard/summary?year={year}&companyId={companyId}&businessUnitId={businessUnitId}&branchId={branchId}`;
+      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/dashboard/summary?siteId=${siteId}&businessUnitId=${businessUnitId}&companyId=${companyId}&year=${year}`;
     const res = await axios.get(url, {
       withCredentials: true,
       headers: { "Content-Type": "application/json" },

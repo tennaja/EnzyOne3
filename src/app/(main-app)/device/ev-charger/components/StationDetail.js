@@ -940,10 +940,14 @@ const StationDetail = ({ onNavigate }) => {
   value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
   onChange={handleStartDateChange}
   disabledDate={(current) => {
+    const today = dayjs().endOf("day");
+    const end = endDate ? dayjs(endDate, "YYYY/MM/DD").endOf("day") : null;
+
     return (
-      current &&
-      (current > today || // ห้ามเลือกวันในอนาคต
-        (endDate && current.isAfter(dayjs(endDate, "YYYY/MM/DD"), "day"))) // ห้ามมากกว่า endDate
+      current && (
+        current.isAfter(today) || // ห้ามเลือกวันในอนาคต
+        (end && current.isAfter(end, "day")) // ห้ามมากกว่า endDate
+      )
     );
   }}
   format="YYYY/MM/DD"

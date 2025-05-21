@@ -78,7 +78,10 @@ export default function RevenueBarChart({ history }) {
             textAnchor="middle"
             height={40}
           />
-          <YAxis domain={[0, maxY]} />
+          <YAxis
+            domain={[0, maxY]}
+            tickFormatter={(v) => v.toLocaleString()}
+          />
           
           <Tooltip
   formatter={(value, name) => [`${Number(value).toLocaleString()} ฿`, name]}

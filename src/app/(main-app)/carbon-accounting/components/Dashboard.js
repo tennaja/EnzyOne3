@@ -1,11 +1,11 @@
 "use client";
-import { useState ,useeffect} from "react";
+import { useState ,useEffect} from "react";
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import "dayjs/locale/en"; // หรือ 'th' ถ้าอยากใช้ภาษาไทย
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import Tooltip from "@mui/material/Tooltip";
-import {  } from "@/utils/api";
+import {getCarbonDashboardSummary} from "@/utils/api";
 
 import Loading from "./Loading";
 import { Select } from 'antd';
@@ -26,7 +26,38 @@ const { MonthPicker } = DatePicker;
 
 
 export default function Dashboard() {
+  const [loading, setLoading] = useState(false);
  
+  useEffect(() => {
+    GetCarbonDashboardSummary();
+  }, []);
+const GetCarbonDashboardSummary = async (showLoading = true) => {
+    const paramsNav = {
+      siteId: 1,
+      businessUnitId: 1,
+      companyId : 2,
+      year: "2025",
+    };
+    
+    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+
+    try {
+      const result = await getCarbonDashboardSummary(paramsNav);
+      if (result && result.status === 200) {
+        console.log("Summary Carbon:", result);
+        // setRevenueHistoryData(result.data);
+      } else {
+        // setRevenueHistoryData([]);
+      }
+    } catch (error) {
+      console.log("Error Summary Carbon:", error);
+    } finally {
+      if (showLoading) {
+        setLoading(false);
+      }
+    }
+  };
+  
   const LEGEND_ITEMS = [
     { name: 'Scope 1', color: '#0088FE' },
     { name: 'Scope 2', color: '#00C49F' },

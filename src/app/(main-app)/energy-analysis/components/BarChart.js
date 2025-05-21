@@ -78,7 +78,10 @@ export default function RevenueBarChart2({ data }) {
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="time" />
-          <YAxis domain={[0, maxY]} />
+          <YAxis
+            domain={[0, maxY]}
+            tickFormatter={(v) => v.toLocaleString()}
+          />
           <Tooltip
   formatter={(value, name) => [`${Number(value).toLocaleString()} ฿`, name]}
 />

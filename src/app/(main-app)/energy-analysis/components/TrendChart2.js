@@ -99,7 +99,11 @@ export default function EnergyTrendChart3({ type, data }) {
         <ComposedChart data={chartData} barCategoryGap={10} margin={{ top: 40, right: 0, left: leftMargin, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="day" />
-          <YAxis domain={[0, maxY]} />
+          <YAxis
+  domain={[0, maxY]}
+  tickFormatter={(v) => v.toLocaleString()}
+/>
+
           <Tooltip
   formatter={(value, name) => [`${Number(value).toLocaleString()} kWh`, name]}
 />
@@ -146,7 +150,11 @@ export default function EnergyTrendChart3({ type, data }) {
       <LineChart data={chartData} margin={{ top: 40, right: 0, left: leftMargin, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="day" />
-        <YAxis domain={[0, maxY]} />
+        <YAxis
+  domain={[0, maxY]}
+  tickFormatter={(v) => v.toLocaleString()}
+/>
+
         <Tooltip
   formatter={(value, name) => [`${Number(value).toLocaleString()} kW`, name]}
 />

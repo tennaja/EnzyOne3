@@ -170,6 +170,13 @@ console.log("BarChartComponent", data);
   const zoomOut = () => {
     setZoomDomain(null);
   };
+  const formatTruncatedDecimal = (value, decimals = 2) => {
+    const factor = Math.pow(10, decimals);
+    const truncated = Math.floor(value * factor) / factor;
+    return truncated.toFixed(decimals); // ให้ .00 เสมอ
+  };
+  
+  
 
   return (
     <div style={{ position: "relative", textAlign: "left" }}>
@@ -229,11 +236,12 @@ console.log("BarChartComponent", data);
                 fontWeight: "bold",
               },
             }}
-            tickFormatter={(value) => value.toFixed(decimalPlaces)}  
+            tickFormatter={(value) => formatTruncatedDecimal(value, 2)}
           />
           <Tooltip
-            formatter={(value) => value.toFixed(decimalPlaces)}  
-          />
+  formatter={(value, name) => [formatTruncatedDecimal(value, 2), name]}
+/>
+
           <Legend
             layout="horizontal"
             align="center"

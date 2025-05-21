@@ -191,7 +191,7 @@ const handleSortCharging = (column) => {
                 </div>
               </th>
               <th
-                className="px-2 py-1 text-left"
+                className="px-2 py-1 text-left cursor-pointer"
                 onClick={() => handleSortCharging('name')}
               >
                 Name
@@ -227,7 +227,7 @@ const handleSortCharging = (column) => {
                 </div>
               </th>
               <th
-                className="px-2 py-1 text-center"
+                className="px-2 py-1 text-center cursor-pointer"
                 onClick={() => handleSortCharging('status')}
               >
                 Status

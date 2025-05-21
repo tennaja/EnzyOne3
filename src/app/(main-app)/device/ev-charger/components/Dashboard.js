@@ -581,7 +581,7 @@ const Dashboard = ({ onNavigate }) => {
   const getMaxEndDate1 = (selectedStartDate) => {
     if (!selectedStartDate) return dayjs(); // ถ้าไม่มี startDate, ใช้วันนี้
 
-    const maxByStartDate = dayjs(selectedStartDate).add(31, "day");
+    const maxByStartDate = dayjs(selectedStartDate).add(30, "day");
     return dayjs(Math.min(maxByStartDate.valueOf(), dayjs().valueOf())); // ใช้ valueOf() เพื่อแปลงเป็น timestamp แล้วใช้ Math.min
   };
 
@@ -615,7 +615,7 @@ const Dashboard = ({ onNavigate }) => {
 
     // ถ้าเลือก endDate ก่อน startDate → อัปเดต startDate ให้เป็น 31 วันก่อนหน้า
     if (!startDate) {
-      setStartDate(dayjs(date).subtract(31, "day").format("YYYY/MM/DD"));
+      setStartDate(dayjs(date).subtract(30, "day").format("YYYY/MM/DD"));
     }
     setChargingCurrentPage(1); // Reset current page to 1 when changing end date
   };
