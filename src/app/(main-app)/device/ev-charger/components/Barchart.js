@@ -242,15 +242,15 @@ console.log("BarChartComponent", data);
   formatter={(value, name) => [formatTruncatedDecimal(value, 2), name]}
 />
 
-          <Legend
-            layout="horizontal"
-            align="center"
-            verticalAlign="top"
-            wrapperStyle={{ marginBottom: 20 }}
-            onClick={selectBar}
-            onMouseOver={handleLegendMouseEnter}
-            onMouseOut={handleLegendMouseLeave}
-          />
+<Legend
+  layout="horizontal"
+  align="center"
+  verticalAlign="top"
+  wrapperStyle={{ marginBottom: 20 }}
+  onMouseOver={handleLegendMouseEnter}
+  onMouseOut={handleLegendMouseLeave}
+/>
+
           {valueKeys.map((key) => (
             <Bar
               key={key}
