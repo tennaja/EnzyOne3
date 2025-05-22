@@ -2373,7 +2373,7 @@ export async function getCustomDeviceHistory(req) {
     return error;
   }
 }
-
+//Carbon Accounting-----------------------------------------------
 export async function getCarbonDashboardSummary(req) {
 const siteId = req.siteId;
 const businessUnitId = req.businessUnitId;
@@ -2383,6 +2383,52 @@ const year = req.year;
   try {
     const url =
       `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/dashboard/summary?siteId=${siteId}&businessUnitId=${businessUnitId}&companyId=${companyId}&year=${year}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+
+export async function getCarbonYearList(companyId) {
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/list/year?companyId=${companyId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getCarbonBusinessUnitList(companyId) {
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/list/business-unit?companyId=${companyId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getCarbonSiteList(req) {
+  const businessUnitId = req.businessUnitId;
+  const companyId = req.companyId;
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/list/site?businessUnitId=${businessUnitId}&companyId=${companyId}`;
     const res = await axios.get(url, {
       withCredentials: true,
       headers: { "Content-Type": "application/json" },

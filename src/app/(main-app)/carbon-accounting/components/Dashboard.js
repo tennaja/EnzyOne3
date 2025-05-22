@@ -27,6 +27,14 @@ const { MonthPicker } = DatePicker;
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(false);
+  const [totalEmission, setTotalEmission] = useState([]);
+  const [totalEmissionByMonth, setTotalEmissionByMonth] = useState([]);
+  const [scopeEmission, setScopeEmission] = useState([]);
+  const [scopeEmissionByMonth, setScopeEmissionByMonth] = useState([]);
+  const [scopeEmissionByYear, setScopeEmissionByYear] = useState([]);
+  const [year, setYear] = useState(dayjs().format("YYYY"));
+  const [month, setMonth] = useState(dayjs().format("MM"));
+  const [date, setDate] = useState(dayjs());
  
   useEffect(() => {
     GetCarbonDashboardSummary();
@@ -44,10 +52,14 @@ const GetCarbonDashboardSummary = async (showLoading = true) => {
     try {
       const result = await getCarbonDashboardSummary(paramsNav);
       if (result && result.status === 200) {
-        console.log("Summary Carbon:", result);
-        // setRevenueHistoryData(result.data);
+        console.log("Summary Carbon ALL:", result.data);
+        console.log("Summary Carbon:", result.data.emissionData
+        );
+        setTotalEmission(result.data.totalEmission);
+        setTotalEmissionByMonth(result.data.totalEmissionByMonth);
+        setScopeEmission(result.data.emissionData);
       } else {
-        // setRevenueHistoryData([]);
+        setTotalEmission([]);
       }
     } catch (error) {
       console.log("Error Summary Carbon:", error);
@@ -202,20 +214,20 @@ const GetCarbonDashboardSummary = async (showLoading = true) => {
     {/* Left - Pie Chart */}
     <div className="w-1/2">
       <h3 className="font-semibold text-md mb-10">Total Emissions</h3>
-      <PieEmissionsChart data={pieData} colors={LEGEND_ITEMS} total={totalValue} />
+      <PieEmissionsChart data={totalEmission}  />
     </div>
 
     {/* Right - Bar Chart */}
     <div className="w-1/2">
       <h3 className="font-semibold text-md mb-10">Monthly Emissions Trends</h3>
 
-      <BarEmissionsChart data={barData} colors={LEGEND_ITEMS} />
+      <BarEmissionsChart data={totalEmissionByMonth} />
       
     </div>
   </div>
 
   {/* Legend */}
-  <ChartLegend items={LEGEND_ITEMS} />
+  <ChartLegend />
   <div className="mt-4 flex justify-center">
         <button
           className="w-20 text-sm border border-[#32c0bf] text-[#32c0bf] rounded py-1 hover:bg-[#e6fafa] transition"
@@ -228,35 +240,26 @@ const GetCarbonDashboardSummary = async (showLoading = true) => {
 
       {/* Scope Emissions */}
       {/* Donut Charts */}
-      <div className="grid grid-cols-3 gap-4 mb-6 mt-5">
-        {scopeData.map((item, i) => (
-          <ScopeEmissionDonutChart
-            key={i}
-            scope={item.scope}
-            data={item.donut}
-            total={item.total}
-          />
-        ))}
-      </div>
+      <div className="w-full mb-6 mt-5 ">
+  <ScopeEmissionDonutChart year={2025} emissionData={scopeEmission} />
+</div>
+
 
       {/* Scope Top3 Emission */}
       {/* Bar Charts */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {scopeData.map((item, i) => (
-          <ScopeTop3BarChart key={i} scope={item.scope} data={item.bar} />
-        ))}
+      <div className="w-full mb-6 mt-5">
+        
+          <ScopeTop3BarChart year={2025} emissionData={scopeEmission} />
+       
       </div>
 
       {/* Emission Trends */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {scopes.map((scope, index) => (
+      <div className="w-full mb-6 mt-5">
+      
         <EmissionTrendCard
-          key={index}
-          title={scope.title}
-          chartData={scope.data}
-          tableData={scope.table}
+         year={2025} emissionData={scopeEmission}
         />
-      ))}
+
     </div>
 
       {/* {loading && <Loading/>}   */}

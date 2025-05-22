@@ -38,7 +38,9 @@ const ChargerDetail = ({ onNavigate }) => {
   const [staticsToday, setStaticsToday] = useState({});
   const [staticsTotal, setStaticsTotal] = useState({});
   const [chargersHead, setChargersHead] = useState([]);
-  const [startDate, setStartDate] = useState(dayjs().subtract(1, 'month').format("YYYY/MM/DD"));
+  const [startDate, setStartDate] = useState(
+    dayjs().subtract(1, "month").format("YYYY/MM/DD")
+  );
   const [endDate, setEndDate] = useState(todayFormatted);
   const [timeUnit, setTimeUnit] = useState("day");
   const [graphData, setGraphData] = useState();
@@ -67,8 +69,8 @@ const ChargerDetail = ({ onNavigate }) => {
     onNavigate("chargeheaddetail");
   };
 
-  const GetStationbyId = async (id,showLoading = true) => {
-    if (showLoading) setLoading(true); 
+  const GetStationbyId = async (id, showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const result = await getChargerbyId(id);
       console.log("Station:", result);
@@ -88,15 +90,15 @@ const ChargerDetail = ({ onNavigate }) => {
       }
     } catch (error) {
       console.error("Error fetching station data:", error);
-    }finally {
+    } finally {
       if (showLoading) {
         setLoading(false);
-        }
+      }
     }
   };
-  const GetStationStatic = async (id,showLoading = true) => {
+  const GetStationStatic = async (id, showLoading = true) => {
     console.log("station Id:", id);
-    if (showLoading)setLoading(true);
+    if (showLoading) setLoading(true);
     try {
       const result = await getChargersStatics(id);
       console.log("Today:", result?.data?.today);
@@ -116,21 +118,21 @@ const ChargerDetail = ({ onNavigate }) => {
       }
     } catch (error) {
       console.error("Error fetching station data:", error);
-    }finally {
+    } finally {
       if (showLoading) {
         setLoading(false);
       }
     }
   };
 
-  const GetChargerHistoryStatistics = async (id,showLoading = true) => {
+  const GetChargerHistoryStatistics = async (id, showLoading = true) => {
     const Param = {
       chargerId: id,
       groupBy: timeUnit,
       endDate: endDate,
       startDate: startDate,
     };
-    if (showLoading)setLoading(true);
+    if (showLoading) setLoading(true);
     try {
       const result = await getChargerHistoryStatistics(Param);
       if (result) {
@@ -139,7 +141,7 @@ const ChargerDetail = ({ onNavigate }) => {
       }
     } catch (error) {
       console.error("Error fetching graph data:", error);
-    }finally {
+    } finally {
       if (showLoading) {
         setLoading(false);
       }
@@ -147,43 +149,43 @@ const ChargerDetail = ({ onNavigate }) => {
   };
 
   useEffect(() => {
-    // Fetch Charger by ID ทุกๆ 5 นาที 
+    // Fetch Charger by ID ทุกๆ 5 นาที
     if (ChargerId) {
       GetStationbyId(ChargerId);
-  
+
       const interval = setInterval(() => {
         console.log("⏳ Fetching Charger by ID...");
         GetStationbyId(ChargerId, false);
       }, 300000); // 5 นาที
-  
+
       return () => clearInterval(interval); // Cleanup interval เมื่อ component ถูก unmount
     }
   }, [ChargerId]);
-  
+
   useEffect(() => {
     // Fetch Charger Static ทุกๆ // 5 นาที
     if (ChargerId) {
       GetStationStatic(ChargerId);
-  
+
       const interval = setInterval(() => {
         console.log("⏳ Fetching Charger Static...");
         GetStationStatic(ChargerId, false);
       }, 300000); // 5 นาที
-  
+
       return () => clearInterval(interval); // Cleanup interval เมื่อ component ถูก unmount
     }
   }, [ChargerId]);
-  
+
   useEffect(() => {
     // Fetch Charger History Statistics ทุกๆ // 5 นาที
     if (ChargerId) {
       GetChargerHistoryStatistics(ChargerId);
-  
+
       const interval = setInterval(() => {
         console.log("⏳ Fetching Charger History Statistics...");
         GetChargerHistoryStatistics(ChargerId, false);
       }, 300000); // 5 นาที
-  
+
       return () => clearInterval(interval); // Cleanup interval เมื่อ component ถูก unmount
     }
   }, [ChargerId, endDate, startDate, timeUnit]);
@@ -312,7 +314,6 @@ const ChargerDetail = ({ onNavigate }) => {
     const { startDate, endDate } = calculateDefaultDateRange(value);
     setStartDate(startDate);
     setEndDate(endDate);
-    
   };
   const handleStartDateChange = (date) => {
     if (date) {
@@ -416,77 +417,76 @@ const ChargerDetail = ({ onNavigate }) => {
 
           <div className="w-full lg:w-60 flex-1">
             <div className="flex-1 ml-6">
-            <div className="overflow-x-auto">
-  <table className="w-full mt-5 text-sm">
-    <tbody>
-      <tr className="text-xs border-b border-gray-200">
-        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
-          <strong>Charger Name</strong>
-        </td>
-        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
-          {station?.name}
-        </td>
-      </tr>
-      <tr className="text-xs border-b border-gray-200">
-        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
-          <strong>Brand Name</strong>
-        </td>
-        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
-          {station?.brandName}
-        </td>
-      </tr>
-      <tr className="text-xs border-b border-gray-200">
-        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
-          <strong>Charger Type</strong>
-        </td>
-        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
-          {station?.type}
-        </td>
-      </tr>
-      <tr className="text-xs border-b border-gray-200">
-        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
-          <strong>Power Type</strong>
-        </td>
-        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
-          {station?.powerType}
-        </td>
-      </tr>
-      <tr className="text-xs border-b border-gray-200">
-        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
-          <strong>Charger Price (per kWh)</strong>
-        </td>
-        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
-          {station?.price}
-        </td>
-      </tr>
-      <tr className="text-xs border-b border-gray-200">
-        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
-          <strong>Simultaneous Charging</strong>
-        </td>
-        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
-          {station?.simultaneousCharge}
-        </td>
-      </tr>
-      <tr className="text-xs border-b border-gray-200">
-        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
-          <strong>Station Name</strong>
-        </td>
-        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
-          {station?.stationName}
-        </td>
-      </tr>
-      <tr className="text-xs border-b border-gray-200">
-        <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
-          <strong>Latitude / Longitude</strong>
-        </td>
-        <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
-          {station?.latitude}, {station?.longitude}
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
+              <div className="overflow-x-auto">
+                <table className="w-full mt-5 text-sm">
+                  <tbody>
+                    <tr className="text-xs border-b border-gray-200">
+                      <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+                        <strong>Charger Name</strong>
+                      </td>
+                      <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+                        {station?.name}
+                      </td>
+                    </tr>
+                    <tr className="text-xs border-b border-gray-200">
+                      <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+                        <strong>Brand Name</strong>
+                      </td>
+                      <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+                        {station?.brandName}
+                      </td>
+                    </tr>
+                    <tr className="text-xs border-b border-gray-200">
+                      <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+                        <strong>Charger Type</strong>
+                      </td>
+                      <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+                        {station?.type}
+                      </td>
+                    </tr>
+                    <tr className="text-xs border-b border-gray-200">
+                      <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+                        <strong>Power Type</strong>
+                      </td>
+                      <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+                        {station?.powerType}
+                      </td>
+                    </tr>
+                    <tr className="text-xs border-b border-gray-200">
+                      <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+                        <strong>Charger Price (per kWh)</strong>
+                      </td>
+                      <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+                        {station?.price}
+                      </td>
+                    </tr>
+                    <tr className="text-xs border-b border-gray-200">
+                      <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+                        <strong>Simultaneous Charging</strong>
+                      </td>
+                      <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+                        {station?.simultaneousCharge}
+                      </td>
+                    </tr>
+                    <tr className="text-xs border-b border-gray-200">
+                      <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+                        <strong>Station Name</strong>
+                      </td>
+                      <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+                        {station?.stationName}
+                      </td>
+                    </tr>
+                    <tr className="text-xs border-b border-gray-200">
+                      <td className="px-4 py-2 bg-[#F2FAFA] dark:bg-gray-900 dark:text-white whitespace-nowrap">
+                        <strong>Latitude / Longitude</strong>
+                      </td>
+                      <td className="px-4 py-2 font-bold break-words whitespace-pre-line">
+                        {station?.latitude}, {station?.longitude}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -501,17 +501,31 @@ const ChargerDetail = ({ onNavigate }) => {
           <div className="w-full lg:w-60 flex-1">
             <div className="flex-1">
               <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-semibold">
-  {chargersHead.length} Charger Head{chargersHead.length !== 1 ? 's' : ''}
-</span>
+                <span className="text-xs font-semibold">
+                  {chargersHead.length} Charger Head
+                  {chargersHead.length !== 1 ? "s" : ""}
+                </span>
 
-                <input
-                  type="text"
-                  placeholder="ค้นหา"
-                  value={searchChargingQuery}
-                  onChange={handleSearchChargingquery}
-                  className="border border-gray-300 p-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
-                />
+                <div className="relative w-56">
+                  <input
+                    type="text"
+                    placeholder="ค้นหา"
+                    value={searchChargingQuery}
+                    onChange={handleSearchChargingquery}
+                    className="w-full border border-gray-300 p-1.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+                  />
+                  {searchChargingQuery && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleSearchChargingquery({ target: { value: "" } })
+                      }
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="overflow-x-auto mt-3">
                 <table className="min-w-full table-auto text-sm">
@@ -975,43 +989,43 @@ const ChargerDetail = ({ onNavigate }) => {
             <div className="flex items-center gap-2">
               <span className="text-sm">Group by:</span>
               <div className="inline-flex items-center bg-gray-100 dark:bg-gray-800 rounded-md p-1">
-  {OptionsTimeUnit.map((option) => (
-    <button
-      key={option.value}
-      onClick={() => handleTimeUnitChange(option.value)}
-      className={`px-4 py-1 rounded-md text-sm font-medium ${
-        timeUnit === option.value
-          ? "bg-white dark:bg-gray-600 shadow text-black dark:text-white"
-          : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
-      }`}
-    >
-      {option.label}
-    </button>
-  ))}
-</div>
-
+                {OptionsTimeUnit.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleTimeUnitChange(option.value)}
+                    className={`px-4 py-1 rounded-md text-sm font-medium ${
+                      timeUnit === option.value
+                        ? "bg-white dark:bg-gray-600 shadow text-black dark:text-white"
+                        : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="flex gap-2 mt-5 items-center">
               <span className="text-sm">Date :</span>
               <DatePicker
-  className="w-48 p-2 bg-white border shadow-default 
+                className="w-48 p-2 bg-white border shadow-default 
     dark:border-slate-300 dark:bg-[#121212] dark:text-slate-200"
-  value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
-  onChange={handleStartDateChange}
-  disabledDate={(current) => {
-    const today = dayjs().endOf("day");
-    const end = endDate ? dayjs(endDate, "YYYY/MM/DD").endOf("day") : null;
+                value={startDate ? dayjs(startDate, "YYYY/MM/DD") : null}
+                onChange={handleStartDateChange}
+                disabledDate={(current) => {
+                  const today = dayjs().endOf("day");
+                  const end = endDate
+                    ? dayjs(endDate, "YYYY/MM/DD").endOf("day")
+                    : null;
 
-    return (
-      current && (
-        current.isAfter(today) || // ห้ามเลือกวันในอนาคต
-        (end && current.isAfter(end, "day")) // ห้ามมากกว่า endDate
-      )
-    );
-  }}
-  format="YYYY/MM/DD"
-  allowClear={false}
-/>
+                  return (
+                    current &&
+                    (current.isAfter(today) || // ห้ามเลือกวันในอนาคต
+                      (end && current.isAfter(end, "day"))) // ห้ามมากกว่า endDate
+                  );
+                }}
+                format="YYYY/MM/DD"
+                allowClear={false}
+              />
 
               <p>-</p>
               <DatePicker
@@ -1044,7 +1058,7 @@ const ChargerDetail = ({ onNavigate }) => {
               legendLabels={{
                 session: "Sessions",
               }}
-              decimalPlaces={0} 
+              decimalPlaces={0}
             />
           </div>
           <div className="mt-5">
@@ -1057,7 +1071,7 @@ const ChargerDetail = ({ onNavigate }) => {
               legendLabels={{
                 electricityAmount: "Energy",
               }}
-              decimalPlaces={2} 
+              decimalPlaces={2}
             />
           </div>
           <div className="mt-5">
@@ -1070,10 +1084,10 @@ const ChargerDetail = ({ onNavigate }) => {
               legendLabels={{
                 revenue: "Revenue",
               }}
-              decimalPlaces={2} 
+              decimalPlaces={2}
             />
           </div>
-           {loading && <Loading />}
+          {loading && <Loading />}
         </div>
       </div>
     </div>
