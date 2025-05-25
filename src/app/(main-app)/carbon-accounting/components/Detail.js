@@ -1,314 +1,324 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect,useMemo} from "react";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Tooltip from "@mui/material/Tooltip";
 import dayjs from "dayjs";
 import { DatePicker } from "antd";
-import EnergyPieChart from "./EnergyPieChart";
-import EnergyTrendChart2 from "./Trendchart";
-import RevenueBarChart2 from "./BarChart";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import { Select, Space } from "antd";
-import HeatmapPage from "./Heatmap";
-import {
-  getProductSummary,
-  getProductEnergyHistory,
-  getProductRevenueHistory,
-  getProductDeviceList,
-  getProductionHeatmap,
-} from "@/utils/api";
+import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import ArrowForwardIosOutlinedIcon from "@mui/icons-material/ArrowForwardIosOutlined";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import { getCarbonDetailList, getCarbonDetail ,getCarbonScopeList } from "@/utils/api";
 import Loading from "./Loading";
 const { Option } = Select;
 
-const allTabs = [
-  { id: "day", label: "Day" },
-  { id: "month", label: "Month" },
-  { id: "year", label: "Year" },
-  { id: "lifetime", label: "Lifetime" },
-];
-
-const revenueTabs = allTabs.filter((tab) => tab.id !== "day");
-
-const GroupTabs = ({ range, onChange, tabs }) => (
-  <div className="inline-flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-    {tabs.map((tab) => (
-      <button
-        key={tab.id}
-        onClick={() => onChange(tab.id)}
-        className={`px-4 py-2 text-sm border-r last:border-r-0 border-gray-300 dark:border-gray-600 transition-all ${
-          range === tab.id
-            ? "bg-teal-500 text-white"
-            : "bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-        }`}
-      >
-        {tab.label}
-      </button>
-    ))}
-  </div>
-);
-
-const DatePickerByRange = ({ range, value, onChange }) => {
-  if (range === "lifetime") {
-    return <DatePicker disabled className="ml-4" />;
-  }
-
-  if (range === "year") {
-    return (
-      <DatePicker
-        picker="year"
-        format="YYYY"
-        value={value}
-        onChange={onChange}
-        className="ml-4"
-        allowClear={false}
-      />
-    );
-  }
-
-  if (range === "month") {
-    return (
-      <DatePicker
-        picker="month"
-        format="YYYY/MM"
-        value={value}
-        onChange={onChange}
-        className="ml-4"
-        allowClear={false}
-      />
-    );
-  }
-
-  return (
-    <DatePicker
-      format="YYYY/MM/DD"
-      value={value}
-      onChange={onChange}
-      className="ml-4"
-      allowClear={false}
-    />
-  );
-};
-
-export default function Detail() {
-  const [searchLoad, setSearchLoad] = useState("");
-  const [energyRange, setEnergyRange] = useState("day");
-  const [energyDate, setEnergyDate] = useState(dayjs());
-  const [revenueRange, setRevenueRange] = useState("month");
-  const [revenueDate, setRevenueDate] = useState(dayjs());
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, "0");
-  const [year, setYear] = useState(currentYear.toString());
-  const [month, setMonth] = useState(currentMonth);
-  const [externalData, setExternalData] = useState([]);
-  const yearMonth = `${year}/${month}`;
-  const [sourceType, setSourceType] = useState(0); // ใช้ number 0 สำหรับ All
-  const [productDeviceList, setProductDeviceList] = useState([]);
-  const [dropdownDeviceList, setDropdownDeviceList] = useState([]);
-  const [energyHistoryData, setEnergyHistoryData] = useState([]);
-  const [revenueHistoryData, setRevenueHistoryData] = useState([]);
-  const [totalSummary, setTotalSummary] = useState({
-    power: "0.00",
-    energy: "0.00",
-    revenue: "0.00",
-  });
+export default function Detail({ scopeId, businessUnitId, year, siteId }) {
+  
+  const [detailData, setDetailData] = useState([]);
+  const [detailList, setDetailList] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
+  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const [scope, setScope] = useState(0);
+  const [scopeList, setScopeList] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    GetEnergyProductDeviceList();
-    GetDropdownDeviceList();
+    GetCarbonDetail();
     const interval = setInterval(() => {
-    GetEnergyProductDeviceList(false);
-    GetDropdownDeviceList(false);
+      GetCarbonDetail(false);
+    }
+    , 300000); // 300,000 ms = 5 minutes
+    return () => clearInterval(interval);
+  }, [businessUnitId, year, siteId]);
+
+  useEffect(() => {
+    GetCarbonDetailList();
+    const interval = setInterval(() => {
+      GetCarbonDetailList(false);
     }, 300000); // 300,000 ms = 5 minutes
     return () => clearInterval(interval);
-  }, []);
-  
-  useEffect(() => {
-    GetEnergyHistory();
-    const interval = setInterval(() => {
-      GetEnergyHistory(false);
-      }, 300000); 
-    
-    return () => clearInterval(interval);
-  }, [energyDate, energyRange]);
-  
-  useEffect(() => {
-    GetEnergyRevenue();
-    const interval = setInterval(() => {
-      GetEnergyRevenue(false);
-      }, 300000); 
-    
-    return () => clearInterval(interval);
-    
-  }, [revenueDate, revenueRange]);
-  
-  useEffect(() => {
-    GetProductionHeatmap();
-    const interval = setInterval(() => {
-      GetProductionHeatmap(false);
-      }, 300000); 
-    
-    return () => clearInterval(interval);
-    
-  }, [year, month, sourceType]);
+  }, [scopeId, businessUnitId, year, siteId , scope]);
 
-  const GetEnergyProductDeviceList = async (showLoading = true) => {
-    const siteId = 6;
-    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
-    try {
-      const result = await getProductSummary(siteId);
-      if (result && result.status === 200) {
-        const data = result.data;
+  useEffect(() => {
+    GetCarbonScopeList();
+  }, [businessUnitId, year, siteId, scopeId]);
 
-        const total = data.reduce(
-          (acc, item) => {
-            acc.power += Number(item.power || 0);
-            acc.energy += Number(item.energy || 0);
-            acc.revenue += Number(item.revenue || 0);
-            return acc;
-          },
-          { power: 0, energy: 0, revenue: 0 }
-        );
+  // useEffect(() => {
+  //   GetEnergyHistory();
+  //   const interval = setInterval(() => {
+  //     GetEnergyHistory(false);
+  //     }, 300000);
 
-        setProductDeviceList(data);
-        setTotalSummary({
-          power: total.power.toFixed(2),
-          energy: total.energy.toFixed(2),
-          revenue: total.revenue.toFixed(2),
-        });
-      } else {
-        setProductDeviceList([]);
-        setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
-      }
-    } catch (error) {
-      console.error("Error fetching Summary History:", error);
-      setProductDeviceList([]);
-      setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
-    } finally {
-      if (showLoading) {
-        setLoading(false);
-      }
+  //   return () => clearInterval(interval);
+  // }, [energyDate, energyRange]);
+
+  // useEffect(() => {
+  //   GetEnergyRevenue();
+  //   const interval = setInterval(() => {
+  //     GetEnergyRevenue(false);
+  //     }, 300000);
+  useEffect(() => {
+    if (scopeList.length > 0) {
+      const matchedScope = scopeList.find(item => item.scope === scopeId);
+      setScope(matchedScope ? matchedScope.scope : 0);
     }
-  };
-  const GetDropdownDeviceList = async (showLoading = true) => {
-    const siteId = 6;
-    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
-    try {
-      const result = await getProductDeviceList(siteId);
-      if (result && result.status === 200) {
-        setDropdownDeviceList(result.data);
-        console.log("Dropdown Device List:", result.data);
-      } else {
-        setDropdownDeviceList([]);
-      }
-    } catch (error) {
-      console.error("Error fetching Summary History:", error);
-      setProductDeviceList([]);
-      setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
-    } finally {
-      if (showLoading) {
-        setLoading(false);
-      }
-    }
-  };
-  const GetEnergyHistory = async (showLoading = true) => {
+  }, [scopeId, scopeList]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, sortConfig]);
+
+  const GetCarbonScopeList = async (showLoading = true) => {
     const paramsNav = {
-      siteId: 6,
-      date: energyDate.format("YYYY/MM/DD"),
-      groupBy: energyRange,
+      siteId: siteId,
+      businessUnitId: businessUnitId,
+      companyId: 2,
+      year: year,
     };
+
+    if (showLoading) setLoading(true);
+
+  try {
+    const result = await getCarbonScopeList(paramsNav);
+    if (result?.status === 200) {
+      
+      setScopeList(result.data);
+
+      setScope(result.data.scope); // All = 0
+    } else {
+      setScopeList([]);
+      setScope(0);
+    }
+  } catch (error) {
+    console.error("Carbon Scope List Error:", error);
+  } finally {
+    if (showLoading) setLoading(false);
+  }
+  };
+  const GetCarbonDetail = async (showLoading = true) => {
+    const paramsNav = {
+      siteId: siteId,
+      businessUnitId: businessUnitId,
+      companyId: 2,
+      year: year,
+    };
+
     if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
 
     try {
-      const result = await getProductEnergyHistory(paramsNav);
+      const result = await getCarbonDetail(paramsNav);
       if (result && result.status === 200) {
-        console.log("Summary History:", result);
-        setEnergyHistoryData(result.data);
+        console.log("Carbon Detail: ------>", result.data);
+        setDetailData(result.data.totalEmission);
       } else {
-        setEnergyHistoryData([]);
+        setDetailData([]);
       }
     } catch (error) {
-      console.error("Error fetching Summary History:", error);
+      console.error("Carbon Detail: ------>", error);
     } finally {
       if (showLoading) {
         setLoading(false);
       }
     }
   };
-
-  const GetEnergyRevenue = async (showLoading = true) => {
+  const GetCarbonDetailList = async (showLoading = true) => {
     const paramsNav = {
-      siteId: 6,
-      date: revenueDate.format("YYYY/MM/DD"),
-      groupBy: revenueRange,
+      siteId: siteId,
+      businessUnitId: businessUnitId,
+      companyId: 2,
+      year: year,
+      format: "",
+      scope: scope ?? scopeId
     };
     if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
     try {
-      const result = await getProductRevenueHistory(paramsNav);
+      const result = await getCarbonDetailList(paramsNav);
       if (result && result.status === 200) {
-        console.log("Summary Revenue:", result);
-        setRevenueHistoryData(result.data);
+        console.log("Carbon Detail List: ------>", result.data);
+        setDetailList(result.data);
       } else {
-        setRevenueHistoryData([]);
+        setDetailList([]);
       }
     } catch (error) {
-      console.error("Error fetching Summary Revenue:", error);
+      console.error("Carbon Detail List: ------>", error);
     } finally {
       if (showLoading) {
         setLoading(false);
       }
     }
   };
-  const GetProductionHeatmap = async (showLoading = true) => {
-    const paramsNav = {
-      siteId: 6,
-      date: yearMonth,
-      deviceId: sourceType,
-    };
-    if (showLoading) setLoading(true); // โหลดเฉพาะการเรียกครั้งแรก
+  
+
+  const DownLoadExcel = async () => {
     try {
-      const result = await getProductionHeatmap(paramsNav);
+      const result = await getCarbonDetailList({
+      siteId: siteId,
+      businessUnitId: businessUnitId,
+      companyId: 2,
+      year: year,
+      format: "xlsx",
+      scope: scope ?? scopeId
+      });
+
       if (result && result.status === 200) {
-        console.log("Production Heatmap:", result);
-        setExternalData(result.data);
+        // result.data เป็น Blob หรือ ArrayBuffer เพราะตั้ง responseType แล้ว
+        const blob = result.data;
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `carbon-report-2025.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url); // ล้าง URL ออกจาก memory
       } else {
-        setExternalData([]);
+        console.warn("Download failed or no data");
       }
     } catch (error) {
-      console.error("Error fetching Production Heatmap:", error);
-      setExternalData([]);
-    } finally {
-      if (showLoading) {
-        setLoading(false);
-      }
+      console.error("Download Excel error:", error);
     }
   };
 
-  const filterData = (data, search) =>
-    data
-      .map((item, index) => ({
-        ...item, // คัดลอกข้อมูลเดิมทั้งหมด
-        originalIndex: index + 1, // เพิ่ม originalIndex โดยเริ่มที่ 1
-      }))
-      .filter(
-        (item) =>
-          item.name.toString().includes(search.toLowerCase()) ||
-          item.power.toString().includes(search.toLowerCase()) ||
-          item.energy.toString().includes(search.toLowerCase()) ||
-          item.revenue.toString().includes(search.toLowerCase()) ||
-          item.originalIndex.toString().includes(search) // ค้นหาด้วย originalIndex
-      );
+  const handleScopeChange = (value) => {
+    setScope(value);
+    console.log("Selected scope:", value);
+  }
+
+  
+  
+
+  // แยกข้อมูลของแต่ละ Scope
+  const scope1Data = detailData.map((item) => ({
+    year: item.year,
+    value: item.data.scope1,
+  }));
+  const scope2Data = detailData.map((item) => ({
+    year: item.year,
+    value: item.data.scope2,
+  }));
+  const scope3Data = detailData.map((item) => ({
+    year: item.year,
+    value: item.data.scope3,
+  }));
+
+  const filteredList = detailList.filter((item) => {
+    const search = (searchTerm ?? "").toLowerCase();
+    const scopeName = String(item.scopeName ?? "").toLowerCase();
+    const category = item.scope === 3 ? String(item.categoryName ?? "-") : "-";
+    const categoryLower = category.toLowerCase();
+    const activity = String(item.activity ?? "").toLowerCase();
+    const twoYearsAgo =
+      item.twoYearsAgo != null ? String(item.twoYearsAgo) : "";
+    const previousYear =
+      item.previousYear != null ? String(item.previousYear) : "";
+    const selectedYear =
+      item.selectedYear != null ? String(item.selectedYear) : "";
+
+    return (
+      scopeName.includes(search) ||
+      categoryLower.includes(search) ||
+      activity.includes(search) ||
+      twoYearsAgo.includes(search) ||
+      previousYear.includes(search) ||
+      selectedYear.includes(search)
+    );
+  });
+  const handleSort = (key) => {
+    setSortConfig((prevConfig) => {
+      const isSameKey = prevConfig.key === key;
+      const direction = isSameKey && prevConfig.direction === "asc" ? "desc" : "asc";
+      return { key, direction };
+    });
+  };
+
+  const sortedList = [...filteredList].sort((a, b) => {
+    const key = sortConfig.key;
+    const direction = sortConfig.direction;
+  
+    let aValue = a[key];
+    let bValue = b[key];
+  
+    // ถ้าเป็น emission_x ให้ map ไปยัง field ที่ถูกต้อง
+    if (key.startsWith("emission_")) {
+      const index = parseInt(key.split("_")[1]);
+      const yearMap = ["twoYearsAgo", "previousYear", "selectedYear"];
+      aValue = a[yearMap[index]];
+      bValue = b[yearMap[index]];
+    }
+  
+    // ถ้าเป็น category ให้แปลงตามเงื่อนไข scope === 3
+    if (key === "category") {
+      aValue = a.scope === 3 ? (a.categoryName || "-") : "-";
+      bValue = b.scope === 3 ? (b.categoryName || "-") : "-";
+    }
+  
+    // Normalize ค่าที่เป็น string
+    if (typeof aValue === "string") aValue = aValue.toLowerCase();
+    if (typeof bValue === "string") bValue = bValue.toLowerCase();
+  
+    if (aValue < bValue) return direction === "asc" ? -1 : 1;
+    if (aValue > bValue) return direction === "asc" ? 1 : -1;
+    return 0;
+  });
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return sortedList.slice(start, start + rowsPerPage);
+  }, [sortedList, currentPage, rowsPerPage]);
+  
+  const totalPages = Math.ceil(sortedList.length / rowsPerPage);
+  
+  
+
+  const renderScopeTable = (title, data) => (
+    <div className="rounded-md border  dark:border-slate-700 p-4 shadow-sm bg-white">
+      <h2 className="font-semibold text-lg mb-2 border-b pb-1">{title}</h2>
+      <table className="w-full text-sm border-t">
+        <thead className="text-left">
+          <tr className="border-b bg-gray-100 dark:bg-slate-700">
+            <th className="py-1 px-2">Year</th>
+            <th className="py-1 px-2">Total (tCO2e)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.length === 0 ? (
+            <tr>
+              <td
+                className="py-2 px-2 text-center text-gray-500 dark:text-slate-400"
+                colSpan={2}
+              >
+                No data
+              </td>
+            </tr>
+          ) : (
+            data.map((row) => (
+              <tr key={row.year} className="border-b">
+                <td className="py-1 px-2">{row.year}</td>
+                <td className="py-1 px-2">{row.value.toFixed(3)}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 
   const highlightText = (text, search) => {
-    const textStr = String(text); // แปลง text เป็น string
-    const searchStr = String(search); // แปลง search เป็น string
+    if (text === null || text === undefined) return "";
+    if (!search) return text;
 
-    if (!searchStr) return textStr; // หากไม่มีคำค้นให้แสดงข้อความปกติ
+    const textStr = String(text);
+    const searchStr = String(search);
 
-    const parts = textStr.split(new RegExp(`(${searchStr})`, "gi")); // แบ่งข้อความที่ตรงกับคำค้น
+    const parts = textStr.split(new RegExp(`(${searchStr})`, "gi"));
+
     return parts.map((part, index) =>
       part.toLowerCase() === searchStr.toLowerCase() ? (
-        <span key={index} className="bg-yellow-300">
+        <span key={index} className="bg-yellow-300 dark:bg-yellow-600">
           {part}
         </span>
       ) : (
@@ -316,6 +326,7 @@ export default function Detail() {
       )
     );
   };
+
   function formatNumber(num) {
     if (typeof num !== "number" || isNaN(num)) {
       return "-";
@@ -340,23 +351,248 @@ export default function Detail() {
     return num.toLocaleString("en-US"); // ใส่ลูกน้ำให้ตัวเลขที่น้อยกว่า 1000
   }
 
-  const handleYearChange = (newYear) => {
-    setYear(newYear);
-    // Reset month ถ้าเดือนเกินจากเดือนปัจจุบันในปีปัจจุบัน
-    if (
-      parseInt(newYear) === currentYear &&
-      parseInt(month) > parseInt(currentMonth)
-    ) {
-      setMonth(currentMonth);
-    }
-  };
-
   return (
     <>
-      <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
-        
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
+        {renderScopeTable("Scope 1", scope1Data)}
+        {renderScopeTable("Scope 2", scope2Data)}
+        {renderScopeTable("Scope 3", scope3Data)}
       </div>
-     
+
+      {/* Emissions Table */}
+      <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-5 space-y-6">
+        {/* Search + Export */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+  {/* ซ้ายสุด: Dropdown */}
+  <div className="flex items-center">
+  <Select
+  value={scope}
+  style={{ width: 250, height: 40 }}
+  onChange={handleScopeChange}
+>
+  <Option value={0}>All</Option>
+  {scopeList.map((item) => (
+    <Option key={item.scope} value={item.scope}>
+      {item.scopeName}
+    </Option>
+  ))}
+</Select>
+
+  </div>
+
+  {/* ขวาสุด: Search + Export */}
+  <div className="flex items-center gap-3">
+    <input
+      type="text"
+      placeholder="ค้นหา"
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="h-10 border px-3 py-2 text-sm rounded-md dark:bg-slate-700 dark:text-white dark:border-slate-600"
+    />
+    <button
+      onClick={DownLoadExcel}
+      type="button"
+      className="h-10 bg-transparent text-sm border-2 border-[#32c0bf] text-[#32c0bf] px-3 py-2 rounded-md flex items-center gap-2 hover:bg-[#32c0bf] hover:text-white transition-colors"
+    >
+      <FileDownloadIcon />
+      Export to Excel
+    </button>
+  </div>
+</div>
+
+        <div className="overflow-x-auto  border border-gray-300 dark:border-slate-700">
+          <table className="w-full text-sm table-auto border-collapse">
+          <thead className="bg-gray-100 dark:bg-slate-800 text-left border-b">
+  <tr>
+    {[
+      { key: "scope", label: "Scope" },
+      { key: "category", label: "Category" },
+      { key: "activity", label: "Activity" },
+    ].map((col) => (
+      <th
+        key={col.key}
+        className="px-4 py-2 border-r align-middle cursor-pointer"
+        rowSpan={2}
+        onClick={() => handleSort(col.key)}
+      >
+        {col.label}
+        <div
+          style={{
+            display: "inline-flex",
+            flexDirection: "column",
+            marginLeft: "4px",
+          }}
+        >
+          <ArrowDropUpIcon
+            style={{
+              fontSize: "14px",
+              opacity:
+                sortConfig.key === col.key && sortConfig.direction === "asc"
+                  ? 1
+                  : 0.3,
+              marginBottom: "-2px",
+            }}
+          />
+          <ArrowDropDownIcon
+            style={{
+              fontSize: "14px",
+              opacity:
+                sortConfig.key === col.key && sortConfig.direction === "desc"
+                  ? 1
+                  : 0.3,
+              marginTop: "-2px",
+            }}
+          />
+        </div>
+      </th>
+    ))}
+
+    {[...Array(3)].map((_, i) => {
+      const displayYear = Number(year) - (2 - i);
+      return (
+        <th
+          key={displayYear}
+          className="px-4 py-1 text-center border-r align-middle"
+          colSpan={1}
+        >
+          FY{displayYear}
+        </th>
+      );
+    })}
+  </tr>
+  <tr>
+    {[...Array(3)].map((_, i) => (
+      <th
+        key={i}
+        className="px-4 py-1 text-center border-r align-middle cursor-pointer"
+        onClick={() => handleSort(`emission_${i}`)} // คุณสามารถเปลี่ยน key ให้เหมาะกับข้อมูลจริง
+      >
+        Emission (tCO₂e)
+        <div
+          style={{
+            display: "inline-flex",
+            flexDirection: "column",
+            marginLeft: "4px",
+          }}
+        >
+          <ArrowDropUpIcon
+            style={{
+              fontSize: "14px",
+              opacity:
+                sortConfig.key === `emission_${i}` &&
+                sortConfig.direction === "asc"
+                  ? 1
+                  : 0.3,
+              marginBottom: "-2px",
+            }}
+          />
+          <ArrowDropDownIcon
+            style={{
+              fontSize: "14px",
+              opacity:
+                sortConfig.key === `emission_${i}` &&
+                sortConfig.direction === "desc"
+                  ? 1
+                  : 0.3,
+              marginTop: "-2px",
+            }}
+          />
+        </div>
+      </th>
+    ))}
+  </tr>
+</thead>
+<tbody>
+  {paginatedData.length > 0 ? (
+    paginatedData.map((item, index) => (
+      <tr key={index} className="even:bg-gray-50 dark:even:bg-slate-700">
+        <td className="px-4 py-2 border-t">
+          {highlightText(item.scopeName, searchTerm)}
+        </td>
+        <td className="px-4 py-2 border-t">
+          {highlightText(
+            item.scope === 3 ? item.categoryName || "-" : "-",
+            searchTerm
+          )}
+        </td>
+        <td className="px-4 py-2 border-t">
+          {highlightText(item.activity, searchTerm)}
+        </td>
+        <td className="px-4 py-2 border-t text-right">
+          {highlightText(
+            item.twoYearsAgo !== null ? item.twoYearsAgo.toFixed(3) : "-",
+            searchTerm
+          )}
+        </td>
+        <td className="px-4 py-2 border-t text-right">
+          {highlightText(
+            item.previousYear !== null ? item.previousYear.toFixed(3) : "-",
+            searchTerm
+          )}
+        </td>
+        <td className="px-4 py-2 border-t text-right">
+          {highlightText(
+            item.selectedYear !== null ? item.selectedYear.toFixed(3) : "-",
+            searchTerm
+          )}
+        </td>
+      </tr>
+    ))
+  ) : (
+    <tr>
+      <td colSpan={6} className="text-center py-4 text-gray-500 dark:text-slate-400">
+        No data
+      </td>
+    </tr>
+  )}
+</tbody>
+
+          </table>
+           
+        </div>
+        {/* Pagination */}
+        <div className="flex justify-between items-center mt-4">
+            <div>
+              <span className="text-sm mr-1">Rows per page:</span>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1); // reset page กลับหน้าแรกเมื่อเปลี่ยน rowsPerPage
+                }}
+                className="border border-gray-300 text-sm rounded-lg"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+              >
+                <ArrowBackIosNewIcon style={{ fontSize: "12px" }} />
+              </button>
+              <span className="text-sm">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(p + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-2 py-1 text-sm bg-gray-200 rounded-lg disabled:opacity-50"
+              >
+                <ArrowForwardIosOutlinedIcon style={{ fontSize: "12px" }} />
+              </button>
+            </div>
+          </div>
+      </div>
       {loading && <Loading />}
     </>
   );

@@ -68,7 +68,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
   const [openModalfail, setopenModalfail] = useState(false);
   const [modalConfirmProps, setModalConfirmProps] = useState(null);
   const [modalErrorProps, setModalErorProps] = useState(null);
-  const [modalSuccessProps, setModalSuccessProps] = useState(null);
+ 
 
   const SelectIdSite = useSelector(
     (state) => state.smartstreetlightData.siteId
@@ -336,7 +336,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
       onCloseModal: handleClosePopup,
       onClickConfirmBtn: handleExternalUpdate,
       title: "Edit/Save Schedule",
-      content: "Are you sureyou want to save this schedule ?",
+      content: "Are you sure you want to save this schedule?",
       buttonTypeColor: "primary",
     });
   };

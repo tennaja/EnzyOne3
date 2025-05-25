@@ -118,12 +118,6 @@ export default function Production() {
     revenue: "0.00",
   });
   const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(false);
-  const [loadingData2, setLoadingData2] = useState(false);
-  const [loadingData3, setLoadingData3] = useState(false);
-  const [loadingData4, setLoadingData4] = useState(false);
-  const [loadingData5, setLoadingData5] = useState(false);
-  
   
   // useEffect(() => {
   //   const firstLoad = async () => {
@@ -188,6 +182,8 @@ export default function Production() {
 
     return () => clearInterval(interval);
   }, [year, month, sourceType]);
+
+
 
   const GetEnergyProductDeviceList = async (showLoading = true) => {
     const siteId = 6;

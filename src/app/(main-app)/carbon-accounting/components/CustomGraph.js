@@ -1,9 +1,13 @@
 "use client";
 
-import React, { useEffect, useState ,useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -12,451 +16,559 @@ import {
   ResponsiveContainer,
   Brush,
 } from "recharts";
-import { Checkbox, DatePicker, Button } from "antd";
+import { Checkbox, Select } from "antd";
+import ModalConfirm from "./Popupconfirm";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import "dayjs/locale/en";
 import DeleteIcon from "@mui/icons-material/Delete";
 import IconButton from "@mui/material/IconButton";
-import {getCustomDevice,getCustomDeviceHistory} from "@/utils/api";
+import Tooltips from "@mui/material/Tooltip";
+import {
+  getCustomDevice,
+  getCustomDeviceHistory,
+  getCarbonYearList,
+  getCarbonBusinessUnitList,
+  getCarbonSiteList,
+  getCarbonScopeList,
+  getCarbonCustomChart,
+} from "@/utils/api";
+const { Option } = Select;
 
 dayjs.extend(customParseFormat);
-const { RangePicker } = DatePicker;
 
-const getDistinctColor = (() => {
-  let usedHues = new Set();
-  const hueStep = 137.5; // ใช้ golden angle (137.5 องศา) เพื่อกระจายสีอย่างสม่ำเสมอ
-  let currentHue = 0;
-
-  return () => {
-    // คำนวณ hue ใหม่โดยใช้ golden angle
-    currentHue = (currentHue + hueStep) % 360;
-
-    // ตรวจสอบว่า hue นี้ถูกใช้ไปแล้วหรือไม่
-    while (usedHues.has(currentHue)) {
-      currentHue = (currentHue + hueStep) % 360;
-
-      // รีเซ็ต usedHues หากครบทุกสีแล้ว
-      if (usedHues.size >= 360 / hueStep) {
-        usedHues = new Set();
-      }
-    }
-
-    usedHues.add(currentHue);
-
-    // กำหนด saturation และ lightness ให้เหมาะสม
-    const saturation = 70; // ความอิ่มตัวของสี
-    const lightness = 50; // ความสว่างของสี
-
-    return `hsl(${currentHue}, ${saturation}%, ${lightness}%)`;
-  };
-})();
-
-const CustomGraph = () => {
-  const [charts, setCharts] = useState([]);
-  const [parameterList, setParameterList] = useState([]);
-  const [historyData, setHistoryData] = useState([]);
+export default function CustomGraph({}) {
   const [loading, setLoading] = useState(false);
-  const [data] = useState(parameterList);
+  const [year, setYear] = useState("");
+  const [yearList, setYearList] = useState([]);
+  const [businessUnitId, setBusinessUnitId] = useState(0);
+  const [siteId, setSiteId] = useState(0);
+  const [scope, setScope] = useState(0);
+  const [scopeList, setScopeList] = useState([]);
+  const [businessUnitList, setBusinessUnitList] = useState([]);
+  const [siteList, setSiteList] = useState([]);
+  const [companyId, setCompanyId] = useState(2);
+  const [openModalconfirm, setopenModalconfirm] = useState(false);
+  const [modalConfirmProps, setModalConfirmProps] = useState(null);
+  const [chartDataList, setChartDataList] = useState([]);
+  const [dataCustom, setDataCustom] = useState([]); // 🆕 เก็บรายการที่เพิ่ม
+  const [visibleItems, setVisibleItems] = useState(dataCustom.map(() => true));
+
   useEffect(() => {
-    GetConsumtionParameterList();
-  
-    // เพิ่ม Chart เริ่มต้นเมื่อโหลดหน้าเว็บครั้งแรก
-    setCharts([
-      {
-        id: Date.now(),
-        selectedParams: [], // ไม่มีพารามิเตอร์เริ่มต้น
-        dateRange: [dayjs().subtract(7, "day"), dayjs()], // ค่าเริ่มต้น: 7 วันล่าสุด
-        data: [], // ข้อมูลเริ่มต้นว่าง
-      },
-    ]);
+    GetCarbonYearList();
   }, []);
 
+  useEffect(() => {
+    GetCarbonSiteList();
+  }, [businessUnitId]);
 
-  const GetConsumtionParameterList = async () => {
-      const siteId = 6;
-      setLoading(true)
+  useEffect(() => {
+    GetCarbonScopeList();
+  }, [businessUnitId, year, siteId]);
+
+  const GetCarbonYearList = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    try {
+      const result = await getCarbonYearList(companyId);
+      if (result?.status === 200) {
+        setYearList(result.data);
+        setYear(result.data[0].year);
+        await GetCarbonBusinessUnitList();
+        await GetCarbonSiteList();
+      } else {
+        setYearList([]);
+      }
+    } catch (error) {
+      console.log("Error Summary Carbon:", error);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
+
+  const GetCarbonBusinessUnitList = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    try {
+      const result = await getCarbonBusinessUnitList(companyId);
+      if (result?.status === 200) {
+        setBusinessUnitList(result.data);
+        setBusinessUnitId(result.data[0].id);
+      } else {
+        setBusinessUnitList([]);
+      }
+    } catch (error) {
+      console.log("Error Summary Carbon:", error);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
+
+  const GetCarbonSiteList = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    try {
+      const result = await getCarbonSiteList({ businessUnitId, companyId });
+      if (result?.status === 200) {
+        setSiteList(result.data);
+        setSiteId(result.data[0].id);
+      } else {
+        setSiteList([]);
+      }
+    } catch (error) {
+      console.log("Error Summary Carbon:", error);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
+
+  const GetCarbonScopeList = async (showLoading = true) => {
+    const paramsNav = {
+      siteId: siteId,
+      businessUnitId: businessUnitId,
+      companyId: 2,
+      year: year,
+    };
+
+    if (showLoading) setLoading(true);
+
+    try {
+      const result = await getCarbonScopeList(paramsNav);
+      if (result?.status === 200) {
+        setScopeList(result.data);
+        // setScope(result.data[0].scope); // All = 0
+      } else {
+        setScopeList([]);
+        setScope(0);
+      }
+    } catch (error) {
+      console.error("Carbon Scope List Error:", error);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
+
+  const DownLoadExcel = async () => {
       try {
-        const result = await getCustomDevice(siteId);
+        const result = await getCarbonDetailList({
+        siteId: siteId,
+        businessUnitId: businessUnitId,
+        companyId: 2,
+        year: year,
+        format: "xlsx",
+        scope: scope ?? scopeId
+        });
+  
         if (result && result.status === 200) {
-          setParameterList(result.data);
-          console.log("Parameter List:", result.data);
+          // result.data เป็น Blob หรือ ArrayBuffer เพราะตั้ง responseType แล้ว
+          const blob = result.data;
+  
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `carbon-report-2025.xlsx`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url); // ล้าง URL ออกจาก memory
         } else {
-          setParameterList([]);
+          console.warn("Download failed or no data");
         }
       } catch (error) {
-        console.error("Error fetching Parameter List:", error);
-        setParameterList([]);
-      }finally {
-        setLoading(false)
+        console.error("Download Excel error:", error);
       }
     };
-    const allParameters = useMemo(() => {
-      if (!Array.isArray(parameterList)) return [];
-      return parameterList.flatMap((device, deviceIndex) => {
-        return device.unit.map((unit, unitIndex) => ({
-          id: device.id, // สร้าง id โดยใช้ devId และ unit
-          label: device.name, // ให้ตรงกับ key ใน data
-          unit,
-          type: device.deviceTypeId,
-          devId: device.devId,
-        }));
-      });
-    }, [parameterList]);
 
+  const handleAdd = async () => {
+    const businessUnit = businessUnitList.find((b) => b.id === businessUnitId);
+    const site = siteList.find((s) => s.id === siteId);
+    const scopeItem = scopeList.find((s) => s.scope === scope);
+    if (!businessUnit || !site) return;
 
-    const mapHistoryDataToChartData = (historyData) => {
-      const { timestamp, unit1, unit2 } = historyData;
-    
-      if (!timestamp || !Array.isArray(timestamp)) {
-        console.error("Invalid timestamp data:", timestamp);
-        return [];
-      }
-    
-      const chartData = timestamp.map((time, index) => {
-        const dataPoint = { time };
-    
-        if (Array.isArray(unit1)) {
-          unit1.forEach((unit) => {
-            const key = `${unit.device}_${unit.name}`;
-            dataPoint[key] = unit.value?.[index] ?? null;
-          });
-        }
-    
-        if (Array.isArray(unit2)) {
-          unit2.forEach((unit) => {
-            const key = `${unit.device}_${unit.name}`;
-            dataPoint[key] = unit.value?.[index] ?? null;
-          });
-        }
-    
-        return dataPoint;
-      });
-    
-      console.log("Mapped Chart Data:", chartData);
-      return chartData;
+    if (dataCustom.length >= 10) {
+      alert("You can only add up to 10 parameters.");
+      return;
+    }
+
+    const newItem = {
+      year,
+      businessUnitId,
+      businessUnitName: businessUnit.name,
+      siteId,
+      siteName: site.name,
+      scopeId: scope,
+      scopeName: scopeItem ? scopeItem.scopeName : "All",
     };
-    
-    const GetConsumtionDeviceHistory = async (chartId, ids, units, startDate, endDate) => {
-      console.log("ids", ids);
-      console.log("units", units);
-      console.log("startDate", startDate);
-      console.log("endDate", endDate);
-    
-      if (!ids || ids.length === 0 || !units || units.length === 0) return;
-    
+
+    setDataCustom((prev) => [...prev, newItem]);
+
+    console.log("Current Custom Data: ", [...dataCustom, newItem]);
+    setVisibleItems((prev) => [...prev, true]);
+
+    try {
       setLoading(true);
-    
-      try {
-        const params = {
-          siteId: 6,
-          deviceId: ids,
-          unit: units,
-          startDate: startDate.format("YYYY/MM/DD"), // แปลงวันที่เป็นรูปแบบที่ API ต้องการ
-          endDate: endDate.format("YYYY/MM/DD"),
-        };
-    
-        const result = await getCustomDeviceHistory(params);
-    
-        if (result && result.status === 200) {
-          const combinedData = mapHistoryDataToChartData(result.data);
-    
-          setCharts((prev) =>
-            prev.map((chart) =>
-              chart.id === chartId
-                ? { ...chart, data: combinedData }
-                : chart
-            )
-          );
-    
-          console.log("Updated Charts:", charts);
-        } else {
-          console.error("Error: Invalid response from API");
-        }
-      } catch (error) {
-        console.error("Error fetching History Data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    const handleCreateNewChart = () => {
-      setCharts((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          selectedParams: [], // ไม่มีพารามิเตอร์เริ่มต้น
-          dateRange: [dayjs().subtract(7, "day"), dayjs()], // ค่าเริ่มต้น: 7 วันล่าสุด
-          data: [], // ข้อมูลเริ่มต้นว่าง
-        },
-      ]);
-    };
-
-  const handleAddParam = (chartId, paramIds, unit) => {
-    console.log("paramIds", paramIds);
-    console.log("unit", unit);
-  
-    setCharts((prev) =>
-      prev.map((chart) => {
-        if (chart.id !== chartId) return chart;
-  
-        const newParams = paramIds
-          .filter((id) => !chart.selectedParams.some((p) => p.id === id && p.unit === unit))
-          .map((id) => {
-            const param = allParameters.find((p) => p.id === id && p.unit === unit);
-            if (!param) {
-              console.error("Parameter not found for id:", id, "and unit:", unit);
-              return null;
-            }
-            return {
-              id: param.id,
-              unit: param.unit,
-              label: param.label,
-              type: param.type,
-              color: getDistinctColor(),
-            };
-          })
-          .filter(Boolean);
-  
-        const updatedParams = [...chart.selectedParams, ...newParams];
-        const uniqueParams = updatedParams.filter(
-          (param, index, self) =>
-            index === self.findIndex((p) => p.id === param.id && p.unit === param.unit)
-        );
-  
-        const uniqueIds = [...new Set(uniqueParams.map((param) => param.id))];
-        const uniqueUnits = [...new Set(uniqueParams.map((param) => param.unit))];
-  
-        // เรียก GetConsumtionDeviceHistory พร้อม startDate และ endDate
-        const [startDate, endDate] = chart.dateRange;
-        GetConsumtionDeviceHistory(chartId, uniqueIds, uniqueUnits, startDate, endDate);
-  
-        return {
-          ...chart,
-          selectedParams: uniqueParams,
-        };
-      })
-    );
-  };
-  
-  const handleRemoveParam = (chartId, paramIds, unit) => {
-    setCharts((prev) =>
-      prev.map((chart) => {
-        if (chart.id !== chartId) return chart;
-  
-        // ลบ paramIds ที่ตรงกับ id และ unit
-        const updatedParams = chart.selectedParams.filter(
-          (p) => !(paramIds.includes(p.id) && p.unit === unit)
-        );
-  
-        return {
-          ...chart,
-          selectedParams: updatedParams,
-        };
-      })
-    );
-  };
-
-  const handleDateChange = (chartId, dates) => {
-    setCharts((prev) =>
-      prev.map((chart) => {
-        if (chart.id !== chartId) return chart;
-  
-        // เรียก GetConsumtionDeviceHistory ใหม่เมื่อวันที่เปลี่ยน
-        const uniqueIds = [...new Set(chart.selectedParams.map((param) => param.id))];
-        const uniqueUnits = [...new Set(chart.selectedParams.map((param) => param.unit))];
-        GetConsumtionDeviceHistory(chartId, uniqueIds, uniqueUnits, dates[0], dates[1]);
-  
-        return { ...chart, dateRange: dates };
-      })
-    );
-  };
-
-  const handleDeleteChart = (chartId) => {
-    setCharts(charts.filter((chart) => chart.id !== chartId));
-  };
-
-  const disabledDate = (current) => {
-    const today = dayjs().endOf("day");
-    const thirtyOneDaysAgo = dayjs().subtract(31, "day").startOf("day");
-    return current > today || current < thirtyOneDaysAgo;
-  };
-
-  
-  const memoizedCharts = useMemo(() => {
-    return charts.map((chart) => {
-      const [startDate, endDate] = chart.dateRange;
-  
-      // คำนวณ filteredData
-      const filteredData = data.filter((item) => {
-        const t = dayjs(item.time, "YYYY-MM-DD HH:mm");
-        return t.isAfter(startDate.startOf("day")) && t.isBefore(endDate.endOf("day"));
+      const result = await getCarbonCustomChart({
+        siteId,
+        businessUnitId,
+        companyId,
+        year,
+        scope,
       });
-  
-      // คำนวณ uniqueUnits จาก selectedParams
-      const selectedUnits = chart.selectedParams
-        .map((p) => p.unit)
-        .filter(Boolean); // กรอง unit ที่ไม่ใช่ falsy
-      const uniqueUnits = [...new Set(selectedUnits)];
-  
-      return { ...chart, filteredData, uniqueUnits };
+
+      if (result && result.status === 200) {
+        const data = result.data;
+
+        const chartItem = {
+          id: `${siteId}_${scope}`, // หรือใช้ uuid
+          name: `${scopeItem?.scopeName} (${site.name})`,
+          values: {
+            [year]: data.selectedYear?.[0] || 0,
+            [year - 1]: data.previousYear?.[0] || 0,
+            [year - 2]: data.twoYearsAgo?.[0] || 0,
+          },
+        };
+
+        setChartDataList((prev) => [...prev, chartItem]);
+      } else {
+        console.error("API error: ", result);
+      }
+    } catch (err) {
+      console.error("Fetch error: ", err);
+    } finally {
+      setLoading(false);
+    }
+
+    // Reset form
+    setBusinessUnitId(null);
+    setSiteId(null);
+    setScope(0);
+  };
+
+  const years = [year - 2, year - 1, year];
+
+  const chartData =
+    dataCustom.length > 0 && chartDataList.length > 0
+      ? years.map((year) => {
+          const dataPoint = { year: year.toString() };
+
+          chartDataList.forEach((chartItem, index) => {
+            const customItem = dataCustom[index];
+            if (!customItem) return;
+
+            const scopeName = customItem.scopeName || `param${index + 1}`;
+            const key = `${scopeName} #${index + 1}`;
+            dataPoint[key] = chartItem.values?.[year] ?? 0;
+          });
+
+          return dataPoint;
+        })
+      : [];
+
+  const colors = [
+    "#4BC0C0",
+    "#008A8B",
+    "#FF35C6",
+    "#FF9966",
+    "#E74C3C",
+    "#FFC40E",
+    "#66CC66",
+    "#00AA00",
+    "#3399FF",
+    "#9747FF",
+  ];
+
+  // ฟังก์ชันลบรายการตาม businessUnitId, siteId, scopeId
+  const handleRemove = (indexToRemove) => {
+    setDataCustom((prev) => prev.filter((_, i) => i !== indexToRemove));
+  };
+
+  const handleOpenModalconfirmDeleteAll = () => {
+    setopenModalconfirm(true);
+    setModalConfirmProps({
+      onCloseModal: handleClosePopup,
+      onClickConfirmBtn: handleDeleteAll,
+      title: "Delete All Parameters",
+      content: "Are you sure you want to delete all the parameters?",
+      buttonTypeColor: "primary",
     });
-  }, [charts, data]);
+  };
+  const handleClosePopup = () => {
+    setopenModalconfirm(false);
+  };
+
+  const handleDeleteAll = () => {
+      setDataCustom([]);
+      setVisibleItems([]);
+      setopenModalconfirm(false);
+  };
+
+  const handleYearChange = (value) => {
+    setYear(value);
+  };
+
+  const handleBusinessUnitChange = (value) => {
+    setBusinessUnitId(value);
+  };
+
+  const handleSiteChange = (value) => {
+    setSiteId(value);
+  };
+
+  const handleScopeChange = (value) => {
+    setScope(value);
+    console.log("Selected scope:", value);
+  };
+
+  const toggleVisibility = (index) => {
+    setVisibleItems((prev) => {
+      const newVisible = [...prev];
+      newVisible[index] = !newVisible[index];
+      return newVisible;
+    });
+  };
 
   return (
-//     <div className="mt-4">
-//       {memoizedCharts.map((chart) => (
-//   <div
-//     key={chart.id}
-//     className="rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4"
-//   >
-//     <div className="flex justify-between items-center mb-3">
-//       <div className="flex items-center space-x-4 text-lg font-semibold">
-//         <div>
-//           Select: <span className="text-cyan-500">{chart.selectedParams.length}</span> parameter
-//         </div>
-//         <div className="h-5 w-px bg-gray-300" />
-//         <div>
-//           Unit:{" "}
-//           {chart.uniqueUnits.map((unit, i) => (
-//             <span key={unit} className="text-cyan-500">
-//               {unit}
-//               {i < chart.uniqueUnits.length - 1 ? ", " : ""}
-//             </span>
-//           ))}
-//         </div>
-//       </div>
-//       <div className="flex items-center gap-4">
-//         <RangePicker
-//           value={chart.dateRange}
-//           onChange={(dates) => handleDateChange(chart.id, dates)}
-//           disabledDate={disabledDate}
-//           format="YYYY/MM/DD"
-//           allowClear={false}
-//         />
-//         <IconButton onClick={() => handleDeleteChart(chart.id)} color="error">
-//           <DeleteIcon />
-//         </IconButton>
-//       </div>
-//     </div>
+    <>
+      <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-5">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-sm">Target Year:</span>
+          <Select
+            value={year}
+            style={{ width: 150 }}
+            onChange={handleYearChange}
+            disabled={true}
+          >
+            {yearList.map((item) => (
+              <Option key={item.year} value={item.year}>
+                {item.year}
+              </Option>
+            ))}
+          </Select>
 
-//     <div className="flex flex-col lg:flex-row">
-//       {/* Parameter List */}
-//       <div className="lg:w-[40%] w-full pr-0 lg:pr-4 mb-4 lg:mb-0 lg:border-r">
-//         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-//           {allParameters.map((param,index) => {
-//             const isSelected = chart.selectedParams.some(
-//               (p) => p.id === param.id && p.unit === param.unit
-//             );
+          <span className="text-sm">Business Unit:</span>
+          <Select
+            value={businessUnitId}
+            style={{ width: 200 }}
+            onChange={handleBusinessUnitChange}
+          >
+            {businessUnitList.map((item) => (
+              <Option key={item.id} value={item.id}>
+                {item.name}
+              </Option>
+            ))}
+          </Select>
 
-//             const isUnitAllowed =
-//               chart.selectedParams.length < 2 ||
-//               chart.uniqueUnits.length === 1 ||
-//               chart.uniqueUnits.includes(param.unit);
+          <span className="text-sm">Site:</span>
+          <Select
+            value={siteId}
+            style={{ width: 200 }}
+            onChange={handleSiteChange}
+            disabled={!businessUnitId}
+          >
+            {siteList.map((item) => (
+              <Option key={item.id} value={item.id}>
+                {item.name}
+              </Option>
+            ))}
+          </Select>
 
-//             const isDisabled = !isSelected && !isUnitAllowed;
+          <span className="text-sm">Scope:</span>
+          <Select
+            value={scope}
+            style={{ width: 250, height: 40 }}
+            onChange={handleScopeChange}
+            disabled={!businessUnitId || !siteId}
+          >
+            <Option value={0}>All</Option>
+            {scopeList.map((item) => (
+              <Option key={item.scope} value={item.scope}>
+                {item.scopeName}
+              </Option>
+            ))}
+          </Select>
 
-//             return (
-//               <div
-//               key={`${chart.id}_${param.id}_${param.unit}_${index}`} // รวม chart.id เพื่อให้ key ไม่ซ้ำ
-//                 className={`border rounded-lg p-3 shadow-sm ${
-//                   isSelected
-//                     ? "bg-green-100 dark:bg-green-900"
-//                     : isDisabled
-//                     ? "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500"
-//                     : "bg-white dark:bg-gray-800 dark:text-white"
-//                 }`}
-//               >
-//                 <div className="flex justify-between items-start">
-//                   <div>
-//                     <p className="text-sm font-semibold">{param.label}</p>
-//                     <p className="text-xs">{param.type}</p>
-//                     <p className="text-xs text-gray-500">{param.unit}</p>
-//                   </div>
-//                   <Checkbox
-//                     checked={isSelected}
-//                     onChange={(e) =>
-//                       e.target.checked
-//                         ? handleAddParam(chart.id, [param.id], param.unit)
-//                         : handleRemoveParam(chart.id, [param.id], param.unit)
-//                     }
-//                     disabled={isDisabled}
-//                   />
-//                 </div>
-//               </div>
-//             );
-//           })}
-//         </div>
-//       </div>
+          <button
+            type="button"
+            onClick={handleAdd}
+            className={`rounded-md text-sm px-5 h-9 
+    ${
+      !businessUnitId ||
+      !siteId ||
+      scope === 0 ||
+      scope === undefined ||
+      dataCustom.length >= 10
+        ? "bg-[#e3e3e3] cursor-not-allowed text-[#999999]" // disabled style สีเทา + cursor ห้ามคลิก
+        : "bg-[#61bcbe] text-white" // enabled style สีเขียว + hover
+    }
+  `}
+            disabled={
+              !businessUnitId ||
+              !siteId ||
+              scope === 0 ||
+              scope === undefined ||
+              dataCustom.length >= 10
+            }
+          >
+            Add
+          </button>
+        </div>
+      </div>
+      <div className="mt-4">
+        <div className="rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center space-x-4 text-lg font-semibold">
+              <div>
+                Select:{" "}
+                <span className="text-cyan-500">{dataCustom.length} / 10</span>{" "}
+                parameter
+              </div>
+              {/* <div className="h-5 w-px bg-gray-300" />
+              <Tooltips
+                title="Two types of parameters are allowed to compare at once. To compare more parameters, please add a new custom chart."
+                arrow
+                placement="top"
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: "14px",
+                    },
+                  },
+                }}
+              >
+                <InfoOutlinedIcon
+                  className="text-[#33BFBF] ml-1 cursor-pointer"
+                  fontSize="small"
+                />
+              </Tooltips> */}
+            </div>
+          </div>
 
-//       {/* Chart */}
-//       <div className="lg:w-[60%] w-full">
-//       <ResponsiveContainer width="100%" height="100%">
-//   <LineChart data={chart.data || []}>
-//     <CartesianGrid strokeDasharray="3 3" />
-//     <XAxis dataKey="time" tickFormatter={(str) => str.slice(5, 16)} />
-//     <Tooltip />
-//     <Legend />
-//     <Brush dataKey="time" height={30} stroke="#8884d8" />
+          <div className="flex flex-col lg:flex-row">
+            {/* Parameter List จาก dataCustom */}
+            <div className="lg:w-[20%] w-full pr-0 lg:pr-4 mb-4 lg:mb-0 lg:border-r">
+              <div className="flex flex-col gap-3">
+                {dataCustom.length === 0 && (
+                  <p className="text-gray-500 italic">No parameters added.</p>
+                )}
+                {dataCustom.map((item, index) => (
+                  <div
+                    key={`${item.businessUnitId}_${item.siteId}_${item.scopeId}_${index}`}
+                    className="rounded-lg p-3 shadow-sm bg-[#f2fafa] border-2 border-[#32c0bf] dark:bg-gray-800 dark:text-white flex justify-between items-center"
+                  >
+                    <div className="flex items-center space-x-2">
+                      {/* วงกลมสี */}
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{
+                          backgroundColor: colors[index % colors.length],
+                        }}
+                      />
+                      {/* ข้อมูลชื่อแบบจัดกลางแนวตั้ง */}
+                      <div className="flex flex-col justify-center">
+                        <p className="text-sm font-semibold leading-tight">
+                          {item.businessUnitName}
+                        </p>
+                        <p className="text-xs leading-tight">{item.siteName}</p>
+                        <p className="text-xs text-gray-400 italic leading-tight">
+                          {item.scopeName}
+                        </p>
+                      </div>
+                    </div>
 
-//     {/* แกน Y ฝั่งซ้าย */}
-//     {chart.uniqueUnits[0] && (
-//       <YAxis
-//         yAxisId="left"
-//         label={{
-//           value: chart.uniqueUnits[0],
-//           angle: -90,
-//           position: "insideLeft",
-//           offset: 10,
-//           style: { fontSize: 12, fontWeight: "bold" },
-//         }}
-//       />
-//     )}
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={visibleItems[index]}
+                        onChange={() => toggleVisibility(index)}
+                      />
 
-//     {/* แกน Y ฝั่งขวา */}
-//     {chart.uniqueUnits[1] && (
-//       <YAxis
-//         yAxisId="right"
-//         orientation="right"
-//         label={{
-//           value: chart.uniqueUnits[1],
-//           angle: -90,
-//           position: "insideRight",
-//           offset: 10,
-//           style: { fontSize: 12, fontWeight: "bold" },
-//         }}
-//       />
-//     )}
+                      <button
+                        onClick={() => handleRemove(index)}
+                        className="text-red-500 hover:text-red-700"
+                        aria-label={`Remove parameter ${item.businessUnitName} - ${item.siteName} - ${item.scopeName}`}
+                        type="button"
+                      >
+                        <DeleteIcon />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-//     {/* เส้นกราฟ */}
-//     {chart.selectedParams.map((param, index) => (
-//       <Line
-//         key={`${param.id}_${param.unit}_${index}`}
-//         type="monotone"
-//         dataKey={`${param.id}_${param.unit}`} // ใช้ devId และ unit เป็น dataKey
-//         stroke={param.color}
-//         dot={false}
-//         yAxisId={param.unit === chart.uniqueUnits[0] ? "left" : "right"} // แยกแกน Y ตาม unit
-//         name={`${param.type}-${param.label} (${param.unit})`} // ชื่อ Legend
-//       />
-//     ))}
-//   </LineChart>
-// </ResponsiveContainer>
-//       </div>
-//     </div>
-//   </div>
-// ))}
+              {dataCustom.length > 0 && (
+                <button
+                  onClick={handleOpenModalconfirmDeleteAll}
+                  className="mt-4 text-red-600 underline hover:text-red-800 text-center"
+                  type="button"
+                >
+                  Delete All
+                </button>
+              )}
+            </div>
 
-//       <div className="grid rounded-xl bg-white p-3 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-2">
-//         <div className="border border-dashed border-gray-400 rounded-lg p-4 flex justify-center items-center">
-//           <Button type="primary" onClick={handleCreateNewChart}>
-//             + Add Graph
-//           </Button>
-//         </div>
-//       </div>
-//     </div>
-    <></>
+            {/* Chart */}
+            <div className="lg:w-[80%] w-full h-auto">
+              <ResponsiveContainer width="100%" height={400}>
+                {chartData.length === 0 ? (
+                  <div className="flex justify-center items-center h-full">
+                    <p className="text-gray-500 italic">No data available</p>
+                  </div>
+                ) : (
+                  <BarChart width={800} height={500} data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />{" "}
+                    {/* เพิ่มเส้นกริด */}
+                    <XAxis dataKey="year" />
+                    <YAxis />
+                    <Tooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null;
+
+                        return (
+                          <div className="bg-white border rounded-md p-2 shadow text-sm">
+                            <p className="font-semibold mb-2">{label}</p>
+                            {payload.map((entry, i) => {
+                              const item = dataCustom[i];
+                              const value = entry.value?.toLocaleString(
+                                undefined,
+                                {
+                                  maximumFractionDigits: 2,
+                                }
+                              );
+
+                              return (
+                                <div key={i} className="flex items-center mb-1">
+                                  <span
+                                    className="w-3 h-3 rounded-full inline-block mr-2"
+                                    style={{ backgroundColor: entry.color }}
+                                  ></span>
+                                  <span className="font-medium">
+                                    {item.businessUnitName} - {item.siteName} -{" "}
+                                    {item.scopeName}
+                                  </span>
+                                  :&nbsp;<span>{value} tCO₂e</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      }}
+                    />
+                    {dataCustom.map((item, index) => {
+                      if (!visibleItems[index]) return null;
+                      const dataKey = `${item.scopeName} #${index + 1}`;
+                      return (
+                        <Bar
+                          key={dataKey}
+                          dataKey={dataKey}
+                          fill={colors[index % colors.length]}
+                        />
+                      );
+                    })}
+                  </BarChart>
+                )}
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      </div>
+      {openModalconfirm && <ModalConfirm {...modalConfirmProps} />}
+    </>
   );
-};
-
-export default CustomGraph;
+}

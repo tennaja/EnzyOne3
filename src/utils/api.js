@@ -2439,6 +2439,131 @@ export async function getCarbonSiteList(req) {
   }
 }
 
+export async function getCarbonDetail(req) {
+  const siteId = req.siteId;
+  const businessUnitId = req.businessUnitId;
+  const companyId = req.companyId;
+  const year = req.year;
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/details/${companyId}?siteId=${siteId}&businessUnitId=${businessUnitId}&year=${year}&companyId=${companyId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getCarbonDetailList(req) {
+  const siteId = req.siteId;
+  const businessUnitId = req.businessUnitId;
+  const companyId = req.companyId;
+  const year = req.year;
+  const format = req.format;
+  const scope = req.scope;
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/details/list/${companyId}?format=${format}&scope=${scope}&siteId=${siteId}&businessUnitId=${businessUnitId}&year=${year}`;
+    
+    // กำหนด config ของ axios
+    const axiosConfig = {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    };
+
+    // ถ้ามี format (เช่น xlsx) ให้เพิ่ม responseType เป็น blob
+    if (format) {
+      axiosConfig.responseType = 'blob';
+    }
+
+    const res = await axios.get(url, axiosConfig);
+
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getCarbonScopeList(req) {
+  const siteId = req.siteId;
+  const businessUnitId = req.businessUnitId;
+  const companyId = req.companyId;
+  const year = req.year;
+
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/list/scope?siteId=${siteId}&businessUnitId=${businessUnitId}&year=${year}&companyId=${companyId}`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function getCarbonCustomChart(req) {
+  const siteId = req.siteId;
+  const businessUnitId = req.businessUnitId;
+  const companyId = req.companyId;
+  const year = req.year;
+  const scope = req.scope;
+  const format = req.format;
+  
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/custom/emission?scope=${scope}&siteId=${siteId}&businessUnitId=${businessUnitId}&year=${year}&companyId=${companyId}`;
+      
+      const axiosConfig = {
+        withCredentials: true,
+        headers: { "Content-Type": "application/json" },
+      };
+  
+      // ถ้ามี format (เช่น xlsx) ให้เพิ่ม responseType เป็น blob
+      if (format) {
+        axiosConfig.responseType = 'blob';
+      }
+  
+      const res = await axios.get(url, axiosConfig);
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+
+
+export async function getCarbonReport() {
+  try {
+    const url =
+      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/report/ghg-report`;
+    const res = await axios.get(url, {
+      withCredentials: true,
+      responseType: 'blob',
+      headers: { "Content-Type": "application/json" },
+    });
+    return res;
+  } catch (error) {
+    return error;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
