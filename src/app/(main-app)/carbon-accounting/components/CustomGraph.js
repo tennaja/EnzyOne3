@@ -49,6 +49,8 @@ export default function CustomGraph({}) {
   const [businessUnitList, setBusinessUnitList] = useState([]);
   const [siteList, setSiteList] = useState([]);
   const [companyId, setCompanyId] = useState(2);
+  const [openModalAlert, setopenModalAlert] = useState(false);
+  const [modalAlertProps, setModalAlertProps] = useState(null);
   const [openModalconfirm, setopenModalconfirm] = useState(false);
   const [modalConfirmProps, setModalConfirmProps] = useState(null);
   const [chartDataList, setChartDataList] = useState([]);
@@ -177,70 +179,106 @@ export default function CustomGraph({}) {
       }
     };
 
-  const handleAdd = async () => {
-    const businessUnit = businessUnitList.find((b) => b.id === businessUnitId);
-    const site = siteList.find((s) => s.id === siteId);
-    const scopeItem = scopeList.find((s) => s.scope === scope);
-    if (!businessUnit || !site) return;
+    const handleAdd = async () => {
+      const selectedBusinessUnitId = Number(businessUnitId);
+      const selectedSiteId = Number(siteId);
+      const selectedScope = Number(scope);
+    
+      const businessUnit = businessUnitList.find((b) => b.id === selectedBusinessUnitId);
+      const site = siteList.find((s) => s.id === selectedSiteId);
+      const scopeItem = scopeList.find((s) => s.scope === selectedScope);
+    
+      if (!businessUnit || !site) return;
+    
+      // เช็คซ้ำ (businessUnitId, siteId, scopeId) ใน dataCustom
+  const isDuplicate = dataCustom.some(
+    (item) =>
+      item.businessUnitId === selectedBusinessUnitId &&
+      item.siteId === selectedSiteId &&
+      item.scopeId === selectedScope
+  );
 
-    if (dataCustom.length >= 10) {
-      alert("You can only add up to 10 parameters.");
-      return;
-    }
+  if (isDuplicate) {
+    setopenModalAlert(
+      
+    )
+    return;
+  }
 
-    const newItem = {
-      year,
-      businessUnitId,
-      businessUnitName: businessUnit.name,
-      siteId,
-      siteName: site.name,
-      scopeId: scope,
-      scopeName: scopeItem ? scopeItem.scopeName : "All",
-    };
-
-    setDataCustom((prev) => [...prev, newItem]);
-
-    console.log("Current Custom Data: ", [...dataCustom, newItem]);
-    setVisibleItems((prev) => [...prev, true]);
-
-    try {
-      setLoading(true);
-      const result = await getCarbonCustomChart({
-        siteId,
-        businessUnitId,
-        companyId,
+  if (dataCustom.length >= 10) {
+    alert("You can only add up to 10 parameters.");
+    return;
+  }
+    
+      // ✅ สร้างอันใหม่ล่าสุด
+      const newItem = {
         year,
-        scope,
-      });
+        businessUnitId: selectedBusinessUnitId,
+        businessUnitName: businessUnit.name,
+        siteId: selectedSiteId,
+        siteName: site.name,
+        scopeId: selectedScope,
+        scopeName: scopeItem ? scopeItem.scopeName : "All",
+      };
+    
+      const updatedDataCustom = [...dataCustom, newItem];
+setDataCustom(updatedDataCustom);
+setVisibleItems((prev) => [...prev, true]);
 
-      if (result && result.status === 200) {
-        const data = result.data;
+try {
+  setLoading(true);
 
-        const chartItem = {
-          id: `${siteId}_${scope}`, // หรือใช้ uuid
-          name: `${scopeItem?.scopeName} (${site.name})`,
-          values: {
-            [year]: data.selectedYear?.[0] || 0,
-            [year - 1]: data.previousYear?.[0] || 0,
-            [year - 2]: data.twoYearsAgo?.[0] || 0,
-          },
-        };
+  // ✅ รวมค่าทั้งหมดจาก updatedDataCustom เพื่อให้เป็น array
+  const siteIds = updatedDataCustom.map((item) => item.siteId);
+  const businessUnitIds = updatedDataCustom.map((item) => item.businessUnitId);
+  const scopes = updatedDataCustom.map((item) => item.scopeId);
 
-        setChartDataList((prev) => [...prev, chartItem]);
-      } else {
-        console.error("API error: ", result);
-      }
-    } catch (err) {
-      console.error("Fetch error: ", err);
-    } finally {
-      setLoading(false);
-    }
+  // ✅ ยิง API โดยส่งเป็น array
+  const result = await getCarbonCustomChart({
+    siteId: siteIds,
+    businessUnitId: businessUnitIds,
+    companyId,
+    year,
+    scope: scopes,
+  });
 
-    // Reset form
-    setBusinessUnitId(null);
-    setSiteId(null);
-    setScope(0);
-  };
+  if (result && result.status === 200) {
+    const data = result.data;
+    console.log(result.data)
+  
+    const chartItems = updatedDataCustom.map((item, index) => ({
+      id: `${item.siteId}_${item.scopeId}`,
+      name: `${item.scopeName} (${item.siteName})`,
+      values: {
+        [year]: data.selectedYear?.[index] || 0,
+        [year - 1]: data.previousYear?.[index] || 0,
+        [year - 2]: data.twoYearsAgo?.[index] || 0,
+      },
+    }));
+
+    console.log(chartItems)
+  
+    setChartDataList(chartItems);
+
+  }
+   else {
+    console.error("API error:", result);
+  }
+} catch (err) {
+  console.error("Fetch error:", err);
+} finally {
+  setLoading(false);
+}
+
+    
+      // ✅ Reset form
+      setBusinessUnitId(null);
+      setSiteId(null);
+      setScope(0);
+    };
+    
+    
+    
 
   const years = [year - 2, year - 1, year];
 
@@ -551,6 +589,7 @@ export default function CustomGraph({}) {
                       }}
                     />
                     {dataCustom.map((item, index) => {
+                      console.log(item)
                       if (!visibleItems[index]) return null;
                       const dataKey = `${item.scopeName} #${index + 1}`;
                       return (

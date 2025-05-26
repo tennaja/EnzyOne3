@@ -45,8 +45,9 @@ const formatData = (data, valueKeys, decimalPlaces = 2) => {
     const formattedItem = { ...item };
     valueKeys.forEach((key) => {
       if (formattedItem[key] !== undefined) {
-        // ใช้ toFixed เพื่อให้เป็นทศนิยมที่ต้องการ
-        formattedItem[key] = Number(formattedItem[key].toFixed(decimalPlaces));
+        formattedItem[key] = key === "session"
+          ? Math.floor(formattedItem[key])
+          : Number(formattedItem[key].toFixed(decimalPlaces));
       }
     });
     return formattedItem;
@@ -60,7 +61,7 @@ const BarChartComponent = ({
   valueKeys = ["kwh"],
   yAxisLabel = "kwh",
   legendLabels = {},
-  decimalPlaces = 2, 
+  decimalPlaces = 2,
 }) => {
   const [barProps, setBarProps] = useState({});
   const [hover, setHover] = useState(null);
@@ -68,7 +69,7 @@ const BarChartComponent = ({
   const [refAreaLeft, setRefAreaLeft] = useState(null);
   const [refAreaRight, setRefAreaRight] = useState(null);
   const [chartKey, setChartKey] = useState(0);
-console.log("BarChartComponent", data);
+
   useEffect(() => {
     const initialBarProps = {};
     valueKeys.forEach((key) => {
@@ -93,36 +94,27 @@ console.log("BarChartComponent", data);
       console.error(`Invalid Date format: ${time}`);
       return {};
     }
-  
+
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     const hour = String(date.getHours()).padStart(2, "0");
-  
+
     const result = {
       fullTime: `${year}/${month}/${day} ${hour}:00`,
-      day: `${year}/${month}/${day}`,     // ✅ ตัดชื่อวัน + เวลาออก
-      month: `${year}/${month}`,         // ✅ ไม่มีเวลา
+      day: `${year}/${month}/${day}`,
+      month: `${year}/${month}`,
     };
-  
+
     valueKeys.forEach((key) => {
       result[key] = data[key]?.[index] ?? 0;
     });
-  
+
     return result;
   });
-  
-  
 
   const formattedData = formatData(rawData, valueKeys, decimalPlaces);
-
-  const xAxisKey = {
-    hour: "fullTime",
-    day: "day",
-    month: "month",
-  }[type] || "fullTime";
-  
-
+  const xAxisKey = { hour: "fullTime", day: "day", month: "month" }[type] || "fullTime";
   let chartData = aggregateData(formattedData, xAxisKey, valueKeys);
 
   if (zoomDomain) {
@@ -138,27 +130,10 @@ console.log("BarChartComponent", data);
     }));
   };
 
-  const handleLegendMouseEnter = (e) => {
-    setHover(e.dataKey);
-  };
-
-  const handleLegendMouseLeave = () => {
-    setHover(null);
-  };
-
-  const handleMouseDown = (e) => {
-    if (e?.activeLabel) {
-      setRefAreaLeft(e.activeLabel);
-      setRefAreaRight(null);
-    }
-  };
-
-  const handleMouseMove = (e) => {
-    if (refAreaLeft && e?.activeLabel) {
-      setRefAreaRight(e.activeLabel);
-    }
-  };
-
+  const handleLegendMouseEnter = (e) => setHover(e.dataKey);
+  const handleLegendMouseLeave = () => setHover(null);
+  const handleMouseDown = (e) => setRefAreaLeft(e?.activeLabel || null);
+  const handleMouseMove = (e) => refAreaLeft && setRefAreaRight(e?.activeLabel || null);
   const handleMouseUp = () => {
     if (refAreaLeft && refAreaRight && refAreaLeft !== refAreaRight) {
       setZoomDomain([refAreaLeft, refAreaRight].sort());
@@ -166,28 +141,48 @@ console.log("BarChartComponent", data);
     setRefAreaLeft(null);
     setRefAreaRight(null);
   };
+  const zoomOut = () => setZoomDomain(null);
 
-  const zoomOut = () => {
-    setZoomDomain(null);
-  };
-  const formatTruncatedDecimal = (value, decimals = 2) => {
+  const formatTruncatedDecimal = (value, decimals = 2, key = "") => {
+    if (key === "session") {
+      return Math.floor(value);
+    }
     const factor = Math.pow(10, decimals);
     const truncated = Math.floor(value * factor) / factor;
-    return truncated.toFixed(decimals); // ให้ .00 เสมอ
+    return truncated.toFixed(decimals);
   };
+
+  const isSessionType = valueKeys.includes("session");
+
+  const yValues = chartData
+  .map((d) => d["session"])
+  .filter((v) => typeof v === "number" && !isNaN(v));
+
+const min = 0;
+let max = Math.max(...yValues, 0);
+if (max === 0) max = 2;
+
+const domain = [min, Math.ceil(max)]; // domain ชัดเจน
+
+// สร้าง ticks ตามที่คุยไว้ก่อนหน้านี้
+let yAxisTicks;
+const maxTicks = 20;
+if (max <= maxTicks) {
+  yAxisTicks = [];
+  for (let i = min; i <= max; i++) yAxisTicks.push(i);
+} else {
+  const step = Math.ceil(max / maxTicks);
+  yAxisTicks = [];
+  for (let i = min; i <= max; i += step) yAxisTicks.push(i);
+  if (yAxisTicks[yAxisTicks.length - 1] !== max) yAxisTicks.push(max);
+}
+
   
-  
+
 
   return (
     <div style={{ position: "relative", textAlign: "left" }}>
-      <div
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 10,
-          zIndex: 10,
-        }}
-      >
+      <div style={{ position: "absolute", top: 10, right: 10, zIndex: 10 }}>
         <button
           onClick={zoomOut}
           className="border-2 border-gray-400 rounded-lg px-3 py-1"
@@ -197,10 +192,10 @@ console.log("BarChartComponent", data);
       </div>
 
       <ResponsiveContainer
-  width="100%"
-  height={400}
-  className="bg-[#f0f0f0] dark:bg-slate-900 dark:text-black rounded-lg"
->
+        width="100%"
+        height={400}
+        className="bg-[#f0f0f0] dark:bg-slate-900 dark:text-black rounded-lg"
+      >
         <BarChart
           key={chartKey}
           data={chartData}
@@ -220,37 +215,47 @@ console.log("BarChartComponent", data);
             height={80}
             allowDataOverflow={true}
           />
-          <YAxis
-            axisLine={false}
-            tickLine={false}
-            label={{
-              value: yAxisLabel,
-              position: "top",
-              offset: 30,
-              angle: 0,
-              dx: -50,
-              dy: -20,
-              style: {
-                textAnchor: "start",
-                fontSize: 17,
-                fontWeight: "bold",
-              },
-            }}
-            tickFormatter={(value) => formatTruncatedDecimal(value, 2)}
-          />
+       <YAxis
+  axisLine={false}
+  tickLine={false}
+  
+  label={{
+    value: yAxisLabel,
+    position: "top",
+    offset: 30,
+    angle: 0,
+    dx: -50,
+    dy: -20,
+    style: {
+      textAnchor: "start",
+      fontSize: 17,
+      fontWeight: "bold",
+    },
+  }}
+  ticks={isSessionType ? yAxisTicks : undefined}
+  domain={isSessionType ? domain : undefined}
+  tickFormatter={(value) =>
+    isSessionType ? value.toString() : formatTruncatedDecimal(value, decimalPlaces)
+  }
+
+/>
+
+
           <Tooltip
-  formatter={(value, name) => [formatTruncatedDecimal(value, 2), name]}
-/>
-
-<Legend
-  layout="horizontal"
-  align="center"
-  verticalAlign="top"
-  wrapperStyle={{ marginBottom: 20 }}
-  onMouseOver={handleLegendMouseEnter}
-  onMouseOut={handleLegendMouseLeave}
-/>
-
+            formatter={(value, name) => [
+              formatTruncatedDecimal(value, decimalPlaces, name),
+              name,
+            ]}
+          />
+          <Legend
+            layout="horizontal"
+            align="center"
+            verticalAlign="top"
+            wrapperStyle={{ marginBottom: 20 }}
+            onMouseOver={handleLegendMouseEnter}
+            onMouseOut={handleLegendMouseLeave}
+            onClick={selectBar}
+          />
           {valueKeys.map((key) => (
             <Bar
               key={key}
@@ -262,7 +267,12 @@ console.log("BarChartComponent", data);
             />
           ))}
           {refAreaLeft && refAreaRight ? (
-            <ReferenceArea x1={refAreaLeft} x2={refAreaRight} strokeOpacity={0.3} fill="gray" />
+            <ReferenceArea
+              x1={refAreaLeft}
+              x2={refAreaRight}
+              strokeOpacity={0.3}
+              fill="gray"
+            />
           ) : null}
         </BarChart>
       </ResponsiveContainer>

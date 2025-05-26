@@ -435,6 +435,7 @@ const StationDetail = ({ onNavigate }) => {
                 zoom={mapZoomLevel}
                 selectedLocation={selectedLocation} // ใช้ selectedLocation เพื่อแสดงตำแหน่งที่เลือก
                 setSelectedLocation={setSelectedLocation}
+                canClickMarker = {false}
               />
             </div>
           </div>

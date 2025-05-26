@@ -499,6 +499,7 @@ export default function Consumption() {
             onChange={(val) => {
               setEnergyRange(val);
               setEnergyDate(dayjs());
+
             }}
             tabs={allTabs}
           />
@@ -1219,7 +1220,14 @@ export default function Consumption() {
                 ? "border-b-2 border-teal-500 text-black dark:text-white"
                 : "text-gray-400 dark:text-gray-600"
             }`}
-            onClick={() => setActiveTab("load")}
+            onClick={() => {
+              setActiveTab("load");
+              setSortDirectionLoad("");
+              setSortByLoad("")
+              setSortByMeter("");
+              setSortDirectionMeter("")
+            }}
+            
           >
             Load Consumption
           </button>
@@ -1229,7 +1237,13 @@ export default function Consumption() {
                 ? "border-b-2 border-teal-500 text-black dark:text-white"
                 : "text-gray-400 dark:text-gray-600"
             }`}
-            onClick={() => setActiveTab("meter")}
+            onClick={() => {
+              setActiveTab("meter")
+              setSortDirectionLoad("");
+              setSortByLoad("")
+              setSortByMeter("");
+              setSortDirectionMeter("")
+            }}
           >
             Meter Consumption
           </button>

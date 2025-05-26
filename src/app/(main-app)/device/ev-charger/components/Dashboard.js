@@ -783,7 +783,7 @@ const Dashboard = ({ onNavigate }) => {
             {siteName} | {stationName}
           </p>
           <p className="text-sm ">
-            Lasted Updated on {countbystatusList?.lastUpdated}
+            Last Updated on {countbystatusList?.lastUpdated}
           </p>
         </div>
       </div>
@@ -853,8 +853,10 @@ const Dashboard = ({ onNavigate }) => {
                 }
                 className={"w-full h-[500px] justify-items-center"}
                 zoom={mapZoomLevel}
-                // selectedLocation={selectedLocation} // ใช้ selectedLocation เพื่อแสดงตำแหน่งที่เลือก
-                // setSelectedLocation={setSelectedLocation}
+                selectedLocation={selectedLocation} // ใช้ selectedLocation เพื่อแสดงตำแหน่งที่เลือก
+                setSelectedLocation={setSelectedLocation}
+                onNavigate = {onNavigate}
+                canClickMarker = {true}
               />
             </div>
           </div>
@@ -1139,9 +1141,10 @@ const Dashboard = ({ onNavigate }) => {
                             <td className="px-2 py-1 text-left dark:text-white">
                               {highlightText(record.brand)}
                             </td>
-                            <td className="px-2 py-1 text-left dark:text-white">
-                              {highlightText(record.address)}
-                            </td>
+                            <td className="px-2 py-1 text-left break-words max-w-[200px] dark:text-white">
+  {highlightText(record.address)}
+</td>
+
                             <td className="px-2 py-1 text-center dark:text-white">
                               {highlightText(record.chargerCount)}
                             </td>

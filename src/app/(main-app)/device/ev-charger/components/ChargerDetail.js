@@ -39,10 +39,10 @@ const ChargerDetail = ({ onNavigate }) => {
   const [staticsTotal, setStaticsTotal] = useState({});
   const [chargersHead, setChargersHead] = useState([]);
   const [startDate, setStartDate] = useState(
-    dayjs().subtract(1, "month").format("YYYY/MM/DD")
+    dayjs().subtract(7, "day").format("YYYY/MM/DD")
   );
   const [endDate, setEndDate] = useState(todayFormatted);
-  const [timeUnit, setTimeUnit] = useState("day");
+  const [timeUnit, setTimeUnit] = useState("hour");
   const [graphData, setGraphData] = useState();
   const [loading, setLoading] = useState(false);
   const [mapZoomLevel, setMapZoomLevel] = useState(15);
@@ -411,6 +411,7 @@ const ChargerDetail = ({ onNavigate }) => {
                 zoom={mapZoomLevel}
                 selectedLocation={selectedLocation} // ใช้ selectedLocation เพื่อแสดงตำแหน่งที่เลือก
                 setSelectedLocation={setSelectedLocation}
+                canClickMarker = {false}
               />
             </div>
           </div>

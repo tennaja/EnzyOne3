@@ -6,6 +6,16 @@ import "leaflet/dist/leaflet.css";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import ReactDOMServer from "react-dom/server";
 import { useRouter, usePathname } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  setSiteId,
+  setStationId,
+  setStationName,
+  clearAll,
+} from "@/redux/slicer/evchargerSlice";
+
+
+
 
 const defaultCenter = { lat: 15.8700, lng: 100.9925 };
 
@@ -26,11 +36,12 @@ const MapTH = ({
   selectedLocation = null,
   setSelectedLocation,
   isCanZoom = true,
-  onDeviceClick,
   setActiveTab,
   selectedStatus,
   SiteId,
   GroupId,
+  onNavigate,
+  canClickMarker,
   className = "w-[auto] h-500px] rounded-lg shadow-md overflow-hidden",
 }) => {
   const mapRef = useRef(null);
@@ -38,6 +49,7 @@ const MapTH = ({
   const prevSiteIdRef = useRef(SiteId);
   const prevGroupIdRef = useRef(GroupId);
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const dispatch = useDispatch();
 console.log(selectedLocation)
   useEffect(() => {
     if (!mapRef.current) return;
@@ -104,14 +116,18 @@ console.log(selectedLocation)
 
   const handleMarkerClick = useCallback(
     (loca) => {
+      if (!canClickMarker) return;
+  
       setSelectedLocation(loca);
       setSelectedMarker(loca);
-      router.push("ev-charger/stationdetail");
-      if (onDeviceClick) onDeviceClick(loca);
+      onNavigate("stationdetail");
+      console.log(loca);
+      dispatch(setStationId(loca.id));
+      dispatch(setStationName(loca.name));
     },
-    [setSelectedLocation, setActiveTab, onDeviceClick]
+    [canClickMarker, setSelectedLocation, setSelectedMarker, onNavigate, dispatch]
   );
-
+  
   const statusCount = useMemo(
     () =>
       locationList.reduce(
