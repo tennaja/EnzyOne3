@@ -1,6 +1,6 @@
 import { Modal } from "@mantine/core";
 
-const ModalConfirm = (props) => {
+const ModalAlert = (props) => {
   const {
     onCloseModal,
     title = "An error occurred!",
@@ -66,4 +66,4 @@ const ModalConfirm = (props) => {
   );
 };
 
-export default ModalConfirm;
+export default ModalAlert;

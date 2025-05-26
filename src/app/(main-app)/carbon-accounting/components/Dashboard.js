@@ -200,7 +200,7 @@ export default function Dashboard({ year, businessUnitId, siteId ,setActiveTab})
       <div className="w-full flex justify-end mt-5">
   <div className="flex items-end">
     <p className="text-sm block">
-      Lasted Updated on {lastUpdated}
+      Last Updated on {lastUpdated}
     </p>
   </div>
 </div>

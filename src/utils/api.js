@@ -2518,7 +2518,7 @@ export async function getCarbonCustomChart(req) {
   
   try {
     const url =
-      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/custom/emission?scope=${scope}&siteId=${siteId}&businessUnitId=${businessUnitId}&year=${year}&companyId=${companyId}`;
+      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/custom/emission?format=${format}&scope=${scope}&siteId=${siteId}&businessUnitId=${businessUnitId}&year=${year}&companyId=${companyId}`;
       
       const axiosConfig = {
         withCredentials: true,

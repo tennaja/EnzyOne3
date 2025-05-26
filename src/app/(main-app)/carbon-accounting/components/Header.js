@@ -253,67 +253,73 @@ export default function Header() {
       
       {/* Filters */}
       {activeTab.tab !== "customchart" && (
-      <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-5">
-        <div className="flex items-center gap-3">
-          <span className="text-sm">Target Year:</span>
-          <Select
-            value={year}
-            style={{ width: 150 }}
-            onChange={handleYearChange}
-            // loading={loading}
-          >
-            {yearList.map((item) => (
-              <Option key={item.year} value={item.year}>
-                {item.year}
-              </Option>
-            ))}
-          </Select>
+  <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-5">
+    <div className="flex items-center gap-3">
+      {/* กลุ่มแรก: Select + Search */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm">Target Year:</span>
+        <Select
+          value={year}
+          style={{ width: 150 }}
+          onChange={handleYearChange}
+        >
+          {yearList.map((item) => (
+            <Option key={item.year} value={item.year}>
+              {item.year}
+            </Option>
+          ))}
+        </Select>
 
-          <span className="text-sm">Business Unit:</span>
-          <Select
-            value={businessUnitId}
-            onChange={handleBusinessUnitChange}
-            style={{ width: 200 }}
-          >
-            {/* <Option value="All BU">All BU</Option> */}
-            {businessUnitList.map((item) => (
-              <Option key={item.id} value={item.id}>
-                {item.name}
-              </Option>
-            ))}
-          </Select>
-          <span className="text-sm">Site:</span>
-          <Select
-            value={siteId}
-            style={{ width: 200 }}
-            onChange={handleSiteChange}
-          >
-            {siteList.map((item) => (
-              <Option key={item.id} value={item.id}>
-                {item.name}
-              </Option>
-            ))}
-          </Select>
+        <span className="text-sm">Business Unit:</span>
+        <Select
+          value={businessUnitId}
+          onChange={handleBusinessUnitChange}
+          style={{ width: 200 }}
+        >
+          {businessUnitList.map((item) => (
+            <Option key={item.id} value={item.id}>
+              {item.name}
+            </Option>
+          ))}
+        </Select>
 
-          <button
-            type="button"
-            className="text-white bg-[#33BFBF] rounded-md text-lg px-10 h-9"
-            onClick={handleSearch}
-          >
-            Search
-          </button>
-          {activeTab.tab == "dashboard" && (
-          <button
-      onClick={DownloadFile}
-      type="button"
-      className="h-10 bg-transparent text-sm border-2 border-[#32c0bf] text-[#32c0bf] px-3 py-2 rounded-md flex items-center gap-2 hover:bg-[#32c0bf] hover:text-white transition-colors"
-    >
-      <FileDownloadIcon />
-      Annual Report
-    </button> )}
-        </div>
+        <span className="text-sm">Site:</span>
+        <Select
+          value={siteId}
+          style={{ width: 200 }}
+          onChange={handleSiteChange}
+        >
+          {siteList.map((item) => (
+            <Option key={item.id} value={item.id}>
+              {item.name}
+            </Option>
+          ))}
+        </Select>
+
+        <button
+          type="button"
+          className="text-white bg-[#33BFBF] rounded-md text-lg px-10 h-9"
+          onClick={handleSearch}
+        >
+          Search
+        </button>
       </div>
+
+      {/* ปุ่ม Annual Report ชิดขวา */}
+      {activeTab.tab === "dashboard" && (
+        <button
+          onClick={DownloadFile}
+          type="button"
+          className="h-10 bg-transparent text-sm border-2 border-[#32c0bf] text-[#32c0bf] px-3 py-2 rounded-md flex items-center gap-2 hover:bg-[#32c0bf] hover:text-white transition-colors ml-auto"
+        >
+          <FileDownloadIcon />
+          Annual Report
+        </button>
       )}
+    </div>
+  </div>
+)}
+
       {renderContent()}
     </div>
   );

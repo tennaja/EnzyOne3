@@ -229,59 +229,145 @@ export default function Detail({ scopeId, businessUnitId, year, siteId }) {
     );
   });
   const handleSort = (key) => {
-    setSortConfig((prevConfig) => {
-      const isSameKey = prevConfig.key === key;
-      const direction = isSameKey && prevConfig.direction === "asc" ? "desc" : "asc";
-      return { key, direction };
-    });
+    if (key === "scope") return; // ไม่อนุญาตให้ sort scope โดยตรง
+  
+    if (sortConfig.key === key) {
+      setSortConfig({
+        key,
+        direction: sortConfig.direction === "asc" ? "desc" : "asc",
+      });
+    } else {
+      setSortConfig({ key, direction: "asc" });
+    }
   };
-
-  const sortedList = [...filteredList].sort((a, b) => {
-    const key = sortConfig.key;
-    const direction = sortConfig.direction;
   
-    let aValue = a[key];
-    let bValue = b[key];
+  const sortedData = useMemo(() => {
+    // ถ้ายังไม่ sort หรือ sort ที่ scope ก็คืนข้อมูลเดิม
+    if (!sortConfig.key || sortConfig.key === "scope") return filteredList;
   
-    // ถ้าเป็น emission_x ให้ map ไปยัง field ที่ถูกต้อง
-    if (key.startsWith("emission_")) {
-      const index = parseInt(key.split("_")[1]);
-      const yearMap = ["twoYearsAgo", "previousYear", "selectedYear"];
-      aValue = a[yearMap[index]];
-      bValue = b[yearMap[index]];
-    }
+    // Group ตาม scopeName โดยลำดับ scopeName จะคงเดิมตามลำดับที่พบใน filteredList
+    const orderedScopes = [];
+    const groups = filteredList.reduce((acc, item) => {
+      const scope = item.scopeName;
+      if (!acc[scope]) {
+        acc[scope] = [];
+        orderedScopes.push(scope);
+      }
+      acc[scope].push(item);
+      return acc;
+    }, {});
   
-    // ถ้าเป็น category ให้แปลงตามเงื่อนไข scope === 3
-    if (key === "category") {
-      aValue = a.scope === 3 ? (a.categoryName || "-") : "-";
-      bValue = b.scope === 3 ? (b.categoryName || "-") : "-";
-    }
+    // Sort ภายในแต่ละ group
+    const sortedGroups = orderedScopes.map((scope) => {
+      const items = groups[scope];
+      return [...items].sort((a, b) => {
+        let aVal = a[sortConfig.key];
+        let bVal = b[sortConfig.key];
   
-    // Normalize ค่าที่เป็น string
-    if (typeof aValue === "string") aValue = aValue.toLowerCase();
-    if (typeof bValue === "string") bValue = bValue.toLowerCase();
+        // กรณีพิเศษ emission_x
+        if (sortConfig.key.startsWith("emission_")) {
+          const index = parseInt(sortConfig.key.split("_")[1]);
+          const yearMap = ["twoYearsAgo", "previousYear", "selectedYear"];
+          aVal = a[yearMap[index]];
+          bVal = b[yearMap[index]];
+        }
   
-    if (aValue < bValue) return direction === "asc" ? -1 : 1;
-    if (aValue > bValue) return direction === "asc" ? 1 : -1;
-    return 0;
-  });
+        // กรณีพิเศษ category
+        if (sortConfig.key === "category") {
+          aVal = a.scope === 3 ? (a.categoryName || "-") : "-";
+          bVal = b.scope === 3 ? (b.categoryName || "-") : "-";
+        }
+  
+        if (typeof aVal === "string") aVal = aVal.toLowerCase();
+        if (typeof bVal === "string") bVal = bVal.toLowerCase();
+  
+        if (aVal == null) return 1;
+        if (bVal == null) return -1;
+        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    });
+  
+    return sortedGroups.flat();
+  }, [filteredList, sortConfig]);
+  
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
-    return sortedList.slice(start, start + rowsPerPage);
-  }, [sortedList, currentPage, rowsPerPage]);
+    return sortedData.slice(start, start + rowsPerPage);
+  }, [sortedData, currentPage, rowsPerPage]);
   
-  const totalPages = Math.ceil(sortedList.length / rowsPerPage);
+  const totalPages = Math.ceil(sortedData.length / rowsPerPage);
   
+  // const groupedAndSortedData = () => {
+  //   // Group by scopeName
+  //   const grouped = paginatedData.reduce((acc, item) => {
+  //     const scope = item.scopeName;
+  //     if (!acc[scope]) acc[scope] = [];
+  //     acc[scope].push(item);
+  //     return acc;
+  //   }, {});
+  
+  //   // Sort within each group
+  //   const sortedGroups = Object.keys(grouped).sort().map((scope) => {
+  //     const items = grouped[scope];
+  //     if (sortConfig.key) {
+  //       return items.sort((a, b) => {
+  //         const aValue = a[sortConfig.key];
+  //         const bValue = b[sortConfig.key];
+  
+  //         if (aValue === null || aValue === undefined) return 1;
+  //         if (bValue === null || bValue === undefined) return -1;
+  
+  //         if (typeof aValue === "number" && typeof bValue === "number") {
+  //           return sortConfig.direction === "asc"
+  //             ? aValue - bValue
+  //             : bValue - aValue;
+  //         }
+  
+  //         return sortConfig.direction === "asc"
+  //           ? String(aValue).localeCompare(String(bValue))
+  //           : String(bValue).localeCompare(String(aValue));
+  //       });
+  //     }
+  //     return items;
+  //   });
+  
+  //   // Flatten all groups back to single array
+  //   return sortedGroups.flat();
+  // };
+  
+  // const sortedData = groupedAndSortedData();
   
 
-  const renderScopeTable = (title, data) => (
-    <div className="rounded-md border  dark:border-slate-700 p-4 shadow-sm bg-white">
-      <h2 className="font-semibold text-lg mb-2 border-b pb-1">{title}</h2>
+  const renderScopeTable = (title, tooltip, data) => (
+    <div className="rounded-md border dark:border-slate-700 p-4 shadow-sm bg-white">
+      <h2 className="font-semibold text-lg mb-2 border-b pb-1 flex items-center">
+        {title}
+        <Tooltip
+          title={
+            <>
+              <strong>{tooltip.title}</strong>
+              <div>{tooltip.description}</div>
+            </>
+          }
+          arrow
+          placement="top"
+          componentsProps={{
+            tooltip: { sx: { fontSize: "14px", fontFamily: "inherit" } },
+          }}
+        >
+          <InfoOutlinedIcon
+            className="text-[#33BFBF] ml-1 cursor-pointer"
+            fontSize="small"
+          />
+        </Tooltip>
+      </h2>
       <table className="w-full text-sm border-t">
         <thead className="text-left">
           <tr className="border-b bg-gray-100 dark:bg-slate-700">
             <th className="py-1 px-2">Year</th>
-            <th className="py-1 px-2">Total (tCO2e)</th>
+            <th className="py-1 px-2 text-right">Total (tCO2e)</th>
           </tr>
         </thead>
         <tbody>
@@ -298,7 +384,7 @@ export default function Detail({ scopeId, businessUnitId, year, siteId }) {
             data.map((row) => (
               <tr key={row.year} className="border-b">
                 <td className="py-1 px-2">{row.year}</td>
-                <td className="py-1 px-2">{row.value.toFixed(3)}</td>
+                <td className="py-1 px-2 text-right">{row.value.toFixed(3)}</td>
               </tr>
             ))
           )}
@@ -306,6 +392,7 @@ export default function Detail({ scopeId, businessUnitId, year, siteId }) {
       </table>
     </div>
   );
+  
 
   const highlightText = (text, search) => {
     if (text === null || text === undefined) return "";
@@ -351,21 +438,40 @@ export default function Detail({ scopeId, businessUnitId, year, siteId }) {
     return num.toLocaleString("en-US"); // ใส่ลูกน้ำให้ตัวเลขที่น้อยกว่า 1000
   }
 
+  const scopeTooltips = {
+    scope1: {
+      title: "Scope 1 : การปล่อยก๊าซเรือนกระจกโดยตรง (Direct Emissions)",
+      description: "การปล่อยโดยตรงทั้งหมดจากกิจกรรมขององค์กรหรือภายใต้การควบคุมขององค์กร เช่น การเผาไหม้เชื้อเพลิง สารทำความเย็น หม้อไอน้ำ เตาเผา การปล่อยก๊าซจากยานพาหนะ",
+    },
+    scope2: {
+      title: "Scope 2 : การปล่อยก๊าซเรือนกระจกทางอ้อมที่ถูกซื้อมา (Indirect Emissions)",
+      description: "การปล่อยก๊าซทางอ้อมที่เกี่ยวข้องกับการผลิตพลังงานที่ซื้อหรือได้มาเท่านั้น เช่น ไอน้ำไฟฟ้า ความร้อน หรือการทำความเย็น ซึ่งเกิดขึ้นนอกสถานที่และถูกใช้โดยองค์กร",
+    },
+    scope3: {
+      title: "Scope 3 : การปล่อยก๊าซเรือนกระจกทางอ้อมที่อยู่เหนือการควบคุม (indirect value chain emissions)",
+      description: "การปล่อยมลพิษทางอ้อมอื่น ๆ ทั้งหมดจากกิจกรรมขององค์กร ซึ่งเกิดขึ้นจากแหล่งที่องค์กรไม่ได้เป็นเจ้าของหรือควบคุม เช่น การใช้กระดาษA4, การใช้น้ำประปา, การซื้อไฟฟ้าเพื่อจำหน่าย, การใช้รถบริการรับ-ส่งพนักงาน",
+    },
+  };
+
   return (
     <>
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
-        {renderScopeTable("Scope 1", scope1Data)}
-        {renderScopeTable("Scope 2", scope2Data)}
-        {renderScopeTable("Scope 3", scope3Data)}
-      </div>
+      
+
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
+  {renderScopeTable("Scope 1", scopeTooltips.scope1, scope1Data)}
+  {renderScopeTable("Scope 2", scopeTooltips.scope2, scope2Data)}
+  {renderScopeTable("Scope 3", scopeTooltips.scope3, scope3Data)}
+</div>
 
       {/* Emissions Table */}
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-5 space-y-6">
         {/* Search + Export */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
   {/* ซ้ายสุด: Dropdown */}
-  <div className="flex items-center">
+  <div className="flex items-center gap-2">
+  <span className="text-sm" >
+      Scope:
+    </span>
   <Select
   value={scope}
   style={{ width: 250, height: 40 }}
@@ -405,48 +511,56 @@ export default function Detail({ scopeId, businessUnitId, year, siteId }) {
           <table className="w-full text-sm table-auto border-collapse">
           <thead className="bg-gray-100 dark:bg-slate-800 text-left border-b">
   <tr>
-    {[
-      { key: "scope", label: "Scope" },
-      { key: "category", label: "Category" },
-      { key: "activity", label: "Activity" },
-    ].map((col) => (
-      <th
-        key={col.key}
-        className="px-4 py-2 border-r align-middle cursor-pointer"
-        rowSpan={2}
-        onClick={() => handleSort(col.key)}
+  {[
+  { key: "scope", label: "Scope", sortable: false },
+  { key: "category", label: "Category", sortable: true },
+  { key: "activity", label: "Activity", sortable: true },
+].map((col) => (
+  <th
+    key={col.key}
+    className="px-4 py-2 border-r align-middle"
+    rowSpan={2}
+    {...(col.sortable
+      ? {
+          onClick: () => handleSort(col.key),
+          className: "cursor-pointer px-4 py-2 border-r align-middle",
+        }
+      : {})}
+  >
+    {col.label}
+    {col.sortable && (
+      <div
+        style={{
+          display: "inline-flex",
+          flexDirection: "column",
+          marginLeft: "4px",
+        }}
       >
-        {col.label}
-        <div
+        <ArrowDropUpIcon
           style={{
-            display: "inline-flex",
-            flexDirection: "column",
-            marginLeft: "4px",
+            fontSize: "14px",
+            opacity:
+              sortConfig.key === col.key && sortConfig.direction === "asc"
+                ? 1
+                : 0.3,
+            marginBottom: "-2px",
           }}
-        >
-          <ArrowDropUpIcon
-            style={{
-              fontSize: "14px",
-              opacity:
-                sortConfig.key === col.key && sortConfig.direction === "asc"
-                  ? 1
-                  : 0.3,
-              marginBottom: "-2px",
-            }}
-          />
-          <ArrowDropDownIcon
-            style={{
-              fontSize: "14px",
-              opacity:
-                sortConfig.key === col.key && sortConfig.direction === "desc"
-                  ? 1
-                  : 0.3,
-              marginTop: "-2px",
-            }}
-          />
-        </div>
-      </th>
-    ))}
+        />
+        <ArrowDropDownIcon
+          style={{
+            fontSize: "14px",
+            opacity:
+              sortConfig.key === col.key && sortConfig.direction === "desc"
+                ? 1
+                : 0.3,
+            marginTop: "-2px",
+          }}
+        />
+      </div>
+    )}
+  </th>
+))}
+
 
     {[...Array(3)].map((_, i) => {
       const displayYear = Number(year) - (2 - i);
@@ -547,6 +661,7 @@ export default function Detail({ scopeId, businessUnitId, year, siteId }) {
     </tr>
   )}
 </tbody>
+
 
           </table>
            

@@ -136,7 +136,8 @@ export default function ScopeEmissionDonutChart({ year, emissionData, setActiveT
                       cy="50%"
                       innerRadius={60}
                       outerRadius={90}
-                      label={({ value }) => value}
+                      label={({ value }) => `${value} tCO₂e`}
+
                       isAnimationActive={false}
                     >
                       {data.map((entry, index) => (

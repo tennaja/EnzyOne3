@@ -53,9 +53,9 @@ export default function EmissionTrendCard({ year, emissionData }) {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {scopes.map(({ key, label }, scopeIndex) => {
         // ข้อมูลของ scope นี้ สำหรับทุกปีที่กรองแล้ว
-        const dataForScope = filteredData.filter(
-          (item) => item[key] && item[key].data?.length > 0
-        );
+        const dataForScope = filteredData
+  .filter((item) => item[key] && item[key].data?.length > 0)
+  .sort((a, b) => a.year - b.year); // ✅ เรียงปีน้อยไปมาก
 
   
         // หาชื่อรายการ emission (item.name) จากทุกปีใน scope นี้ (union ของชื่อทั้งหมด)

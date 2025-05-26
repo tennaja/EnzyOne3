@@ -121,7 +121,7 @@ export default function EmissionsOverview({ totalEmission, totalEmissionByMonth,
                     cy="50%"
                     innerRadius={80}
                     outerRadius={130}
-                    label={({ value }) => `${value}`}
+                    label={({ value }) => `${value} tCO₂e`}
                   >
                     {pieData.map((entry) => (
                       <Cell
@@ -130,7 +130,7 @@ export default function EmissionsOverview({ totalEmission, totalEmissionByMonth,
                       />
                     ))}
                   </Pie>
-                  <PieTooltip />
+                  <PieTooltip formatter={(value) => `${value} tCO₂e`} />
                 </PieChart>
               </ResponsiveContainer>
               <div
