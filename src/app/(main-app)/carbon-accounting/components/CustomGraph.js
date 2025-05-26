@@ -234,9 +234,9 @@ export default function CustomGraph({}) {
     // ✅ สร้างอันใหม่ล่าสุด
     const newItem = {
       year,
-      businessUnitId: selectedBusinessUnitId ?? 0,
+      businessUnitId: selectedBusinessUnitId,
       businessUnitName: businessUnit.name,
-      siteId: selectedSiteId ?? 0,
+      siteId: selectedSiteId,
       siteName: site.name,
       scopeId: selectedScope,
       scopeName: scopeItem ? scopeItem.scopeName : "All",
@@ -250,25 +250,25 @@ export default function CustomGraph({}) {
       setLoading(true);
 
       // ✅ รวมค่าทั้งหมดจาก updatedDataCustom เพื่อให้เป็น array
-      const siteIds = updatedDataCustom.map((item) => item.siteId);
-      const businessUnitIds = updatedDataCustom.map(
-        (item) => item.businessUnitId
-      );
-      const scopes = updatedDataCustom.map((item) => item.scopeId);
-      
+      const siteIds = updatedDataCustom.map((item) => item.siteId ?? 0);
+      const businessUnitIds = updatedDataCustom.map((item) => item.businessUnitId ?? 0);
+      const scopes = updatedDataCustom.map((item) => item.scopeId ?? 0);
+      console.log(siteIds)
+      console.log(businessUnitIds)
       setLatestChartParams({
-        siteId: siteIds,
-        businessUnitId: businessUnitIds,
-        scope: scopes,
+        siteId: siteIds ?? 0,
+        businessUnitId: businessUnitIds ?? 0,
+        scope: scopes ?? 0,
       });
       
       // ✅ ยิง API โดยส่งเป็น array
       const result = await getCarbonCustomChart({
-        siteId: siteIds,
-        businessUnitId: businessUnitIds,
+        format:'',
+        siteId: siteIds ?? 0,
+        businessUnitId: businessUnitIds ?? 0,
         companyId,
         year,
-        scope: scopes,
+        scope: scopes ?? 0,
       });
 
       if (result && result.status === 200) {
