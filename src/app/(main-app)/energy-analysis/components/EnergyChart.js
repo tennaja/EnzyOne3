@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -17,6 +17,51 @@ import {
 } from "recharts";
 
 export default function EnergyTrendChart({ type, dataProp }) {
+  const [hiddenKeys, setHiddenKeys] = useState([]);
+
+  // คำนวณ maxY โดยไม่ว่าจะมี data หรือไม่
+  const maxY = useMemo(() => {
+    if (!dataProp) return 0;
+    return Math.max(
+      ...(dataProp.consumption ?? []),
+      ...(dataProp.generation ?? []),
+      ...(dataProp.powerFromGrid ?? []),
+      ...(dataProp.energyBaseline ?? []),
+      0
+    );
+  }, [dataProp]);
+
+  // ฟังก์ชันวัดความกว้างของข้อความสำหรับ margin ซ้าย
+  const getTextWidth = (text, font = "12px sans-serif") => {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    context.font = font;
+    return context.measureText(text).width;
+  };
+
+  // คำนวณ margin ซ้ายโดยอ้างอิงจากความกว้างของค่าที่ใหญ่สุด
+  const leftMargin = useMemo(() => {
+    const longestLabel = (-maxY).toLocaleString();
+    const width = getTextWidth(longestLabel, "12px Roboto");
+    return Math.max(40, Math.ceil(width + 10));
+  }, [maxY]);
+
+  // ฟังก์ชันจัดการการคลิก legend เพื่อซ่อน/แสดงกราฟ
+  const handleLegendClick = useCallback(
+    (e) => {
+      const key = e.dataKey;
+      setHiddenKeys((prev) =>
+        prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+      );
+    },
+    []
+  );
+
+  const commonProps = {
+    onClick: handleLegendClick,
+  };
+
+  // ถ้าไม่มีข้อมูล ให้แสดงข้อความนี้ และ return หลังจากเรียก hooks ทั้งหมดแล้ว
   if (!dataProp || !dataProp.timestamp || dataProp.timestamp.length === 0) {
     return (
       <div
@@ -28,7 +73,6 @@ export default function EnergyTrendChart({ type, dataProp }) {
           justifyContent: "center",
           fontSize: 16,
           color: "#888",
-          // background: '#f9f9f9',
           borderRadius: 12,
           border: "1px solid #ddd",
         }}
@@ -38,7 +82,7 @@ export default function EnergyTrendChart({ type, dataProp }) {
     );
   }
 
-  // แปลงข้อมูลจาก object เป็น array ของ object ที่เหมาะกับ Recharts
+  // เตรียม data สำหรับใช้ใน chart โดย map ตาม timestamp
   const data = dataProp.timestamp.map((timestamp, index) => ({
     day: timestamp,
     consumed: -1 * (dataProp.consumption?.[index] ?? 0),
@@ -47,28 +91,7 @@ export default function EnergyTrendChart({ type, dataProp }) {
     energy_base_line: -1 * (dataProp.energyBaseline?.[index] ?? 0),
   }));
 
-  const maxY = useMemo(() => {
-    return Math.max(
-      ...(dataProp.consumption ?? []),
-      ...(dataProp.generation ?? []),
-      ...(dataProp.powerFromGrid ?? []),
-      ...(dataProp.energyBaseline ?? []),
-      0 // กันกรณี array ว่างทั้งหมด
-    );
-  }, [dataProp]);
-
-  const getTextWidth = (text, font = "12px sans-serif") => {
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    context.font = font;
-    return context.measureText(text).width;
-  };
-  // คำนวณความกว้างของ label แกน Y แล้วปรับ margin.left
-  const leftMargin = useMemo(() => {
-    const longestLabel = (-maxY).toLocaleString(); // เช่น "-12,345.67"
-    const width = getTextWidth(longestLabel, "12px Roboto");
-    return Math.max(40, Math.ceil(width + 10)); // padding 10px
-  }, [maxY]);
+  // ฟังก์ชัน render ชื่อหน่วย (kWh หรือ kW)
   const renderUnitLabel = () => (
     <text
       x={80}
@@ -82,7 +105,8 @@ export default function EnergyTrendChart({ type, dataProp }) {
     </text>
   );
 
-  if (type === "month" || type === "year" || type === "lifetime") {
+  // ถ้า type คือ month, year, หรือ lifetime ให้แสดง ComposedChart แบบ stacked bar + line
+  if (["month", "year", "lifetime"].includes(type)) {
     return (
       <ResponsiveContainer width="100%" height={300}>
         <ComposedChart
@@ -94,42 +118,39 @@ export default function EnergyTrendChart({ type, dataProp }) {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="day" />
           <YAxis
-  domain={[-maxY, maxY]}
-  tickFormatter={(v) => Math.abs(v).toLocaleString()}
-/>
-
+            domain={[-maxY, maxY]}
+            tickFormatter={(v) => Math.abs(v).toLocaleString()}
+          />
           <Tooltip
-  formatter={(value, name) => [
-    `${Math.abs(Number(value)).toLocaleString()} kWh`,
-    name,
-  ]}
-/>
-
-
-          <Legend />
-          <ReferenceLine y={0} stroke="gray" strokeDasharray="" />
-
+            formatter={(value, name) => [
+              `${Math.abs(Number(value)).toLocaleString()} kWh`,
+              name,
+            ]}
+          />
+          <Legend {...commonProps} />
+          <ReferenceLine y={0} stroke="gray" />
           {renderUnitLabel()}
-
           <Bar
             dataKey="consumed"
             stackId="energy"
             name="Energy Consumed"
             fill="#FFB74D"
+            hide={hiddenKeys.includes("consumed")}
           />
           <Bar
             dataKey="generated_mirror"
             stackId="energy"
             name="Generated by PV"
             fill="#81C784"
+            hide={hiddenKeys.includes("generated_mirror")}
           />
           <Bar
             dataKey="purchased_mirror"
             stackId="energy"
             name="Purchased from grid"
             fill="#4FC3F7"
+            hide={hiddenKeys.includes("purchased_mirror")}
           />
-
           <Line
             type="monotone"
             dataKey="energy_base_line"
@@ -137,38 +158,33 @@ export default function EnergyTrendChart({ type, dataProp }) {
             strokeWidth={2}
             dot={true}
             name="Energy Baseline"
+            hide={hiddenKeys.includes("energy_base_line")}
           />
-
           <Brush dataKey="day" height={30} stroke="#8884d8" />
         </ComposedChart>
       </ResponsiveContainer>
     );
   }
 
-  // Default = daily (AreaChart)
+  // กรณีอื่น ๆ (เช่น daily หรือ hourly) ใช้ AreaChart
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <AreaChart
-        data={data}
-        margin={{ top: 40, right: 0, left: 40, bottom: 0 }}
-      >
+      <AreaChart data={data} margin={{ top: 40, right: 0, left: leftMargin, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="day" />
         <YAxis
-  domain={[-maxY, maxY]}
-  tickFormatter={(v) => Math.abs(v).toLocaleString()}
-/>
+          domain={[-maxY, maxY]}
+          tickFormatter={(v) => Math.abs(v).toLocaleString()}
+        />
         <Tooltip
-  formatter={(value, name) => [
-    `${Math.abs(Number(value)).toLocaleString()} kW`,
-    name,
-  ]}
-/>
-
-        <Legend wrapperStyle={{ marginBottom: -20 }} />
-        <ReferenceLine y={0} stroke="gray" strokeDasharray="" />
+          formatter={(value, name) => [
+            `${Math.abs(Number(value)).toLocaleString()} kW`,
+            name,
+          ]}
+        />
+        <Legend {...commonProps} />
+        <ReferenceLine y={0} stroke="gray" />
         {renderUnitLabel()}
-
         <Area
           type="monotone"
           dataKey="consumed"
@@ -176,6 +192,7 @@ export default function EnergyTrendChart({ type, dataProp }) {
           fill="#FFE9CA"
           strokeWidth={2}
           name="Consumption Power"
+          hide={hiddenKeys.includes("consumed")}
         />
         <Area
           type="monotone"
@@ -184,6 +201,7 @@ export default function EnergyTrendChart({ type, dataProp }) {
           strokeWidth={2}
           fill="#fff"
           name="Power from grid"
+          hide={hiddenKeys.includes("purchased_mirror")}
         />
         <Area
           type="monotone"
@@ -192,8 +210,8 @@ export default function EnergyTrendChart({ type, dataProp }) {
           fill="#deede8"
           strokeWidth={2}
           name="PV Power"
+          hide={hiddenKeys.includes("generated_mirror")}
         />
-
         <Brush dataKey="day" height={30} stroke="#8884d8" />
       </AreaChart>
     </ResponsiveContainer>

@@ -45,9 +45,8 @@ function getColor(scopeIndex, itemIndex) {
 
 export default function EmissionTrendCard({ year, emissionData }) {
   // กรองข้อมูลปีที่ไม่ตรงกับปีที่รับเข้ามา (แสดงปีอื่น ๆ ทั้งหมด)
-  const filteredData = Array.isArray(emissionData)
-    ? emissionData.filter((item) => item.year !== year)
-    : [];
+  const filteredData = Array.isArray(emissionData) ? emissionData : [];
+
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -128,7 +127,9 @@ export default function EmissionTrendCard({ year, emissionData }) {
                     <BarChart data={chartData}>
                       <XAxis dataKey="year" />
                       <YAxis />
-                      <RechartsTooltip />
+                      <RechartsTooltip
+                      formatter={(value, name) => [`${value} tCO₂e`, name]}
+                      />
                       {/* <Legend /> */}
                       {itemNames.map((name, i) => (
                         <Bar

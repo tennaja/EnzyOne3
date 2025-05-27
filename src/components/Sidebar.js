@@ -17,6 +17,7 @@ import {
   HandThumbUpIcon,
   PresentationChartLineIcon,
   RectangleGroupIcon,
+  CloudIcon
 } from "@heroicons/react/24/outline";
 import { Disclosure, Listbox, Popover } from "@headlessui/react";
 import { ToggleSwitch } from "./ToggleSwitch";
@@ -69,6 +70,9 @@ const Sidebar = ({ collapsed, shown, setCollapsed }) => {
 
       case "Report":
         return <PresentationChartLineIcon className="w-6 h-6" />;
+
+      case "CarbonAccounting":
+        return <CloudIcon className="w-6 h-6" />;  
 
       default:
         return <RectangleGroupIcon className="w-6 h-6" />;

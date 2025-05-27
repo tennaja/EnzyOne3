@@ -42,6 +42,7 @@ dayjs.extend(customParseFormat);
 
 export default function CustomGraph({}) {
   const [loading, setLoading] = useState(false);
+  const [isFirst,setIsfirst] = useState(true)
   const [year, setYear] = useState("");
   const [yearList, setYearList] = useState([]);
   const [businessUnitId, setBusinessUnitId] = useState(null);
@@ -419,7 +420,7 @@ export default function CustomGraph({}) {
       value={year}
       style={{ width: 200 }}
       onChange={handleYearChange}
-      disabled={true}
+      disabled={dataCustom.length >= 1}
     >
       {yearList.map((item) => (
         <Option key={item.year} value={item.year}>
@@ -438,6 +439,7 @@ export default function CustomGraph({}) {
       value={businessUnitId}
       style={{ width: 200 }}
       onChange={handleBusinessUnitChange}
+      disabled={dataCustom.length >= 10}
     >
       {businessUnitList.map((item) => (
         <Option key={item.id} value={item.id}>
@@ -453,6 +455,7 @@ export default function CustomGraph({}) {
       value={siteId}
       style={{ width: 200 }}
       onChange={handleSiteChange}
+      disabled={dataCustom.length >= 10}
     >
       {siteList.map((item) => (
         <Option key={item.id} value={item.id}>
@@ -468,6 +471,7 @@ export default function CustomGraph({}) {
       value={scope}
       style={{ width: 200, height: 40 }}
       onChange={handleScopeChange}
+      disabled={dataCustom.length >= 10}
     >
       <Option value={0}>All</Option>
       {scopeList.map((item) => (
@@ -485,6 +489,7 @@ export default function CustomGraph({}) {
           ? "bg-[#e3e3e3] cursor-not-allowed text-[#999999]"
           : "bg-[#61bcbe] text-white"
       }`}
+      disabled={dataCustom.length >= 10}
     >
       Add
     </button>

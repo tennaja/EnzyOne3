@@ -234,21 +234,7 @@ const GetSummaryOverview = async (showLoading = true) => {
   
     return num.toLocaleString('en-US'); // ใส่ลูกน้ำให้ตัวเลขที่น้อยกว่า 1000
   }
-  
-  
-    
-  
-  // const data = {
-  //   currentPower: { value: "254.14", unit: "kW" },
-  //   yieldToday: { value: "1.72", unit: "MWh" },
-  //   revenueToday: { value: "8.48K", unit: "Baht", hasInfo: true },
-  //   totalYield: { value: "828.91", unit: "MWh", hasInfo: true },
-  //   inventorRatedPower: { value: "980.00", unit: "kW", hasInfo: true },
-  //   rateEssCapacity: { value: "0.00", unit: "kWh" },
-  //   supplyFromGrid: { value: "76.37", unit: "kWh" },
-  //   co2Avoided: { value: "2.37", unit: "tons" },
-  //   treePlanted: { value: "4", unit: "" },
-  // };
+
   console.log("Summary component loaded");
 
   return (

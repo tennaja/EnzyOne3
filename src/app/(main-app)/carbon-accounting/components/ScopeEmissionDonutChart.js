@@ -30,9 +30,9 @@ const scopeTooltips = {
 };
 
 const scopeColors = {
-  scope1: ["#008EAF", "#FF35C6", "#FF9966"],
-  scope2: ["#008A8B", "#FF35C6", "#FF9966"],
-  scope3: ["#BFFCFB", "#FF35C6", "#FF9966"],
+  scope1: ["#008EAF", "#FF35C6", "#FF9966","#4bc0c0"],
+  scope2: ["#008A8B", "#FF35C6", "#FF9966","#4bc0c0"],
+  scope3: ["#BFFCFB", "#FF35C6", "#FF9966","#4bc0c0"],
 };
 
 export default function ScopeEmissionDonutChart({ year, emissionData, setActiveTab }) {

@@ -185,7 +185,7 @@ export default function EmissionsOverview({ totalEmission, totalEmissionByMonth,
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <BarTooltip />
+                  <BarTooltip formatter={(value) => `${value} tCO₂e`}/>
                   {availableScopes.map((scope) =>
                     visibleScopes.includes(scope) ? (
                       <Bar

@@ -68,7 +68,7 @@ const CustomGraph = () => {
       {
         id: Date.now(),
         selectedParams: [], // ไม่มีพารามิเตอร์เริ่มต้น
-        dateRange: [dayjs().subtract(7, "day"), dayjs()], // ค่าเริ่มต้น: 7 วันล่าสุด
+        dateRange: [dayjs(), dayjs()], // ค่าเริ่มต้น: 7 วันล่าสุด
         data: [], // ข้อมูลเริ่มต้นว่าง
       },
     ]);
@@ -188,7 +188,7 @@ const CustomGraph = () => {
         {
           id: Date.now(),
           selectedParams: [], // ไม่มีพารามิเตอร์เริ่มต้น
-          dateRange: [dayjs().subtract(7, "day"), dayjs()], // ค่าเริ่มต้น: 7 วันล่าสุด
+          dateRange: [dayjs(), dayjs()], // ค่าเริ่มต้น: 7 วันล่าสุด
           data: [], // ข้อมูลเริ่มต้นว่าง
         },
       ]);
@@ -280,7 +280,7 @@ const CustomGraph = () => {
 
   const disabledDate = (current) => {
     const today = dayjs().endOf("day");
-    const thirtyOneDaysAgo = dayjs().subtract(31, "day").startOf("day");
+    const thirtyOneDaysAgo = dayjs().subtract(30, "day").startOf("day");
     return current > today || current < thirtyOneDaysAgo;
   };
 
