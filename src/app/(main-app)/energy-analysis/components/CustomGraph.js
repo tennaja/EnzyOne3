@@ -194,53 +194,56 @@ const CustomGraph = () => {
       ]);
     };
 
-  const handleAddParam = (chartId, paramIds, unit) => {
-    console.log("paramIds", paramIds);
-    console.log("unit", unit);
-  
-    setCharts((prev) =>
-      prev.map((chart) => {
-        if (chart.id !== chartId) return chart;
-  
-        const newParams = paramIds
-          .filter((id) => !chart.selectedParams.some((p) => p.id === id && p.unit === unit))
-          .map((id) => {
-            const param = allParameters.find((p) => p.id === id && p.unit === unit);
-            if (!param) {
-              console.error("Parameter not found for id:", id, "and unit:", unit);
-              return null;
-            }
-            return {
-              id: param.id,
-              unit: param.unit,
-              label: param.label,
-              type: param.type,
-              color: getDistinctColor(),
-            };
-          })
-          .filter(Boolean);
-  
-        const updatedParams = [...chart.selectedParams, ...newParams];
-        const uniqueParams = updatedParams.filter(
-          (param, index, self) =>
-            index === self.findIndex((p) => p.id === param.id && p.unit === param.unit)
-        );
-  
-        const uniqueIds = [...new Set(uniqueParams.map((param) => param.id))];
-        const uniqueUnits = [...new Set(uniqueParams.map((param) => param.unit))];
-  
-        // เรียก GetConsumtionDeviceHistory พร้อม startDate และ endDate
-        const [startDate, endDate] = chart.dateRange;
-        GetConsumtionDeviceHistory(chartId, uniqueIds, uniqueUnits, startDate, endDate);
-  
-        return {
-          ...chart,
-          selectedParams: uniqueParams,
-        };
-      })
-    );
-  };
-  
+    const handleAddParam = (chartId, paramIds, unit) => {
+      console.log("paramIds", paramIds);
+      console.log("unit", unit);
+    
+      setCharts((prev) =>
+        prev.map((chart) => {
+          if (chart.id !== chartId) return chart;
+    
+          const newParams = paramIds
+            .filter((id) => !chart.selectedParams.some((p) => p.id === id && p.unit === unit))
+            .map((id) => {
+              const param = allParameters.find((p) => p.id === id && p.unit === unit);
+              if (!param) {
+                console.error("Parameter not found for id:", id, "and unit:", unit);
+                return null;
+              }
+              return {
+                id: param.id,
+                unit: param.unit,
+                label: param.label,
+                type: param.type,
+                color: getDistinctColor(),
+              };
+            })
+            .filter(Boolean);
+    
+          const updatedParams = [...chart.selectedParams, ...newParams];
+          const uniqueParams = updatedParams.filter(
+            (param, index, self) =>
+              index === self.findIndex((p) => p.id === param.id && p.unit === param.unit)
+          );
+    
+          // ✅ ดึง id และ unit แบบตรง index
+          const uniqueIds = uniqueParams.map((param) => param.id);
+          const uniqueUnits = uniqueParams.map((param) => param.unit);
+    
+          console.log("uniqueIds", uniqueIds);
+          console.log("uniqueUnits", uniqueUnits);
+    
+          const [startDate, endDate] = chart.dateRange;
+          GetConsumtionDeviceHistory(chartId, uniqueIds, uniqueUnits, startDate, endDate);
+    
+          return {
+            ...chart,
+            selectedParams: uniqueParams,
+          };
+        })
+      );
+    };
+    
   const handleRemoveParam = (chartId, paramIds, unit) => {
     setCharts((prev) =>
       prev.map((chart) => {
@@ -264,15 +267,17 @@ const CustomGraph = () => {
       prev.map((chart) => {
         if (chart.id !== chartId) return chart;
   
-        // เรียก GetConsumtionDeviceHistory ใหม่เมื่อวันที่เปลี่ยน
-        const uniqueIds = [...new Set(chart.selectedParams.map((param) => param.id))];
-        const uniqueUnits = [...new Set(chart.selectedParams.map((param) => param.unit))];
+        // ✅ ดึง id/unit จาก selectedParams แบบตรงลำดับ
+        const uniqueIds = chart.selectedParams.map((param) => param.id);
+        const uniqueUnits = chart.selectedParams.map((param) => param.unit);
+  
         GetConsumtionDeviceHistory(chartId, uniqueIds, uniqueUnits, dates[0], dates[1]);
   
         return { ...chart, dateRange: dates };
       })
     );
   };
+  
 
   const handleDeleteChart = (chartId) => {
     setCharts(charts.filter((chart) => chart.id !== chartId));

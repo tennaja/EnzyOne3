@@ -14,9 +14,9 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Tooltip from "@mui/material/Tooltip";
 
 const scopeColors = {
-  scope1: ["#008EAF", "#FF35C6", "#FF9966"],
-  scope2: ["#008A8B", "#FF35C6", "#FF9966"],
-  scope3: ["#BFFCFB", "#FF35C6", "#FF9966"],
+  scope1: ["#008EAF", "#FF35C6", "#FF9966","#4bc0c0"],
+  scope2: ["#008A8B", "#FF35C6", "#FF9966","#4bc0c0"],
+  scope3: ["#63ebe7", "#FF35C6", "#FF9966","#4bc0c0"],
 };
 
 const scopes = [
@@ -67,17 +67,25 @@ export default function ScopeTop3BarChart({ year, emissionData }) {
   };
 
   // ฟังก์ชัน map ข้อมูล scope (กรอง Top3)
+
   const getScopeTop3Data = (scopeKey) => {
     const data = selectedYearData[scopeKey]?.data ?? [];
-    return data
-      .slice()
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 3)
-      .map(({ name, value }) => ({
-        name,
-        value,
-      }));
+    return data.map(({ name, value }) => ({
+      name,
+      value,
+    }));
   };
+  
+  // const getScopeTop3Data = (scopeKey) => {
+  //   const data = selectedYearData[scopeKey]?.data ?? [];
+  //   return data
+  //     .slice()
+  //     .sort((a, b) => b.value - a.value)
+  //     .map(({ name, value }) => ({
+  //       name,
+  //       value,
+  //     }));
+  // };
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
@@ -93,7 +101,7 @@ export default function ScopeTop3BarChart({ year, emissionData }) {
           >
             {/* หัวข้อ พร้อม tooltip */}
             <h3 className="font-bold mb-2 text-left flex items-center gap-1">
-              {label} Top3 Emission
+              {label} Top3 Emissions
               <Tooltip
                 title={
                   <>

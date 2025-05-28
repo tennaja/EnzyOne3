@@ -1205,7 +1205,7 @@ export default function Consumption() {
         </Space>
       </div>
       <div className="mt-5">
-        <HeatmapPage data={heatmapData} />
+        <HeatmapPage data={heatmapData} Energytype="Energy Consumed"/>
       </div>
     </div>
   );

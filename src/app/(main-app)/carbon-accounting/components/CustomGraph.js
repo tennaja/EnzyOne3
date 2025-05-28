@@ -499,10 +499,12 @@ export default function CustomGraph({}) {
 
       </div>
       <div className="mt-4">
-        <div className="rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
+        <div className="rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-5">
+        <span className="text-xl font-bold">Carbon Emissions</span>
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center space-x-4 text-lg font-semibold">
-              <div>
+            
+              <div className="mt-5">
                 Select:{" "}
                 <span className="text-cyan-500">{dataCustom.length} / 10</span>{" "}
                 parameter

@@ -32,9 +32,9 @@ const scopeTooltips = {
 };
 
 const scopeColors = [
-  ["#008EAF", "#FF35C6", "#FF9966"], // Scope 1
-  ["#008A8B", "#FF35C6", "#FF9966"], // Scope 2
-  ["#BFFCFB", "#FF35C6", "#FF9966"], // Scope 3
+  ["#008EAF", "#FF35C6", "#FF9966","#4bc0c0"], // Scope 1
+  ["#008A8B", "#FF35C6", "#FF9966","#4bc0c0"], // Scope 2
+  ["#63ebe7", "#FF35C6", "#FF9966","#4bc0c0"], // Scope 3
 ];
 
 
@@ -97,7 +97,7 @@ export default function EmissionTrendCard({ year, emissionData }) {
 
         return (
           <div key={key} className="bg-white p-4 rounded shadow flex flex-col">
-            <h3 className="font-bold mb-2 text-left flex items-center gap-1">{label} Emission Trend
+            <h3 className="font-bold mb-2 text-left flex items-center gap-1">{label} Emissions Trends
             <Tooltip
   title={
     <>

@@ -742,7 +742,7 @@ export default function Production() {
         </div>
 
         <div className="w-full flex items-center justify-center mt-5"></div>
-        <HeatmapPage data={externalData} />
+        <HeatmapPage data={externalData} Energytype="Energy Generated"/>
       </div>
       {loading && <Loading />}
     </>

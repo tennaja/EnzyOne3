@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ResponsiveContainer, Surface, Rectangle } from 'recharts';
+import { Spin } from 'antd';
+
 import dayjs from 'dayjs';
 
 const getColor = (value, min, max) => {
@@ -12,11 +14,12 @@ const getColor = (value, min, max) => {
   return '#f95b3c';
 };
 
-export default function HeatmapPage({ data = { timestamp: [], value: [] } }) {
+export default function HeatmapPage({ data = { timestamp: [], value: []} , Energytype}) {
   const [gridData, setGridData] = useState({ rows: [], days: [] });
   const [min, setMin] = useState(0);
   const [max, setMax] = useState(100);
   const [hoverInfo, setHoverInfo] = useState(null);
+  const [loading, setLoading] = useState(false);
   const containerRef = useRef(null);
 
   const cellHeight = 20;
@@ -24,40 +27,45 @@ export default function HeatmapPage({ data = { timestamp: [], value: [] } }) {
   const minCellWidth = 30;
 
   useEffect(() => {
+    setLoading(true);
     if (!Array.isArray(data.timestamp) || !Array.isArray(data.value) || !data.timestamp.length || !data.value.length) {
       setGridData({ rows: [], days: [] });
+      setLoading(false);
       return;
     }
 
-    const raw = data.timestamp.map((ts, i) => ({
-      day: dayjs(ts).format('DD'),
-      fullDate: dayjs(ts).format('YYYY/MM/DD'),
-      hour: parseInt(dayjs(ts).format('H')),
-      value: parseFloat(data.value[i]),
-    }));
+    setTimeout(() => {
+      const raw = data.timestamp.map((ts, i) => ({
+        day: dayjs(ts).format('DD'),
+        fullDate: dayjs(ts).format('YYYY/MM/DD'),
+        hour: parseInt(dayjs(ts).format('H')),
+        value: parseFloat(data.value[i]),
+      }));
 
-    const values = raw.map(d => d.value);
-    setMin(Math.min(...values));
-    setMax(Math.max(...values));
+      const values = raw.map(d => d.value);
+      setMin(Math.min(...values));
+      setMax(Math.max(...values));
 
-    const grouped = {};
-    raw.forEach(({ day, hour, value, fullDate }) => {
-      if (!grouped[day]) grouped[day] = {};
-      grouped[day][hour] = { value, fullDate };
-    });
-
-    const days = Object.keys(grouped).sort();
-    const rows = [];
-
-    for (let hour = 0; hour < 24; hour++) {
-      const row = { hour };
-      days.forEach(day => {
-        row[day] = grouped[day][hour] ?? null;
+      const grouped = {};
+      raw.forEach(({ day, hour, value, fullDate }) => {
+        if (!grouped[day]) grouped[day] = {};
+        grouped[day][hour] = { value, fullDate };
       });
-      rows.push(row);
-    }
 
-    setGridData({ rows, days });
+      const days = Object.keys(grouped).sort();
+      const rows = [];
+
+      for (let hour = 0; hour < 24; hour++) {
+        const row = { hour };
+        days.forEach(day => {
+          row[day] = grouped[day][hour] ?? null;
+        });
+        rows.push(row);
+      }
+
+      setGridData({ rows, days });
+      setLoading(false);
+    }, 300); // Delay สำหรับแสดง loading effect
   }, [data]);
 
   const hasNoData =
@@ -67,6 +75,23 @@ export default function HeatmapPage({ data = { timestamp: [], value: [] } }) {
     !data.value.length ||
     !gridData.rows.length ||
     !gridData.days.length;
+
+  if (loading) {
+    return (
+      <div
+  style={{
+    width: '100%',
+    height: '400px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }}
+>
+  <Spin tip="Loading heatmap..." size="large" />
+</div>
+
+    );
+  }
 
   if (hasNoData) {
     return (
@@ -79,7 +104,6 @@ export default function HeatmapPage({ data = { timestamp: [], value: [] } }) {
           justifyContent: 'center',
           fontSize: 16,
           color: '#888',
-          // background: '#f9f9f9',
           borderRadius: 12,
           border: '1px solid #ddd',
         }}
@@ -96,67 +120,58 @@ export default function HeatmapPage({ data = { timestamp: [], value: [] } }) {
   const height = 24 * cellHeight + 40;
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width: '100%',
-        overflowX: 'auto',
-        position: 'relative',
-      }}
-    >
+    <div ref={containerRef} style={{ width: '100%', overflowX: 'auto', position: 'relative' }}>
       <div style={{ width: graphWidth }}>
         <ResponsiveContainer width="100%" height={height}>
           <Surface>
             {/* Y-Axis (Hours) */}
-            {/* Y-Axis (Hours) */}
-{gridData.rows.map((row, rowIndex) => (
-  <text
-    key={`hour-label-${rowIndex}`}
-    x={0}
-    y={(24 - 1 - rowIndex) * cellHeight + 15}
-    fontSize={10}
-    fill="#444"
-  >
-    {row.hour}:00
-  </text>
-))}
+            {gridData.rows.map((row, rowIndex) => (
+              <text
+                key={`hour-label-${rowIndex}`}
+                x={0}
+                y={(24 - 1 - rowIndex) * cellHeight + 15}
+                fontSize={10}
+                fill="#444"
+              >
+                {row.hour}:00
+              </text>
+            ))}
 
-{/* Grid Cells */}
-{gridData.rows.map((row, rowIndex) =>
-  gridData.days.map((day, colIndex) => {
-    const cell = row[day];
-    const value = cell?.value ?? null;
-    const fullDate = cell?.fullDate;
-    const color = value != null ? getColor(value, min, max) : '#eee';
+            {/* Grid Cells */}
+            {gridData.rows.map((row, rowIndex) =>
+              gridData.days.map((day, colIndex) => {
+                const cell = row[day];
+                const value = cell?.value ?? null;
+                const fullDate = cell?.fullDate;
+                const color = value != null ? getColor(value, min, max) : '#eee';
 
-    const x = colIndex * cellWidth + paddingLeft;
-    const y = (24 - 1 - rowIndex) * cellHeight;
+                const x = colIndex * cellWidth + paddingLeft;
+                const y = (24 - 1 - rowIndex) * cellHeight;
 
-    return (
-      <Rectangle
-        key={`cell-${rowIndex}-${colIndex}`}
-        x={x}
-        y={y}
-        width={cellWidth}
-        height={cellHeight}
-        fill={color}
-        stroke="#fff"
-        onMouseEnter={(e) => {
-          const bounds = e.currentTarget.ownerSVGElement.getBoundingClientRect();
-          setHoverInfo({
-            x: e.clientX - bounds.left + 10,
-            y: e.clientY - bounds.top + 10,
-            value,
-            hour: row.hour,
-            day: fullDate,
-          });
-        }}
-        onMouseLeave={() => setHoverInfo(null)}
-      />
-    );
-  })
-)}
-
+                return (
+                  <Rectangle
+                    key={`cell-${rowIndex}-${colIndex}`}
+                    x={x}
+                    y={y}
+                    width={cellWidth}
+                    height={cellHeight}
+                    fill={color}
+                    stroke="#fff"
+                    onMouseEnter={(e) => {
+                      const bounds = e.currentTarget.ownerSVGElement.getBoundingClientRect();
+                      setHoverInfo({
+                        x: e.clientX - bounds.left + 10,
+                        y: e.clientY - bounds.top + 10,
+                        value,
+                        hour: row.hour,
+                        day: fullDate,
+                      });
+                    }}
+                    onMouseLeave={() => setHoverInfo(null)}
+                  />
+                );
+              })
+            )}
 
             {/* X-Axis (Days) */}
             {gridData.days.map((day, colIndex) => (
@@ -195,7 +210,7 @@ export default function HeatmapPage({ data = { timestamp: [], value: [] } }) {
         >
           <div><strong>Day:</strong> {hoverInfo.day}</div>
           <div><strong>Hour:</strong> {hoverInfo.hour}:00</div>
-          <div><strong>Energy Generated:</strong> {hoverInfo.value} kWh</div>
+          <div><strong>{Energytype}:</strong> {hoverInfo.value} kWh</div>
         </div>
       )}
 

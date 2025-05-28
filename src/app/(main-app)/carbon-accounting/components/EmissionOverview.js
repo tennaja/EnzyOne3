@@ -18,7 +18,7 @@ import Tooltip from "@mui/material/Tooltip";
 const COLORS = {
   scope1: '#4BC0C0',
   scope2: '#008A8B',
-  scope3: '#BFFCFB',
+  scope3: '#63ebe7',
 };
 
 const scopeNames = {
