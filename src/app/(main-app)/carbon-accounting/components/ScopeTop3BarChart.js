@@ -101,7 +101,7 @@ export default function ScopeTop3BarChart({ year, emissionData }) {
           >
             {/* หัวข้อ พร้อม tooltip */}
             <h3 className="font-bold mb-2 text-left flex items-center gap-1">
-              {label} Top3 Emissions
+              {label} Top 3 Emissions
               <Tooltip
                 title={
                   <>
