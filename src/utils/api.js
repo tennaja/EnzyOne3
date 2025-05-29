@@ -2327,10 +2327,11 @@ export async function getConsumptionHeatmap(req) {
   const siteId = req.siteId;
   const date = req.date
   const deviceId = req.deviceId;
+  const deviceType = req.deviceType;
 
   try {
     const url =
-      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/consumption/heatmap?date=${date}&deviceId=${deviceId}&siteId=${siteId}`;
+      `https://enzy-api.egat.co.th/dev/api/v1/energy-analysis/consumption/heatmap?deviceType=${deviceType}&date=${date}&deviceId=${deviceId}&siteId=${siteId}`;
     const res = await axios.get(url, {
       withCredentials: true,
       headers: { "Content-Type": "application/json" },

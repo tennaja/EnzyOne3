@@ -3,7 +3,7 @@ import React from "react";
 // import SummaryCard from "./components/SummaryCard";
 
 import dynamic from "next/dynamic";
-const LoadConsumption = dynamic(() => import("./components/LoadConsumptionBreakdown"), {
+const LoadConsumption = dynamic(() => import("./components/Header"), {
   ssr: false,
 });
 

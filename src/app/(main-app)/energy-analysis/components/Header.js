@@ -1,10 +1,10 @@
 'use client';
 import { useState } from 'react';
-import TabNavigation from '../components/TabNavigation';
+import TabNavigation from './TabNavigation';
 import Summary from './Summary.js';
-import Production from '../components/Production';
-import Consumption from '../components/Consumption';
-import CustomGraph from '../components/CustomGraph';
+import Production from './Production';
+import Consumption from './Consumption';
+import CustomGraph from './CustomGraph';
 
 const tabConfig = [
   { id: 'summary', label: 'Summary' },
@@ -40,12 +40,11 @@ export default function LoadConsumption() {
             activeTab={activeTab}
             onTabChange={setActiveTab}
             tabs={tabConfig}
-            showBreadcrumb={false} // เราจะไม่แสดง breadcrumb ที่นี่
           />
         </div>
 
         {/* Breadcrumb */}
-        <div className="text-sm text-gray-600">
+        {/* <div className="text-sm text-gray-600">
           {
             // ดึง breadcrumb ด้วยการ slice tabConfig จาก 0 ถึง activeTab
             tabConfig
@@ -64,7 +63,7 @@ export default function LoadConsumption() {
                 </span>
               ))
           }
-        </div>
+        </div> */}
         </div>
         
         {renderContent()}

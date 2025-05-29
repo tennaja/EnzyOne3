@@ -525,6 +525,10 @@ export default function CustomGraph({}) {
         className="rounded-lg p-3 shadow-sm bg-[#f2fafa] border-2 border-[#32c0bf] dark:bg-gray-800 dark:text-white flex justify-between items-center"
       >
         <div className="flex items-center space-x-2">
+        <Checkbox
+            checked={visibleItems[index]}
+            onChange={() => toggleVisibility(index)}
+          />
           <div
             className="w-3 h-3 rounded-full"
             style={{ backgroundColor: colors[index % colors.length] }}
@@ -541,10 +545,10 @@ export default function CustomGraph({}) {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Checkbox
+          {/* <Checkbox
             checked={visibleItems[index]}
             onChange={() => toggleVisibility(index)}
-          />
+          /> */}
           <button
             onClick={() => handleRemove(index)}
             className="text-red-500 hover:text-red-700"
