@@ -110,6 +110,7 @@ export default function Production() {
   const [dropdownDeviceList, setDropdownDeviceList] = useState([]);
   const [energyHistoryData, setEnergyHistoryData] = useState([]);
   const [revenueHistoryData, setRevenueHistoryData] = useState([]);
+  const [lastUpdated,setLatsUpdated]=useState('')
   const [rowsPerPage, setRowsPerPage] = useState(20); // default 10
 
   const [totalSummary, setTotalSummary] = useState({
@@ -192,8 +193,9 @@ export default function Production() {
       const result = await getProductSummary(siteId);
       if (result && result.status === 200) {
         const data = result.data;
-
-        const total = data.reduce(
+        setLatsUpdated(data.lastUpdated)
+        console.log(data)
+        const total = data?.data.reduce(
           (acc, item) => {
             acc.power += Number(item.power || 0);
             acc.energy += Number(item.energy || 0);
@@ -203,7 +205,7 @@ export default function Production() {
           { power: 0, energy: 0, revenue: 0 }
         );
 
-        setProductDeviceList(data);
+        setProductDeviceList(data?.data);
         setTotalSummary({
           power: total.power.toFixed(2),
           energy: total.energy.toFixed(2),
@@ -435,7 +437,7 @@ export default function Production() {
               onChange={(e) => setSearchLoad(e.target.value)}
             />
             <span className="text-sm text-gray-500 dark:text-white">
-              Last Updated on DD/MM/YYYY 00:00
+              Last Updated on {lastUpdated}
             </span>
           </div>
         </div>

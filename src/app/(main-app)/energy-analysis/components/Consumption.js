@@ -129,6 +129,7 @@ const meterData = [
 
 export default function Consumption() {
   const [activeTab, setActiveTab] = useState("load");
+  const [lastUpdated,setLatsUpdated]=useState('')
   // const [searchLoad, setSearchLoad] = useState("");
   // const [searchMeter, setSearchMeter] = useState("");
   const [energyRange, setEnergyRange] = useState("day");
@@ -221,8 +222,9 @@ export default function Consumption() {
       const result = await getConsumptionSummary(params);
       if (result && result.status === 200) {
         const data = result.data;
-
-        const total = data.reduce(
+        setLatsUpdated(data.lastUpdated)
+        console.log(data)
+        const total = data.data.reduce(
           (acc, item) => {
             acc.power += Number(item.power || 0);
             acc.energy += Number(item.energy || 0);
@@ -233,7 +235,7 @@ export default function Consumption() {
           { power: 0, energy: 0, onPeak: 0, offPeak: 0 }
         );
 
-        setConsumptionDeviceList(data);
+        setConsumptionDeviceList(data.data);
         setTotalSummary({
           power: total.power.toFixed(2),
           energy: total.energy.toFixed(2),
@@ -654,7 +656,7 @@ export default function Consumption() {
               }}
             />
             <span className="text-sm text-gray-500 dark:text-white">
-              Last Updated on DD/MM/YYYY 00:00
+              Last Updated on {lastUpdated}
             </span>
           </div>
         </div>
@@ -838,7 +840,7 @@ export default function Consumption() {
               }}
             />
             <span className="text-sm text-gray-500 dark:text-white">
-              Last Updated on DD/MM/YYYY 00:00
+              Last Updated on {lastUpdated}
             </span>
           </div>
         </div>
