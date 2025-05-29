@@ -32,7 +32,7 @@ export default function Detail({ scopeId, businessUnitId, year, siteId }) {
     const interval = setInterval(() => {
       GetCarbonDetail(false);
     }
-    , 300000); // 300,000 ms = 5 minutes
+    , 900000); // 300,000 ms = 5 minutes
     return () => clearInterval(interval);
   }, [businessUnitId, year, siteId]);
 
@@ -40,7 +40,7 @@ export default function Detail({ scopeId, businessUnitId, year, siteId }) {
     GetCarbonDetailList();
     const interval = setInterval(() => {
       GetCarbonDetailList(false);
-    }, 300000); // 300,000 ms = 5 minutes
+    }, 900000); // 300,000 ms = 5 minutes
     return () => clearInterval(interval);
   }, [scopeId, businessUnitId, year, siteId , scope]);
 
