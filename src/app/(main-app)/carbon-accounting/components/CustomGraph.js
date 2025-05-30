@@ -388,9 +388,9 @@ export default function CustomGraph({}) {
     });
   };
   const notifyError = () =>
-    toast.error(
+    toast.warning(
       <div className="px-2 font-inherit">
-        <div className="flex flex-row font-bold">Error</div>
+        <div className="flex flex-row font-bold">Warning</div>
         <div className="flex flex-row text-xs">
           ไม่สามารถเพิ่มได้ เนื่องจากมี Parameter นี้แล้ว
         </div>
