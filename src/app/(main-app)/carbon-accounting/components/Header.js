@@ -9,8 +9,7 @@ import { Select } from "antd";
 import {
   getCarbonYearList,
   getCarbonBusinessUnitList,
-  getCarbonSiteList,
-  getCarbonReport
+  getCarbonSiteList
 } from "@/utils/api";
 const { Option } = Select;
 
@@ -28,8 +27,8 @@ export default function Header() {
   const [selectYear,setSelectYear] = useState("");
   const [yearList, setYearList] = useState([]);
 
-  // const [businessUnit, setBusinessUnit] = useState(0);
-  // const [site, setSite] = useState("All Site");
+  const [businessUnitName, setBusinessUnitName] = useState("");
+  const [siteName, setSiteName] = useState("");
   const [businessUnitList, setBusinessUnitList] = useState([]);
   const [siteList, setSiteList] = useState([]);
   const [companyId, setCompanyId] = useState(2);
@@ -96,6 +95,7 @@ export default function Header() {
         setBusinessUnitList(result.data);
         setBusinessUnitId(result.data[0].id); // ตั้งค่า businessUnit เป็นปีแรกในรายการ
         setSelectBusinessUnitId(result.data[0].id ?? 0)
+        setBusinessUnitName(result.data[0].name ?? "");
       } else {
         setBusinessUnitList([]);
       }
@@ -120,6 +120,7 @@ export default function Header() {
         setSiteList(result.data);
         setSiteId(result.data[0].id); // ตั้งค่า site เป็นปีแรกในรายการ
         setSelectSiteId(result.data[0].id ?? 0)
+        setSiteName(result.data[0].name ?? "");
       } else {
         setSiteList([]);
       }
@@ -163,14 +164,20 @@ export default function Header() {
   };
   const handleBusinessUnitChange = (value) => {
     setBusinessUnitId(value);
+    
     GetCarbonSiteList();
   };
   const handleSiteChange = (value) => {
     setSiteId(value);
+    
   };
   
   const handleSearch = () => {
     setSelectYear(year)
+    setSiteName(siteList.find((item) => item.id === siteId)?.name ?? "")
+    setBusinessUnitName(
+      businessUnitList.find((item) => item.id === businessUnitId)?.name ?? ""
+    );
     setSelectBusinessUnitId(businessUnitId ?? 0)
     setSelectSiteId(siteId ?? 0)
 
@@ -184,6 +191,8 @@ export default function Header() {
             year={selectYear}
             businessUnitId={selectBusinessUnitId}
             siteId={selectSiteId}
+            siteName={siteName}
+            businessUnitName={businessUnitName}
             scopeId={activeTab.scopeId}
             setActiveTab={setActiveTab}
           />
@@ -257,65 +266,76 @@ export default function Header() {
     <div className="flex items-center gap-3">
       {/* กลุ่มแรก: Select + Search */}
       <div className="flex items-center gap-3">
-        <span className="text-sm">Target Year:</span>
-        <Select
-          value={year}
-          style={{ width: 150 }}
-          onChange={handleYearChange}
-        >
-          {yearList.map((item) => (
-            <Option key={item.year} value={item.year}>
-              {item.year}
-            </Option>
-          ))}
-        </Select>
+  <span className="text-sm">Target Year:</span>
+  <Select
+    value={year}
+    style={{ width: 150 }}
+    onChange={handleYearChange}
+    disabled={yearList.length === 0}
+    placeholder={yearList.length === 0 ? 'No Data' : undefined}
+  >
+    {yearList.length > 0 ? (
+      yearList.map((item) => (
+        <Option key={item.year} value={item.year}>
+          {item.year}
+        </Option>
+      ))
+    ) : (
+      <Option disabled>No Data</Option>
+    )}
+  </Select>
 
-        <span className="text-sm">Business Unit:</span>
-        <Select
-          value={businessUnitId}
-          onChange={handleBusinessUnitChange}
-          style={{ width: 200 }}
-        >
-          {businessUnitList.map((item) => (
-            <Option key={item.id} value={item.id}>
-              {item.name}
-            </Option>
-          ))}
-        </Select>
+  <span className="text-sm">Business Unit:</span>
+  <Select
+    value={businessUnitId}
+    onChange={handleBusinessUnitChange}
+    style={{ width: 200 }}
+    disabled={businessUnitList.length === 0}
+    placeholder={businessUnitList.length === 0 ? 'No Data' : undefined}
+  >
+    {businessUnitList.length > 0 ? (
+      businessUnitList.map((item) => (
+        <Option key={item.id} value={item.id}>
+          {item.name}
+        </Option>
+      ))
+    ) : (
+      <Option disabled>No Data</Option>
+    )}
+  </Select>
 
-        <span className="text-sm">Site:</span>
-        <Select
-          value={siteId}
-          style={{ width: 200 }}
-          onChange={handleSiteChange}
-        >
-          {siteList.map((item) => (
-            <Option key={item.id} value={item.id}>
-              {item.name}
-            </Option>
-          ))}
-        </Select>
+  <span className="text-sm">Site:</span>
+  <Select
+    value={siteId}
+    style={{ width: 200 }}
+    onChange={handleSiteChange}
+    disabled={siteList.length === 0}
+    placeholder={siteList.length === 0 ? 'No Data' : undefined}
+  >
+    {siteList.length > 0 ? (
+      siteList.map((item) => (
+        <Option key={item.id} value={item.id}>
+          {item.name}
+        </Option>
+      ))
+    ) : (
+      <Option disabled>No Data</Option>
+    )}
+  </Select>
 
-        <button
-          type="button"
-          className="text-white bg-[#33BFBF] rounded-md text-lg px-10 h-9"
-          onClick={handleSearch}
-        >
-          Search
-        </button>
-      </div>
-
-      {/* ปุ่ม Annual Report ชิดขวา */}
-      {activeTab.tab === "dashboard" && (
-        <button
-          onClick={DownloadFile}
-          type="button"
-          className="h-10 bg-transparent text-sm border-2 border-[#32c0bf] text-[#32c0bf] px-3 py-2 rounded-md flex items-center gap-2 hover:bg-[#32c0bf] hover:text-white transition-colors ml-auto"
-        >
-          <FileDownloadIcon />
-          Annual Report
-        </button>
-      )}
+  <button
+    type="button"
+    className="text-white bg-[#33BFBF] rounded-md text-lg px-10 h-9 disabled:opacity-50"
+    onClick={handleSearch}
+    disabled={
+      yearList.length === 0 ||
+      businessUnitList.length === 0 ||
+      siteList.length === 0
+    }
+  >
+    Search
+  </button>
+</div>
     </div>
   </div>
 )}

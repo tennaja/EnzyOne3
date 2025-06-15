@@ -412,8 +412,9 @@ const CustomGraph = () => {
                     chart.uniqueUnits.includes(param.unit);
 
                   const isDisabled = !isSelected && !isUnitAllowed;
-
+                  if (isDisabled) return null;
                   return (
+                    
                     <div
                       key={`${chart.id}_${param.id}_${param.unit}_${index}`} // รวม chart.id เพื่อให้ key ไม่ซ้ำ
                       className={`border rounded-lg p-3 shadow-sm ${

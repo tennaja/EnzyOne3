@@ -50,17 +50,19 @@ export default function ScopeTop3BarChart({ year, emissionData }) {
   // หา data ปีที่ต้องการ
   const selectedYearData = safeEmissionData.find((item) => item.year === year) || {};
 
-  // Custom tick แสดงคำในแกน y ให้ขึ้นบรรทัดใหม่ได้
+  // Custom tick แสดงคำในแกน y และตัดข้อความยาวเกินไป
   const CustomizedYAxisTick = ({ x, y, payload }) => {
-    const words = payload.value.split(" ");
+    const maxLength = 15; // Maximum number of characters before truncating
+    const truncatedValue =
+      payload.value.length > maxLength
+        ? `${payload.value.substring(0, maxLength)}...`
+        : payload.value;
+  
     return (
       <g transform={`translate(${x},${y})`}>
         <text x={0} y={0} dy={4} textAnchor="end" fill="#666" fontSize={10}>
-          {words.map((word, index) => (
-            <tspan key={index} x={0} dy={index === 0 ? 0 : 10}>
-              {word}
-            </tspan>
-          ))}
+          <title>{payload.value}</title> {/* Full name on hover */}
+          {truncatedValue}
         </text>
       </g>
     );
@@ -132,18 +134,36 @@ export default function ScopeTop3BarChart({ year, emissionData }) {
                   <BarChart
                     layout="vertical"
                     data={scopeDataFormatted}
-                    margin={{ top: 10, right: 20, bottom: 20, left: 0 }}
+                    margin={{ top: 30, right: 50, bottom: 0, left: 10 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                       type="number"
                       tickFormatter={(v) => v.toLocaleString()}
+                      label={{
+                        angle: 0,
+                        value: 'Month',
+                        position: 'insideRight',
+                        offset: 0,
+                        dy: -10, // ย้ายลงใต้เส้นแกน X
+                        dx: 50,
+                        style: { fontSize: 12, fill: '#666' },
+                      }}
                     />
                     <YAxis
                       dataKey="name"
                       type="category"
                       width={100}
                       tick={<CustomizedYAxisTick />}
+                      label={{
+                        value: 'tCO₂e',
+                        angle: 0,
+                        position: 'top',
+                        offset: 0,
+                        dx: 45,
+                        dy: -10, // ย้ายขึ้นเหนือเส้นแกน Y
+                        style: { fontSize: 12, fill: '#666' },
+                      }} 
                     />
                     <RechartsTooltip
   // labelFormatter ใช้แสดงชื่อแทน label ปกติ

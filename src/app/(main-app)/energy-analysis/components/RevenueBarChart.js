@@ -102,13 +102,22 @@ export default function RevenueBarChart({ history }) {
             ฿
           </text>
 
-          <Brush
+          {/* <Brush
             dataKey="date"
             height={30}
             stroke="#8884d8"
             startIndex={0}
             endIndex={data.length - 1}
-          />
+          /> */}
+                    <Brush
+                                dataKey="date"
+                                height={30}
+                                stroke="#8884d8"
+                                startIndex={data.length <= 1 ? 0 : undefined}
+                                endIndex={data.length - 1}
+                                travellerWidth={data.length <= 1 ? 0 : undefined}
+                                disabled={data.length <= 1}
+                              />
         </BarChart>
       </ResponsiveContainer>
     </div>

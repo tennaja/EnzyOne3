@@ -113,11 +113,11 @@ export default function Production() {
   const [lastUpdated,setLatsUpdated]=useState('')
   const [rowsPerPage, setRowsPerPage] = useState(20); // default 10
 
-  const [totalSummary, setTotalSummary] = useState({
-    power: "0.00",
-    energy: "0.00",
-    revenue: "0.00",
-  });
+  // const [totalSummary, setTotalSummary] = useState({
+  //   power: "0.00",
+  //   energy: "0.00",
+  //   revenue: "0.00",
+  // });
   const [loading, setLoading] = useState(false);
   
   // useEffect(() => {
@@ -206,19 +206,19 @@ export default function Production() {
         );
 
         setProductDeviceList(data?.data);
-        setTotalSummary({
-          power: total.power.toFixed(2),
-          energy: total.energy.toFixed(2),
-          revenue: total.revenue.toFixed(2),
-        });
+        // setTotalSummary({
+        //   power: total.power.toFixed(2),
+        //   energy: total.energy.toFixed(2),
+        //   revenue: total.revenue.toFixed(2),
+        // });
       } else {
         setProductDeviceList([]);
-        setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
+        // setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
       }
     } catch (error) {
       console.error("Error fetching Summary History:", error);
       setProductDeviceList([]);
-      setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
+      // setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
     } finally {
       if (showLoading) {
         setLoading(false);
@@ -239,7 +239,6 @@ export default function Production() {
     } catch (error) {
       console.error("Error fetching Summary History:", error);
       setProductDeviceList([]);
-      setTotalSummary({ power: "0.00", energy: "0.00", revenue: "0.00" });
     } finally {
       if (showLoading) {
         setLoading(false);
@@ -328,11 +327,11 @@ export default function Production() {
       .filter(
         (item) =>
 
-          item.name?.toString().toLowerCase().includes(search.toLowerCase()) ||
-          item.power.toString().includes(search.toLowerCase()) ||
-          item.energy.toString().includes(search.toLowerCase()) ||
-          item.revenue.toString().includes(search.toLowerCase()) ||
-          item.originalIndex.toString().includes(search) // ค้นหาด้วย originalIndex
+          item?.name?.toLowerCase().includes(search.toLowerCase()) ||
+          item?.power?.toFixed(2).toString().includes(search.toLowerCase()) ||
+          item?.energy?.toFixed(2).toString().includes(search.toLowerCase()) ||
+          item?.revenue?.toFixed(2).toString().includes(search.toLowerCase()) ||
+          item?.originalIndex?.toString().includes(search.toLowerCase()) // ค้นหาด้วย originalIndex
       );
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -396,32 +395,52 @@ export default function Production() {
   }
 
   function formatNumberWithK(num) {
-    if (typeof num !== "number" || isNaN(num)) {
-      return "-";
+    if (typeof num !== 'number' || isNaN(num)) {
+      return '-';
     }
-
+  
     if (num >= 1000) {
       const value = num / 1000;
-      // format number with commas, ถ้าเป็น integer แสดงไม่ต้องมีทศนิยม
-      const formattedValue = Number.isInteger(value)
-        ? value.toLocaleString("en-US")
-        : parseFloat(value.toFixed(1)).toLocaleString("en-US");
+      const formattedValue = value.toFixed(2); // แสดงทศนิยม 2 ตำแหน่งเสมอ
       return `${formattedValue}K`;
     }
-
-    return num.toLocaleString("en-US"); // ใส่ลูกน้ำให้ตัวเลขที่น้อยกว่า 1000
+  
+    return num.toLocaleString('en-US'); // แสดงเลขน้อยกว่า 1,000 แบบมีลูกน้ำ
   }
 
   const handleYearChange = (newYear) => {
     setYear(newYear);
-    // Reset month ถ้าเดือนเกินจากเดือนปัจจุบันในปีปัจจุบัน
-    if (
-      parseInt(newYear) === currentYear &&
-      parseInt(month) > parseInt(currentMonth)
-    ) {
-      setMonth(currentMonth);
+  
+    if (parseInt(newYear) === currentYear) {
+      // ถ้าเลือกปีปัจจุบัน และเดือนปัจจุบันเกิน currentMonth → set เป็น currentMonth
+      if (parseInt(month) > parseInt(currentMonth)) {
+        setMonth(currentMonth);
+      }
+    } else {
+      // ถ้าไม่ใช่ปีปัจจุบัน → reset เป็นเดือน 01
+      setMonth("01");
     }
   };
+  
+
+  const totalSummary = useMemo(() => {
+    const total = sortedData.reduce(
+      (acc, item) => {
+        acc.power += Number(item.power || 0);
+        acc.energy += Number(item.energy || 0);
+        acc.revenue += Number(item.revenue || 0);
+        return acc;
+      },
+      { power: 0, energy: 0, revenue: 0 }
+    );
+  
+    return {
+      power: total.power.toFixed(2),
+      energy: total.energy.toFixed(2),
+      revenue: total.revenue.toFixed(2),
+    };
+  }, [sortedData]);
+  
 
   return (
     <>
@@ -496,47 +515,59 @@ export default function Production() {
               </tr>
             </thead>
             <tbody>
-              {paginatedData.map((item) => (
-                <tr
-                  key={item.originalIndex}
-                  className="border-b border-gray-200"
-                >
-                  <td className="py-2">
-                    {highlightText(item.originalIndex, searchLoad)}
-                  </td>
-                  <td className="py-2">
-                    {highlightText(item.name, searchLoad)}
-                  </td>
-                  <td className="py-2">
-                    {highlightText(
-                      parseFloat(item.power).toFixed(2),
-                      searchLoad
-                    )}
-                  </td>
-                  <td className="py-2">
-                    {highlightText(
-                      parseFloat(item.energy).toFixed(2),
-                      searchLoad
-                    )}
-                  </td>
-                  <td className="py-2">
-                    {highlightText(
-                      parseFloat(item.revenue).toFixed(2),
-                      searchLoad
-                    )}
-                  </td>
-                </tr>
-              ))}
+  {paginatedData.length === 0 ? (
+    <tr>
+      <td className="py-4 text-center text-gray-500 dark:text-gray-400" colSpan={5}>
+        No data found
+      </td>
+    </tr>
+  ) : (
+    <>
+      {paginatedData.map((item) => (
+        <tr
+          key={item.originalIndex}
+          className="border-b border-gray-200"
+        >
+          <td className="py-2">
+            {highlightText(item.originalIndex, searchLoad)}
+          </td>
+          <td className="py-2">
+            {highlightText(item.name, searchLoad)}
+          </td>
+          <td className="py-2">
+            {highlightText(
+              parseFloat(item.power).toFixed(2),
+              searchLoad
+            )}
+          </td>
+          <td className="py-2">
+            {highlightText(
+              parseFloat(item.energy).toFixed(2),
+              searchLoad
+            )}
+          </td>
+          <td className="py-2">
+            {highlightText(
+              parseFloat(item.revenue).toFixed(2),
+              searchLoad
+            )}
+          </td>
+        </tr>
+      ))}
 
-              <tr className="font-semibold bg-gray-100 border-t border-gray-200 dark:bg-gray-900 dark:text-white">
-                <td className="py-2" colSpan={2}>
-                  Total
-                </td>
-                <td className="py-2">{totalSummary.power} kW</td>
-                <td className="py-2">{totalSummary.energy} kWh</td>
-                <td className="py-2">{totalSummary.revenue} Bath</td>
-              </tr>
-            </tbody>
+      {/* ✅ แสดง Total เฉพาะเมื่อมีข้อมูล */}
+      <tr className="font-semibold bg-gray-100 border-t border-gray-200 dark:bg-gray-900 dark:text-white">
+        <td className="py-2" colSpan={2}>
+          Total
+        </td>
+        <td className="py-2">{totalSummary.power} kW</td>
+        <td className="py-2">{totalSummary.energy} kWh</td>
+        <td className="py-2">{totalSummary.revenue} Bath</td>
+      </tr>
+    </>
+  )}
+</tbody>
+
           </table>
 
           {/* Pagination */}
@@ -672,7 +703,7 @@ export default function Production() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-4">
-          <RevenueBarChart2 data={revenueHistoryData} />
+          <RevenueBarChart2 data={revenueHistoryData} type={revenueRange}/>
         </div>
       </div>
 

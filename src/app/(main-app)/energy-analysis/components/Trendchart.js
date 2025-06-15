@@ -134,7 +134,16 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
               hide={hiddenKeys.includes(`gen${i + 1}`)}
             />
           ))}
-          <Brush dataKey="time" height={30} stroke="#8884d8" />
+          <Brush
+            dataKey="time"
+            height={30}
+            stroke="#8884d8"
+            startIndex={0}
+            endIndex={chartData.length - 1}
+            travellerWidth={0}
+            disabled={chartData.length <= 1}
+          />
+          {/* <Brush dataKey="time" height={30} stroke="#8884d8" /> */}
         </ComposedChart>
       ) : (
         <LineChart data={chartData} margin={{ top: 40, right: 0, left: leftMargin, bottom: 0 }}>
@@ -159,7 +168,16 @@ export default function EnergyTrendChart2({ type = 'day', data = {} }) {
               hide={hiddenKeys.includes(`gen${i + 1}`)}
             />
           ))}
-          <Brush dataKey="time" height={30} stroke="#8884d8" />
+          <Brush
+            dataKey="time"
+            height={30}
+            stroke="#8884d8"
+            startIndex={chartData.length <= 1 ? 0 : undefined}
+            endIndex={chartData.length - 1}
+            travellerWidth={chartData.length <= 1 ? 0 : undefined}
+            disabled={chartData.length <= 1}
+          />
+          {/* <Brush dataKey="time" height={30} stroke="#8884d8" /> */}
         </LineChart>
       )}
     </ResponsiveContainer>

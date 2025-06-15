@@ -449,7 +449,7 @@ export default function Detail({ scopeId, businessUnitId, year, siteId }) {
     },
     scope3: {
       title: "Scope 3 : การปล่อยก๊าซเรือนกระจกทางอ้อมที่อยู่เหนือการควบคุม (indirect value chain emissions)",
-      description: "การปล่อยมลพิษทางอ้อมอื่น ๆ ทั้งหมดจากกิจกรรมขององค์กร ซึ่งเกิดขึ้นจากแหล่งที่องค์กรไม่ได้เป็นเจ้าของหรือควบคุม เช่น การใช้กระดาษA4, การใช้น้ำประปา, การซื้อไฟฟ้าเพื่อจำหน่าย, การใช้รถบริการรับ-ส่งพนักงาน",
+      description: "การปล่อยก๊าซเรือนกระจกทางอ้อม ที่อยู่เหนือการควบคุม (Indirect value chain emissions) การปล่อยมลพิษทางอ้อมอื่น ๆ ทั้งหมดจากกิจกรรมขององค์กร ซึ่งเกิดขึ้นจากแหล่งที่องค์กรไม่ได้เป็นเจ้าของหรือควบคุม เช่น การใช้กระดาษ A4, การใช้น้ำประปา, การซื้อไฟฟ้าเพื่อจำหน่าย, การใช้รถบริการรับ-ส่งพนักงาน",
     },
   };
 
@@ -477,7 +477,7 @@ export default function Detail({ scopeId, businessUnitId, year, siteId }) {
   style={{ width: 250, height: 40 }}
   onChange={handleScopeChange}
 >
-  <Option value={0}>All</Option>
+  <Option value={0}>All Scopes</Option>
   {scopeList.map((item) => (
     <Option key={item.scope} value={item.scope}>
       {item.scopeName}

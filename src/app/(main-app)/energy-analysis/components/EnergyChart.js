@@ -160,7 +160,16 @@ export default function EnergyTrendChart({ type, dataProp }) {
             name="Energy Baseline"
             hide={hiddenKeys.includes("energy_base_line")}
           />
-          <Brush dataKey="day" height={30} stroke="#8884d8" />
+          {/* <Brush dataKey="day" height={30} stroke="#8884d8" /> */}
+          <Brush
+            dataKey="day"
+            height={30}
+            stroke="#8884d8"
+            startIndex={data.length <= 1 ? 0 : undefined}
+            endIndex={data.length - 1}
+            travellerWidth={data.length <= 1 ? 0 : undefined}
+            disabled={data.length <= 1}
+          />
         </ComposedChart>
       </ResponsiveContainer>
     );
@@ -212,7 +221,16 @@ export default function EnergyTrendChart({ type, dataProp }) {
           name="PV Power"
           hide={hiddenKeys.includes("generated_mirror")}
         />
-        <Brush dataKey="day" height={30} stroke="#8884d8" />
+        {/* <Brush dataKey="day" height={30} stroke="#8884d8" /> */}
+        <Brush
+            dataKey="day"
+            height={30}
+            stroke="#8884d8"
+            startIndex={data.length <= 1 ? 0 : undefined}
+            endIndex={data.length - 1}
+            travellerWidth={data.length <= 1 ? 0 : undefined}
+            disabled={data.length <= 1}
+          />
       </AreaChart>
     </ResponsiveContainer>
   );

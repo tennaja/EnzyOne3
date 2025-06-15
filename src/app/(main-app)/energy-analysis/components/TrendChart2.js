@@ -155,8 +155,16 @@ export default function EnergyTrendChart3({ type, data }) {
               />
             );
           })}
-
-          <Brush dataKey="day" height={30} stroke="#8884d8" />
+                    <Brush
+                                                    dataKey="time"
+                                                    height={30}
+                                                    stroke="#8884d8"
+                                                    startIndex={chartData.length <= 1 ? 0 : undefined}
+                                                    endIndex={chartData.length - 1}
+                                                    travellerWidth={chartData.length <= 1 ? 0 : undefined}
+                                                    disabled={chartData.length <= 1}
+                                                  />
+          {/* <Brush dataKey="day" height={30} stroke="#8884d8" /> */}
         </ComposedChart>
       </ResponsiveContainer>
     );
@@ -188,8 +196,17 @@ export default function EnergyTrendChart3({ type, data }) {
             />
           );
         })}
+<Brush
+                                                    dataKey="time"
+                                                    height={30}
+                                                    stroke="#8884d8"
+                                                    startIndex={chartData.length <= 1 ? 0 : undefined}
+                                                    endIndex={chartData.length - 1}
+                                                    travellerWidth={chartData.length <= 1 ? 0 : undefined}
+                                                    disabled={chartData.length <= 1}
+                                                  />
 
-        <Brush dataKey="day" height={30} stroke="#8884d8" />
+        {/* <Brush dataKey="day" height={30} stroke="#8884d8" /> */}
       </LineChart>
     </ResponsiveContainer>
   );

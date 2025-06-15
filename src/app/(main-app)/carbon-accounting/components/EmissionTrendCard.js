@@ -124,9 +124,26 @@ export default function EmissionTrendCard({ year, emissionData }) {
               ) : (
                 <div className="w-full h-72">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
-                      <XAxis dataKey="year" />
-                      <YAxis />
+                    <BarChart data={chartData} margin={{ top: 35, right: 50, left: 0, bottom: 5 }}>
+                      <XAxis dataKey="year" 
+                      label={{
+                        angle: 0,
+                        value: 'Month',
+                        position: 'insideRight',
+                        offset: 0,
+                        dy: -15, // ย้ายลงใต้เส้นแกน X
+                        dx: 50,
+                        style: { fontSize: 14, fill: '#666' },
+                      }}/>
+                      <YAxis label={{
+    value: 'tCO₂e',
+    angle: 0,
+    position: 'top',
+    offset: 0,
+    dx: 25,
+    dy: -20, // ย้ายขึ้นเหนือเส้นแกน Y
+    style: { fontSize: 14, fill: '#666' },
+  }} />
                       <RechartsTooltip
                       formatter={(value, name) => [`${value} tCO₂e`, name]}
                       />

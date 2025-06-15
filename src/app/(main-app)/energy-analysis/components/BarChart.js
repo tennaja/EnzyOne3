@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   BarChart,
   Bar,
@@ -12,16 +12,32 @@ import {
   CartesianGrid,
   ReferenceLine,
   Brush,
-} from 'recharts';
+} from "recharts";
 
 const distinctColors = [
-  '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
-  '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe',
-  '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000',
-  '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080'
+  "#e6194b",
+  "#3cb44b",
+  "#ffe119",
+  "#4363d8",
+  "#f58231",
+  "#911eb4",
+  "#46f0f0",
+  "#f032e6",
+  "#bcf60c",
+  "#fabebe",
+  "#008080",
+  "#e6beff",
+  "#9a6324",
+  "#fffac8",
+  "#800000",
+  "#aaffc3",
+  "#808000",
+  "#ffd8b1",
+  "#000075",
+  "#808080",
 ];
 
-export default function RevenueBarChart2({ data }) {
+export default function RevenueBarChart2({ data , type }) {
   const { devices = [], timestamp = [] } = data;
 
   // กำหนด state สำหรับแสดง/ซ่อนแต่ละ Bar
@@ -31,15 +47,15 @@ export default function RevenueBarChart2({ data }) {
     return (
       <div
         style={{
-          width: '100%',
-          height: '300px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          width: "100%",
+          height: "300px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           fontSize: 16,
-          color: '#888',
+          color: "#888",
           borderRadius: 12,
-          border: '1px solid #ddd',
+          border: "1px solid #ddd",
         }}
       >
         No data available
@@ -55,15 +71,15 @@ export default function RevenueBarChart2({ data }) {
     return point;
   });
 
-  const getTextWidth = (text, font = '12px Roboto') => {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
+  const getTextWidth = (text, font = "12px Roboto") => {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
     context.font = font;
     return context.measureText(text).width;
   };
 
   const maxY = Math.max(
-    ...chartData.flatMap(item =>
+    ...chartData.flatMap((item) =>
       devices.map((_, i) =>
         hiddenBars[`gen${i + 1}`] ? 0 : item[`gen${i + 1}`] ?? 0
       )
@@ -73,14 +89,14 @@ export default function RevenueBarChart2({ data }) {
 
   const handleLegendClick = (e) => {
     const { dataKey } = e;
-    setHiddenBars(prev => ({
+    setHiddenBars((prev) => ({
       ...prev,
       [dataKey]: !prev[dataKey],
     }));
   };
 
   return (
-    <div style={{ width: '100%', height: 420 }}>
+    <div style={{ width: "100%", height: 420 }}>
       <ResponsiveContainer width="100%" height={400}>
         <BarChart
           data={chartData}
@@ -90,9 +106,16 @@ export default function RevenueBarChart2({ data }) {
           <XAxis dataKey="time" />
           <YAxis domain={[0, maxY]} tickFormatter={(v) => v.toLocaleString()} />
           <Tooltip
-            formatter={(value, name) => [`${Number(value).toLocaleString()} ฿`, name]}
+            formatter={(value, name) => [
+              `${Number(value).toLocaleString()} ฿`,
+              name,
+            ]}
           />
-          <Legend verticalAlign="bottom" height={36} onClick={handleLegendClick} />
+          <Legend
+            verticalAlign="bottom"
+            height={36}
+            onClick={handleLegendClick}
+          />
           <ReferenceLine y={0} stroke="gray" strokeDasharray="3 3" />
 
           {devices.map((device, i) => {
@@ -109,10 +132,19 @@ export default function RevenueBarChart2({ data }) {
             );
           })}
 
-          <Brush dataKey="time" height={30} stroke="#8884d8" />
+<Brush
+  dataKey="time"
+  height={30}
+  stroke="#8884d8"
+  startIndex={chartData.length <= 1 ? 0 : undefined}
+  endIndex={chartData.length - 1}
+  travellerWidth={chartData.length <= 1 ? 0 : undefined}
+  disabled={chartData.length <= 1}
+/>
+          {/* <Brush dataKey="time" height={30} stroke="#8884d8" /> */}
 
           <text
-            x={110}
+            x={98}
             y={18}
             fill="currentColor"
             className="text-black dark:text-white"

@@ -240,7 +240,7 @@ export default function CustomGraph({}) {
       siteId: selectedSiteId,
       siteName: site.name,
       scopeId: selectedScope,
-      scopeName: scopeItem ? scopeItem.scopeName : "All",
+      scopeName: scopeItem ? scopeItem.scopeName : "All scopes",
     };
 
     const updatedDataCustom = [...dataCustom, newItem];
@@ -339,7 +339,11 @@ export default function CustomGraph({}) {
 
   // ฟังก์ชันลบรายการตาม businessUnitId, siteId, scopeId
   const handleRemove = (indexToRemove) => {
+    // ลบ Parameter ที่ตำแหน่ง indexToRemove ออกจาก dataCustom
     setDataCustom((prev) => prev.filter((_, i) => i !== indexToRemove));
+  
+    // ลบสถานะของ Parameter ที่ตำแหน่ง indexToRemove ออกจาก visibleItems
+    setVisibleItems((prev) => prev.filter((_, i) => i !== indexToRemove));
   };
 
   const handleOpenModalconfirmDeleteAll = () => {
@@ -417,17 +421,22 @@ export default function CustomGraph({}) {
       Target Year:
     </span>
     <Select
-      value={year}
-      style={{ width: 200 }}
-      onChange={handleYearChange}
-      disabled={dataCustom.length >= 1}
-    >
-      {yearList.map((item) => (
-        <Option key={item.year} value={item.year}>
-          {item.year}
-        </Option>
-      ))}
-    </Select>
+        value={year}
+        style={{ width: 200 }}
+        onChange={handleYearChange}
+        disabled={dataCustom.length >= 1 || yearList.length === 0}
+        placeholder={yearList.length === 0 ? 'No Data' : undefined}
+      >
+        {yearList.length > 0 ? (
+          yearList.map((item) => (
+            <Option key={item.year} value={item.year}>
+              {item.year}
+            </Option>
+          ))
+        ) : (
+          <Option disabled>No Data</Option>
+        )}
+      </Select>
   </div>
 
   {/* บรรทัดล่าง: Business Unit, Site, Scope, Add button อยู่แถวเดียวกัน */}
@@ -436,60 +445,87 @@ export default function CustomGraph({}) {
       Business Unit:
     </span>
     <Select
-      value={businessUnitId}
-      style={{ width: 200 }}
-      onChange={handleBusinessUnitChange}
-      disabled={dataCustom.length >= 10}
-    >
-      {businessUnitList.map((item) => (
-        <Option key={item.id} value={item.id}>
-          {item.name}
-        </Option>
-      ))}
-    </Select>
+        value={businessUnitId}
+        onChange={handleBusinessUnitChange}
+        style={{ width: 200 }}
+        disabled={dataCustom.length >= 10 || businessUnitList.length === 0}
+        placeholder={businessUnitList.length === 0 ? 'No Data' : undefined}
+      >
+        {businessUnitList.length > 0 ? (
+          businessUnitList.map((item) => (
+            <Option key={item.id} value={item.id}>
+              {item.name}
+            </Option>
+          ))
+        ) : (
+          <Option disabled>No Data</Option>
+        )}
+      </Select>
 
     <span className="text-sm">
       Site:
     </span>
     <Select
-      value={siteId}
-      style={{ width: 200 }}
-      onChange={handleSiteChange}
-      disabled={dataCustom.length >= 10}
-    >
-      {siteList.map((item) => (
-        <Option key={item.id} value={item.id}>
-          {item.name}
-        </Option>
-      ))}
-    </Select>
+        value={siteId}
+        style={{ width: 200 }}
+        onChange={handleSiteChange}
+        disabled={dataCustom.length >= 10 || siteList.length === 0}
+        placeholder={siteList.length === 0 ? 'No Data' : undefined}
+      >
+        {siteList.length > 0 ? (
+          siteList.map((item) => (
+            <Option key={item.id} value={item.id}>
+              {item.name}
+            </Option>
+          ))
+        ) : (
+          <Option disabled>No Data</Option>
+        )}
+      </Select>
 
     <span className="text-sm" >
       Scope:
     </span>
     <Select
-      value={scope}
-      style={{ width: 200, height: 40 }}
-      onChange={handleScopeChange}
-      disabled={dataCustom.length >= 10}
-    >
-      <Option value={0}>All</Option>
+  value={scope}
+  style={{ width: 200, height: 40 }}
+  onChange={handleScopeChange}
+  disabled={dataCustom.length >= 10 || scopeList.length === 0}
+  placeholder={scopeList.length === 0 ? 'No Data' : undefined}
+>
+  {scopeList.length > 0 ? (
+    <>
+      <Option value={0}>All scopes</Option>
       {scopeList.map((item) => (
         <Option key={item.scope} value={item.scope}>
           {item.scopeName}
         </Option>
       ))}
-    </Select>
+    </>
+  ) : (
+    <Option disabled>No Data</Option>
+  )}
+</Select>
+
 
     <button
       type="button"
       onClick={handleAdd}
       className={`rounded-md text-sm px-5 h-9 ${
-        dataCustom.length >= 10
+        dataCustom.length >= 10 || 
+        yearList.length === 0 ||
+      businessUnitList.length === 0 ||
+      siteList.length === 0
           ? "bg-[#e3e3e3] cursor-not-allowed text-[#999999]"
           : "bg-[#61bcbe] text-white"
       }`}
-      disabled={dataCustom.length >= 10}
+      disabled=
+      {
+        dataCustom.length >= 10 ||
+        yearList.length === 0 ||
+      businessUnitList.length === 0 ||
+      siteList.length === 0
+      }
     >
       Add
     </button>
@@ -520,46 +556,46 @@ export default function CustomGraph({}) {
       <p className="text-gray-500 italic">No parameters added.</p>
     )}
     {dataCustom.map((item, index) => (
+  <div
+    key={`${item.businessUnitId}_${item.siteId}_${item.scopeId}_${index}`}
+    className={`rounded-lg p-3 shadow-sm flex justify-between items-center ${
+      visibleItems[index]
+        ? "bg-[#f2fafa] border-2 border-[#32c0bf]" // สีสำหรับ Parameter ที่เลือก
+        : "bg-[#FFFFFF] border-2 border-[#C0C0C0]" // สีสำหรับ Parameter ที่ไม่ได้เลือก
+    }`}
+  >
+    <div className="flex items-center space-x-2">
+      <Checkbox
+        checked={visibleItems[index]}
+        onChange={() => toggleVisibility(index)}
+      />
       <div
-        key={`${item.businessUnitId}_${item.siteId}_${item.scopeId}_${index}`}
-        className="rounded-lg p-3 shadow-sm bg-[#f2fafa] border-2 border-[#32c0bf] dark:bg-gray-800 dark:text-white flex justify-between items-center"
-      >
-        <div className="flex items-center space-x-2">
-        <Checkbox
-            checked={visibleItems[index]}
-            onChange={() => toggleVisibility(index)}
-          />
-          <div
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: colors[index % colors.length] }}
-          />
-          <div className="flex flex-col justify-center">
-            <p className="text-sm font-semibold leading-tight">
-              {item.businessUnitName}
-            </p>
-            <p className="text-xs leading-tight">{item.siteName}</p>
-            <p className="text-xs text-gray-400 italic leading-tight">
-              {item.scopeName}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          {/* <Checkbox
-            checked={visibleItems[index]}
-            onChange={() => toggleVisibility(index)}
-          /> */}
-          <button
-            onClick={() => handleRemove(index)}
-            className="text-red-500 hover:text-red-700"
-            aria-label={`Remove parameter ${item.businessUnitName} - ${item.siteName} - ${item.scopeName}`}
-            type="button"
-          >
-            <DeleteIcon />
-          </button>
-        </div>
+        className="w-3 h-3 rounded-full"
+        style={{ backgroundColor: colors[index % colors.length] }}
+      />
+      <div className="flex flex-col justify-center">
+        <p className="text-sm font-semibold leading-tight">
+          {item.businessUnitName}
+        </p>
+        <p className="text-xs leading-tight">{item.siteName}</p>
+        <p className="text-xs text-gray-400 italic leading-tight">
+          {item.scopeName}
+        </p>
       </div>
-    ))}
+    </div>
+
+    <div className="flex items-center space-x-2">
+      <button
+        onClick={() => handleRemove(index)}
+        className="text-red-500 hover:text-red-700"
+        aria-label={`Remove parameter ${item.businessUnitName} - ${item.siteName} - ${item.scopeName}`}
+        type="button"
+      >
+        <DeleteIcon />
+      </button>
+    </div>
+  </div>
+))}
   </div>
 
   {dataCustom.length > 0 && (
@@ -609,7 +645,7 @@ export default function CustomGraph({}) {
                 {payload.map((entry, i) => {
                   const item = dataCustom[i];
                   const value = entry.value?.toLocaleString(undefined, {
-                    maximumFractionDigits: 2,
+                    maximumFractionDigits: 3,
                   });
 
                   return (

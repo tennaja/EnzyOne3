@@ -27,7 +27,7 @@ const scopeNames = {
   scope3: 'Scope 3',
 };
 
-export default function EmissionsOverview({ totalEmission, totalEmissionByMonth, onDetailClick }) {
+export default function EmissionsOverview({ selectedYear,totalEmission, totalEmissionByMonth, onDetailClick }) {
   const allScopes = Object.keys(scopeNames);
 
   // ตรวจสอบ scope ที่มีข้อมูลจาก totalEmission หรือ totalEmissionByMonth
@@ -89,69 +89,76 @@ export default function EmissionsOverview({ totalEmission, totalEmissionByMonth,
       <div className="flex w-full gap-4 flex-col lg:flex-row">
         {/* Pie Chart */}
         <div className="w-full lg:w-1/2">
-          <h3 className="font-semibold text-md mb-10">Total Emissions 
-          <Tooltip
-  title={
-    <>
-      <strong>Total Emissions</strong>
-      <div>ปริมาณการปล่อยก๊าซเรือนกระจกทั้งหมดจากทั้ง 3 Scope ภายในระยะเวลา 1 ปี</div>
-    </>
-  }
-  arrow
-  placement="top"
-  componentsProps={{
-    tooltip: { sx: { fontSize: "14px" ,fontFamily: "inherit", } },
-  }}
->
-  <InfoOutlinedIcon
-    className="text-[#33BFBF] ml-1 cursor-pointer"
-    fontSize="small"
-  />
-</Tooltip>
-</h3>
-          {pieData && pieData.length > 0 ? (
-            <div style={{ width: '100%', position: 'relative', height: 400 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={80}
-                    outerRadius={130}
-                    label={({ value }) => `${value} tCO₂e`}
-                  >
-                    {pieData.map((entry) => (
-                      <Cell
-                        key={`cell-${entry.name}`}
-                        fill={COLORS[entry.name]}
-                      />
-                    ))}
-                  </Pie>
-                  <PieTooltip formatter={(value) => `${value} tCO₂e`} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  textAlign: 'center',
-                }}
-              >
-                <p style={{ fontSize: '16px', fontWeight: 'bold' }}>{pieTotal.toLocaleString()}</p>
-                <p style={{ fontSize: '12px', color: '#666' }}>tCO₂e</p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-[400px] text-gray-400 text-lg">
-              No data
-            </div>
-          )}
-        </div>
+  <h3 className="font-semibold text-md ">
+    Total Emissions
+    <Tooltip
+      title={
+        <>
+          <strong>Total Emissions</strong>
+          <div>ปริมาณการปล่อยก๊าซเรือนกระจกทั้งหมดจากทั้ง 3 Scope ภายในระยะเวลา 1 ปี</div>
+        </>
+      }
+      arrow
+      placement="top"
+      componentsProps={{
+        tooltip: { sx: { fontSize: "14px", fontFamily: "inherit" } },
+      }}
+    >
+      <InfoOutlinedIcon
+        className="text-[#33BFBF] ml-1 cursor-pointer"
+        fontSize="small"
+      />
+    </Tooltip>
+  </h3>
+  {/* New Label */}
+  <p className="text-base text-gray-500 mt-2">
+    January - December {selectedYear}
+  </p>
+  {pieData && pieData.length > 0 ? (
+    <div style={{ width: "100%", position: "relative", height: 400 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={pieData}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            innerRadius={80}
+            outerRadius={130}
+            label={({ value }) => `${value} tCO₂e`}
+          >
+            {pieData.map((entry) => (
+              <Cell
+                key={`cell-${entry.name}`}
+                fill={COLORS[entry.name]}
+              />
+            ))}
+          </Pie>
+          <PieTooltip formatter={(value) => `${value} tCO₂e`} />
+        </PieChart>
+      </ResponsiveContainer>
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          textAlign: "center",
+        }}
+      >
+        <p style={{ fontSize: "16px", fontWeight: "bold" }}>
+          {pieTotal.toLocaleString()}
+        </p>
+        <p style={{ fontSize: "12px", color: "#666" }}>tCO₂e</p>
+      </div>
+    </div>
+  ) : (
+    <div className="flex items-center justify-center h-[400px] text-gray-400 text-lg">
+      No data
+    </div>
+  )}
+</div>
 
         {/* Bar Chart */}
         <div className="w-full lg:w-1/2">
@@ -177,28 +184,52 @@ export default function EmissionsOverview({ totalEmission, totalEmissionByMonth,
           </h3>
           {barData && barData.length > 0 ? (
             <div style={{ width: '100%', height: 400 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={barData}
-                  margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <BarTooltip formatter={(value) => `${value} tCO₂e`}/>
-                  {availableScopes.map((scope) =>
-                    visibleScopes.includes(scope) ? (
-                      <Bar
-                        key={scope}
-                        dataKey={scope}
-                        stackId="a"
-                        fill={COLORS[scope]}
-                      />
-                    ) : null
-                  )}
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <ResponsiveContainer width="100%" height="100%">
+  <BarChart
+    data={barData}
+    margin={{ top: 35, right: 50, left: 0, bottom: 5 }}
+  >
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis 
+      dataKey="month"
+      label={{
+        angle: 0,
+        value: 'Month',
+        position: 'insideRight',
+        offset: 0,
+        dy: -15, // ย้ายลงใต้เส้นแกน X
+        dx: 50,
+        style: { fontSize: 14, fill: '#666' },
+      }}
+    />
+    <YAxis 
+  label={{
+    value: 'tCO₂e',
+    angle: 0,
+    position: 'top',
+    offset: 0,
+    dx: 20,
+    dy: -20, // ย้ายขึ้นเหนือเส้นแกน Y
+    style: { fontSize: 14, fill: '#666' },
+  }} 
+/>
+
+
+    <BarTooltip formatter={(value) => `${value} tCO₂e`} />
+    {availableScopes.map((scope) =>
+      visibleScopes.includes(scope) ? (
+        <Bar
+          key={scope}
+          dataKey={scope}
+          stackId="a"
+          fill={COLORS[scope]}
+        />
+      ) : null
+    )}
+  </BarChart>
+</ResponsiveContainer>
+
+          </div>
           ) : (
             <div className="flex items-center justify-center h-[400px] text-gray-400 text-lg">
               No data

@@ -120,7 +120,15 @@ export default function HeatmapPage({ data = { timestamp: [], value: []} , Energ
   const height = 24 * cellHeight + 40;
 
   return (
-    <div ref={containerRef} style={{ width: '100%', overflowX: 'auto', position: 'relative' }}>
+    <div
+      ref={containerRef}
+      style={{
+        width: '100%',
+        height: 'auto', // ใช้ความสูงเต็มหน้าจอ
+        overflow: 'hidden', // ปิดการ scroll ทั้งแนวนอนและแนวตั้ง
+        position: 'relative',
+      }}
+    >
       <div style={{ width: graphWidth }}>
         <ResponsiveContainer width="100%" height={height}>
           <Surface>
@@ -136,7 +144,7 @@ export default function HeatmapPage({ data = { timestamp: [], value: []} , Energ
                 {row.hour}:00
               </text>
             ))}
-
+  
             {/* Grid Cells */}
             {gridData.rows.map((row, rowIndex) =>
               gridData.days.map((day, colIndex) => {
@@ -144,10 +152,10 @@ export default function HeatmapPage({ data = { timestamp: [], value: []} , Energ
                 const value = cell?.value ?? null;
                 const fullDate = cell?.fullDate;
                 const color = value != null ? getColor(value, min, max) : '#eee';
-
+  
                 const x = colIndex * cellWidth + paddingLeft;
                 const y = (24 - 1 - rowIndex) * cellHeight;
-
+  
                 return (
                   <Rectangle
                     key={`cell-${rowIndex}-${colIndex}`}
@@ -172,7 +180,7 @@ export default function HeatmapPage({ data = { timestamp: [], value: []} , Energ
                 );
               })
             )}
-
+  
             {/* X-Axis (Days) */}
             {gridData.days.map((day, colIndex) => (
               <text
@@ -189,31 +197,39 @@ export default function HeatmapPage({ data = { timestamp: [], value: []} , Energ
           </Surface>
         </ResponsiveContainer>
       </div>
-
-      {/* Tooltip */}
-      {hoverInfo && (
-        <div
-          style={{
-            position: 'absolute',
-            left: hoverInfo.x,
-            top: hoverInfo.y,
-            background: 'white',
-            padding: '4px 8px',
-            fontSize: 12,
-            borderRadius: 4,
-            border: '1px solid #ccc',
-            boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
-            pointerEvents: 'none',
-            zIndex: 10,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <div><strong>Day:</strong> {hoverInfo.day}</div>
-          <div><strong>Hour:</strong> {hoverInfo.hour}:00</div>
-          <div><strong>{Energytype}:</strong> {hoverInfo.value} kWh</div>
-        </div>
-      )}
-
+  
+     {hoverInfo && (
+  <div
+    style={{
+      position: 'absolute',
+      left: Math.max(
+        Math.min(hoverInfo.x, containerRef.current?.offsetWidth - 200), // Prevent overflow on the right
+        0 // Prevent overflow on the left
+      ),
+      top: Math.max(
+        Math.min(
+          hoverInfo.y, 
+          containerRef.current?.offsetHeight - 80 // Adjust to prevent overflow at the bottom
+        ),
+        0 // Prevent overflow at the top
+      ),
+      background: 'white',
+      padding: '8px 12px',
+      fontSize: 14,
+      borderRadius: 8,
+      border: '1px solid #ccc',
+      boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
+      pointerEvents: 'none',
+      zIndex: 10,
+      whiteSpace: 'nowrap',
+    }}
+  >
+    <div style={{ fontWeight: 'bold', marginBottom: 4 }}>Day: {hoverInfo.day}</div>
+    <div>Hour: {hoverInfo.hour}:00</div>
+    <div>{Energytype}: {hoverInfo.value} kWh</div>
+  </div>
+)}
+  
       {/* Legend */}
       <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <span>Less</span>

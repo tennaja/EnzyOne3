@@ -33,7 +33,7 @@ const renderSimpleLabel = ({ cx, cy, midAngle, outerRadius, percent }) => {
       x={x}
       y={y}
       fill="white"
-      fontSize={10}
+      fontSize={14}
       textAnchor="middle"
       dominantBaseline="central"
     >

@@ -20,7 +20,7 @@ const iconMap = {
   "Rate ESS capacity": <BatteryChargingFullIcon fontSize="large" className="text-red-400" />,
   "Purchased from grid": <ElectricalServicesIcon fontSize="large" className="text-teal-500" />,
   "CO₂ avoided": <Co2Icon fontSize="large" className="text-green-600" />,
-  "Equivalent tree planted": <ForestIcon fontSize="large" className="text-lime-600" />,
+  "Equivalent trees planted": <ForestIcon fontSize="large" className="text-lime-600" />,
 };
 function formatNumber(num) {
   if (typeof num !== 'number' || isNaN(num)) {

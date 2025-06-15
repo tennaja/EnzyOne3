@@ -225,15 +225,13 @@ const GetSummaryOverview = async (showLoading = true) => {
   
     if (num >= 1000) {
       const value = num / 1000;
-      // format number with commas, ถ้าเป็น integer แสดงไม่ต้องมีทศนิยม
-      const formattedValue = Number.isInteger(value)
-        ? value.toLocaleString('en-US')
-        : parseFloat(value.toFixed(1)).toLocaleString('en-US');
+      const formattedValue = value.toFixed(2); // แสดงทศนิยม 2 ตำแหน่งเสมอ
       return `${formattedValue}K`;
     }
   
-    return num.toLocaleString('en-US'); // ใส่ลูกน้ำให้ตัวเลขที่น้อยกว่า 1000
+    return num.toLocaleString('en-US'); // แสดงเลขน้อยกว่า 1,000 แบบมีลูกน้ำ
   }
+  
 
   console.log("Summary component loaded");
 
@@ -243,7 +241,7 @@ const GetSummaryOverview = async (showLoading = true) => {
         <span className="text-xl font-bold">Plant KPI</span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 mt-2">
           <Card title="Current power" value={formatNumber(summaryOverviewData?.kpi?.currentPower)} unit="kW" />
-          <Card title="Yield today" value={formatNumber(summaryOverviewData?.kpi?.currentPower)} unit="MWh" />
+          <Card title="Yield today" value={formatNumber(summaryOverviewData?.kpi?.currentPower)} unit="kWh" />
           <Card
             title="Revenue today"
             tootipword={"Yield today * Revenue rate"}
@@ -253,7 +251,7 @@ const GetSummaryOverview = async (showLoading = true) => {
           <Card
             title="Total yield"
             tootipword={"Total energy yield of the plant since installation."}
-            value={formatNumber(summaryOverviewData?.kpi?.yieldTotal)} unit="kWh" hasInfo={true}
+            value={formatNumber(summaryOverviewData?.kpi?.yieldTotal)} unit="MWh" hasInfo={true}
           />
           <Card
             title="Inverter rated power"
@@ -269,7 +267,7 @@ const GetSummaryOverview = async (showLoading = true) => {
         <span className="text-xl font-bold mb-4">Environmental Benefits</span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 mt-2">
           <Card title="CO₂ avoided" value={formatNumber(summaryOverviewData?.environmental?.carbonAvoided)} unit="tons"  />
-          <Card title="Equivalent tree planted" value={formatNumber(summaryOverviewData?.environmental?.equivalentTrees)} unit=""/>
+          <Card title="Equivalent trees planted" value={formatNumber(summaryOverviewData?.environmental?.equivalentTrees)} unit=""/>
         </div>
       </div>
       <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200">

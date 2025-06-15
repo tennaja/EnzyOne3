@@ -15,7 +15,7 @@ import {
   Brush,
 } from 'recharts';
 
-export default function RevenueChart3({ data }) {
+export default function RevenueBarChart3({ data, type }) {
   if (!data || !data.timestamp?.length || !data.devices?.length) {
     return (
       <div
@@ -110,7 +110,6 @@ export default function RevenueChart3({ data }) {
             verticalAlign="bottom"
             height={36}
             onClick={handleLegendClick}
-            // แก้ปัญหา legend กดแล้วหาย ให้ไม่ซ่อน Legend
             wrapperStyle={{ cursor: 'pointer' }}
             payload={[
               ...deviceNames.map((name, i) => ({
@@ -161,7 +160,25 @@ export default function RevenueChart3({ data }) {
             />
           )}
 
-          <Brush dataKey="day" height={30} stroke="#8884d8" />
+         {/* Conditionally Render Brush */}
+         {/* <Brush
+            dataKey="day"
+            height={30}
+            stroke="#8884d8"
+            startIndex={type === 'lifetime' ? 0 : undefined}
+            endIndex={type === 'lifetime' ? chartData.length - 1 : undefined}
+            travellerWidth={type === 'lifetime' ? 0 : undefined}
+          /> */}
+
+          <Brush
+                                                              dataKey="day"
+                                                              height={30}
+                                                              stroke="#8884d8"
+                                                              startIndex={chartData.length <= 1 ? 0 : undefined}
+                                                              endIndex={chartData.length - 1}
+                                                              travellerWidth={chartData.length <= 1 ? 0 : undefined}
+                                                              disabled={chartData.length <= 1}
+                                                            />
 
           <text
             x={120}

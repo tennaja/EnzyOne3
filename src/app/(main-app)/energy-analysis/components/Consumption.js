@@ -93,39 +93,6 @@ const DatePickerByRange = ({ range, value, onChange }) => {
   );
 };
 
-const loadData = [
-  {
-    id: 1,
-    source: "Load A",
-    currentPower: "120.5",
-    energyConsumption: "300.5",
-    onPeak: "100",
-    offPeak: "200",
-  },
-  {
-    id: 2,
-    source: "Load B",
-    currentPower: "110.1",
-    energyConsumption: "280.0",
-    onPeak: "90",
-    offPeak: "190",
-  },
-];
-
-const meterData = [
-  {
-    id: 1,
-    source: "Meter X",
-    currentPower: "98.0",
-    energyConsumption: "240.3",
-  },
-  {
-    id: 2,
-    source: "Meter Y",
-    currentPower: "105.2",
-    energyConsumption: "250.6",
-  },
-];
 
 export default function Consumption() {
   const [activeTab, setActiveTab] = useState("load");
@@ -384,10 +351,10 @@ export default function Consumption() {
       .filter(
         (item) =>
           item?.name?.toLowerCase().includes(search.toLowerCase()) ||
-          item?.power?.toString().includes(search.toLowerCase()) ||
-          item?.energy?.toString().includes(search.toLowerCase()) ||
-          item?.onPeak?.toString().includes(search.toLowerCase()) ||
-          item?.offPeak?.toString().includes(search.toLowerCase()) ||
+          item?.power?.toFixed(2).toString().includes(search.toLowerCase()) ||
+          item?.energy?.toFixed(2).toString().includes(search.toLowerCase()) ||
+          item?.onPeak?.toFixed(2).toString().includes(search.toLowerCase()) ||
+          item?.offPeak?.toFixed(2).toString().includes(search.toLowerCase()) ||
           item?.originalIndex?.toString().includes(search.toLowerCase())
       );
 
@@ -455,21 +422,19 @@ export default function Consumption() {
   };
 
   function formatNumberWithK(num) {
-    if (typeof num !== "number" || isNaN(num)) {
-      return "-";
+    if (typeof num !== 'number' || isNaN(num)) {
+      return '-';
     }
-
+  
     if (num >= 1000) {
       const value = num / 1000;
-      // format number with commas, ถ้าเป็น integer แสดงไม่ต้องมีทศนิยม
-      const formattedValue = Number.isInteger(value)
-        ? value.toLocaleString("en-US")
-        : parseFloat(value.toFixed(1)).toLocaleString("en-US");
+      const formattedValue = value.toFixed(2); // แสดงทศนิยม 2 ตำแหน่งเสมอ
       return `${formattedValue}K`;
     }
-
-    return num.toLocaleString("en-US"); // ใส่ลูกน้ำให้ตัวเลขที่น้อยกว่า 1000
+  
+    return num.toLocaleString('en-US'); // แสดงเลขน้อยกว่า 1,000 แบบมีลูกน้ำ
   }
+  
 
   const renderEnergyTrend = (title) => (
     <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
@@ -518,11 +483,14 @@ export default function Consumption() {
         <span className="font-bold text-xl">101.61</span> kWh
       </div> */}
 
-      <div className="flex flex-col lg:flex-row gap-4 mt-4">
-        <div className="w-full lg:w-2/3 h-80 flex items-center justify-center">
+      <div className="flex flex-col lg:flex-row mt-4">
+        <div className="w-full lg:w-2/3 h-auto flex items-center justify-center">
           <EnergyTrendChart3 type={energyRange} data={energyHistoryData} />
         </div>
-        <div className="w-full lg:w-1/3 h-80  flex flex-col items-center justify-center">
+        <div className="w-full lg:w-1/3 h-auto flex flex-col items-center justify-center">
+        <span className="text-sm text-gray-500 dark:text-white ">
+          Consumption Ratio
+        </span>
           <EnergyPieChart data={energyHistoryData} />
         </div>
       </div>
@@ -573,7 +541,7 @@ export default function Consumption() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4">
-        <RevenueBarChart3 data={costHistoryData} />
+        <RevenueBarChart3 data={costHistoryData} type={revenueRange}/>
       </div>
     </div>
   );
@@ -610,7 +578,6 @@ export default function Consumption() {
     sortBy,
     sortDirection,
     onSort,
-    totalSummary,
     currentPage,
     setCurrentPage,
     rowsPerPage,
@@ -618,6 +585,24 @@ export default function Consumption() {
   ) => {
     const filteredData = filterData(data, search);
     const sortedData = sortData(filteredData, sortBy, sortDirection);
+// คำนวณ total summary จาก filteredData
+const total = filteredData.reduce(
+  (acc, item) => {
+    acc.power += Number(item.power || 0);
+    acc.energy += Number(item.energy || 0);
+    acc.onPeak += Number(item.onPeak || 0);
+    acc.offPeak += Number(item.offPeak || 0);
+    return acc;
+  },
+  { power: 0, energy: 0, onPeak: 0, offPeak: 0 }
+);
+
+const totalSummary = {
+  power: total.power.toFixed(2),
+  energy: total.energy.toFixed(2),
+  onPeak: total.onPeak.toFixed(2),
+  offPeak: total.offPeak.toFixed(2),
+};
 
     // คำนวณ pagination
     const totalPages = Math.ceil(sortedData.length / rowsPerPage);
@@ -682,7 +667,7 @@ export default function Consumption() {
                 </th>
                 <th className="py-2">
                   {renderSortHeader(
-                    "Current Power (kWh)",
+                    "Current Power (kW)",
                     "power",
                     sortBy,
                     sortDirection,
@@ -825,7 +810,6 @@ export default function Consumption() {
     sortBy,
     sortDirection,
     onSort,
-    totalSummary,
     currentPage,
     setCurrentPage,
     rowsPerPage,
@@ -833,6 +817,24 @@ export default function Consumption() {
   ) => {
     const filteredData = filterData(data, search);
     const sortedData = sortData(filteredData, sortBy, sortDirection);
+// คำนวณ total summary จาก filteredData
+const total = filteredData.reduce(
+  (acc, item) => {
+    acc.power += Number(item.power || 0);
+    acc.energy += Number(item.energy || 0);
+    acc.onPeak += Number(item.onPeak || 0);
+    acc.offPeak += Number(item.offPeak || 0);
+    return acc;
+  },
+  { power: 0, energy: 0, onPeak: 0, offPeak: 0 }
+);
+
+const totalSummary = {
+  power: total.power.toFixed(2),
+  energy: total.energy.toFixed(2),
+  onPeak: total.onPeak.toFixed(2),
+  offPeak: total.offPeak.toFixed(2),
+};
 
     // คำนวณ pagination
     const totalPages = Math.ceil(sortedData.length / rowsPerPage);
@@ -855,7 +857,7 @@ export default function Consumption() {
     return (
       <>
         <div className="flex justify-between mb-4">
-          <h2 className="text-xl font-bold">Energy Load Consumption</h2>
+          <h2 className="text-xl font-bold">Energy Meter Consumption</h2>
           <div className="flex flex-col items-end gap-4">
             <input
               type="text"
@@ -897,7 +899,7 @@ export default function Consumption() {
                 </th>
                 <th className="py-2">
                   {renderSortHeader(
-                    "Current Power (kWh)",
+                    "Current Power (kW)",
                     "power",
                     sortBy,
                     sortDirection,
@@ -1318,7 +1320,6 @@ export default function Consumption() {
               sortByLoad,
               sortDirectionLoad,
               onSortLoad,
-              totalSummary,
               currentPageLoad,
               setCurrentPageLoad,
               rowsPerPageLoad, // ส่งเพิ่มเข้าไป
@@ -1334,7 +1335,6 @@ export default function Consumption() {
               sortByMeter,
               sortDirectionMeter,
               onSortMeter,
-              totalSummary,
               currentPageMeter,
               setCurrentPageMeter,
               rowsPerPageMeter,
