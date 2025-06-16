@@ -241,11 +241,11 @@ const GetSummaryOverview = async (showLoading = true) => {
         <span className="text-xl font-bold">Plant KPI</span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 mt-2">
           <Card title="Current power" value={formatNumber(summaryOverviewData?.kpi?.currentPower)} unit="kW" />
-          <Card title="Yield today" value={formatNumber(summaryOverviewData?.kpi?.currentPower)} unit="kWh" />
+          <Card title="Yield today" value={formatNumber(summaryOverviewData?.kpi?.yieldToday)} unit="kWh" />
           <Card
             title="Revenue today"
             tootipword={"Yield today * Revenue rate"}
-            value={formatNumberWithK(summaryOverviewData?.kpi?.yieldToday)} unit="Baht"
+            value={formatNumberWithK(summaryOverviewData?.kpi?.revenueToday)} unit="Baht"
           hasInfo={true}
           />
           <Card
