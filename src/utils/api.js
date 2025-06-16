@@ -2466,10 +2466,11 @@ export async function getCarbonDetailList(req) {
   const year = req.year;
   const format = req.format;
   const scope = req.scope;
+  const search = req.search;
 
   try {
     const url =
-      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/details/list/${companyId}?format=${format}&scope=${scope}&siteId=${siteId}&businessUnitId=${businessUnitId}&year=${year}`;
+      `https://enzy-api.egat.co.th/dev/api/v1/carbon-accounting/details/list/${companyId}?format=${format}&search=${search}&scope=${scope}&siteId=${siteId}&businessUnitId=${businessUnitId}&year=${year}`;
     
     // กำหนด config ของ axios
     const axiosConfig = {
