@@ -204,6 +204,8 @@ export default function Header() {
             year={selectYear}
             businessUnitId={selectBusinessUnitId}
             siteId={selectSiteId}
+            siteName={siteName}
+            businessUnitName={businessUnitName}
             setActiveTab={setActiveTab}
           />
         );

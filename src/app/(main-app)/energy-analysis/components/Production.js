@@ -410,16 +410,9 @@ export default function Production() {
 
   const handleYearChange = (newYear) => {
     setYear(newYear);
-  
-    if (parseInt(newYear) === currentYear) {
-      // ถ้าเลือกปีปัจจุบัน และเดือนปัจจุบันเกิน currentMonth → set เป็น currentMonth
-      if (parseInt(month) > parseInt(currentMonth)) {
-        setMonth(currentMonth);
-      }
-    } else {
       // ถ้าไม่ใช่ปีปัจจุบัน → reset เป็นเดือน 01
       setMonth("01");
-    }
+    
   };
   
 

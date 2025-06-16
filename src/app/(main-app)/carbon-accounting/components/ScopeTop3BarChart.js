@@ -52,21 +52,38 @@ export default function ScopeTop3BarChart({ year, emissionData }) {
 
   // Custom tick แสดงคำในแกน y และตัดข้อความยาวเกินไป
   const CustomizedYAxisTick = ({ x, y, payload }) => {
-    const maxLength = 15; // Maximum number of characters before truncating
+    const maxLength = 15;
+  
+    const containsThai = (text) => /[\u0E00-\u0E7F]/.test(text);
+    const isThai = containsThai(payload.value);
+  
+    // ถ้าเป็นภาษาไทย — ตัดด้วย ...
     const truncatedValue =
-      payload.value.length > maxLength
+      isThai && payload.value.length > maxLength
         ? `${payload.value.substring(0, maxLength)}...`
         : payload.value;
+  
+    // ถ้าเป็นภาษาอังกฤษ — ขึ้นบรรทัดใหม่ทุกคำ (แยกตาม space)
+    const renderWrappedEnglish = (text) => {
+      const words = text.split(' ');
+      return words.map((word, index) => (
+        <tspan key={index} x={0} dy={index === 0 ? 0 : 10}>
+          {word}
+        </tspan>
+      ));
+    };
   
     return (
       <g transform={`translate(${x},${y})`}>
         <text x={0} y={0} dy={4} textAnchor="end" fill="#666" fontSize={10}>
-          <title>{payload.value}</title> {/* Full name on hover */}
-          {truncatedValue}
+          <title>{payload.value}</title>
+          {isThai ? truncatedValue : renderWrappedEnglish(payload.value)}
         </text>
       </g>
     );
   };
+  
+  
 
   // ฟังก์ชัน map ข้อมูล scope (กรอง Top3)
 
@@ -142,7 +159,7 @@ export default function ScopeTop3BarChart({ year, emissionData }) {
                       tickFormatter={(v) => v.toLocaleString()}
                       label={{
                         angle: 0,
-                        value: 'Month',
+                        value: 'tCO₂e',
                         position: 'insideRight',
                         offset: 0,
                         dy: -10, // ย้ายลงใต้เส้นแกน X
@@ -156,7 +173,7 @@ export default function ScopeTop3BarChart({ year, emissionData }) {
                       width={100}
                       tick={<CustomizedYAxisTick />}
                       label={{
-                        value: 'tCO₂e',
+                        value: 'Item',
                         angle: 0,
                         position: 'top',
                         offset: 0,

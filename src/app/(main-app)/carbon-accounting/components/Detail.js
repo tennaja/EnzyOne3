@@ -14,7 +14,7 @@ import { getCarbonDetailList, getCarbonDetail ,getCarbonScopeList } from "@/util
 import Loading from "./Loading";
 const { Option } = Select;
 
-export default function Detail({ scopeId, businessUnitId, year, siteId }) {
+export default function Detail({ scopeId, businessUnitId, year, siteId,siteName,businessUnitName,setActiveTab }) {
   
   const [detailData, setDetailData] = useState([]);
   const [detailList, setDetailList] = useState([]);
@@ -448,14 +448,21 @@ export default function Detail({ scopeId, businessUnitId, year, siteId }) {
       description: "การปล่อยก๊าซทางอ้อมที่เกี่ยวข้องกับการผลิตพลังงานที่ซื้อหรือได้มาเท่านั้น เช่น ไอน้ำไฟฟ้า ความร้อน หรือการทำความเย็น ซึ่งเกิดขึ้นนอกสถานที่และถูกใช้โดยองค์กร",
     },
     scope3: {
-      title: "Scope 3 : การปล่อยก๊าซเรือนกระจกทางอ้อมที่อยู่เหนือการควบคุม (indirect value chain emissions)",
-      description: "การปล่อยก๊าซเรือนกระจกทางอ้อม ที่อยู่เหนือการควบคุม (Indirect value chain emissions) การปล่อยมลพิษทางอ้อมอื่น ๆ ทั้งหมดจากกิจกรรมขององค์กร ซึ่งเกิดขึ้นจากแหล่งที่องค์กรไม่ได้เป็นเจ้าของหรือควบคุม เช่น การใช้กระดาษ A4, การใช้น้ำประปา, การซื้อไฟฟ้าเพื่อจำหน่าย, การใช้รถบริการรับ-ส่งพนักงาน",
+      title: "Scope 3 : การปล่อยก๊าซเรือนกระจกทางอ้อมที่อยู่เหนือการควบคุม (Indirect value chain emissions)",
+      description: "การปล่อยมลพิษทางอ้อมอื่น ๆ ทั้งหมดจากกิจกรรมขององค์กร ซึ่งเกิดขึ้นจากแหล่งที่องค์กรไม่ได้เป็นเจ้าของหรือควบคุม เช่น การใช้กระดาษ A4, การใช้น้ำประปา, การซื้อไฟฟ้าเพื่อจำหน่าย, การใช้รถบริการรับ-ส่งพนักงาน",
     },
   };
 
   return (
     <>
-      
+       <div className="flex flex-col gap-2 mt-5">
+    <p className="text-lg font-bold text-slate-800 dark:text-white">
+    Target Year {year} | {businessUnitName} | {siteName} 
+    </p>
+    {/* <p className="text-sm block">
+      Last Updated on {lastUpdated}
+    </p> */}
+  </div>
 
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
   {renderScopeTable("Scope 1", scopeTooltips.scope1, scope1Data)}

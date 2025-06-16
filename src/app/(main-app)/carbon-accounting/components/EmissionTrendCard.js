@@ -124,15 +124,15 @@ export default function EmissionTrendCard({ year, emissionData }) {
               ) : (
                 <div className="w-full h-72">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} margin={{ top: 35, right: 50, left: 0, bottom: 5 }}>
+                    <BarChart data={chartData} margin={{ top: 35, right: 70, left: 0, bottom: 5 }}>
                       <XAxis dataKey="year" 
                       label={{
                         angle: 0,
-                        value: 'Month',
+                        value: 'Fiscal Year',
                         position: 'insideRight',
                         offset: 0,
                         dy: -15, // ย้ายลงใต้เส้นแกน X
-                        dx: 50,
+                        dx: 70,
                         style: { fontSize: 14, fill: '#666' },
                       }}/>
                       <YAxis label={{

@@ -333,14 +333,20 @@ export default function Consumption() {
 
   const handleYearChange = (newYear) => {
     setYear(newYear);
-    // Reset month ถ้าเดือนเกินจากเดือนปัจจุบันในปีปัจจุบัน
-    if (
-      parseInt(newYear) === currentYear &&
-      parseInt(month) > parseInt(currentMonth)
-    ) {
-      setMonth(currentMonth);
-    }
+      // ถ้าไม่ใช่ปีปัจจุบัน → reset เป็นเดือน 01
+      setMonth("01");
+    
   };
+  // const handleYearChange = (newYear) => {
+  //   setYear(newYear);
+  //   // Reset month ถ้าเดือนเกินจากเดือนปัจจุบันในปีปัจจุบัน
+  //   if (
+  //     parseInt(newYear) === currentYear &&
+  //     parseInt(month) > parseInt(currentMonth)
+  //   ) {
+  //     setMonth(currentMonth);
+  //   }
+  // };
 
   const filterData = (data, search) =>
     data
