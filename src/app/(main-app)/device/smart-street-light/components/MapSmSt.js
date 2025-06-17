@@ -29,9 +29,11 @@ const MapTH = ({
   setActiveTab,
   SiteId,
   GroupId,
+  isSearchClicked,
   className = "w-[auto] h-500px] rounded-lg shadow-md overflow-hidden",
 }) => {
   const mapRef = useRef(null);
+  const prevSearchClickedRef = useRef(isSearchClicked);
   const prevSiteIdRef = useRef(SiteId);
   const prevGroupIdRef = useRef(GroupId);
   const [selectedMarker, setSelectedMarker] = useState(null);
@@ -76,7 +78,7 @@ const MapTH = ({
     if (!mapRef.current) return;
   
     // ตรวจสอบโดยใช้ String() เพื่อแก้ไขปัญหาชนิดข้อมูลไม่ตรงกัน
-    if (String(prevSiteIdRef.current) !== String(SiteId) || String(prevGroupIdRef.current) !== String(GroupId)) {
+    if (String(prevSearchClickedRef.current) !== String(isSearchClicked)) {
       setActiveTab("table");
       setSelectedMarker(null);
       setSelectedLocation(null);
@@ -87,10 +89,8 @@ const MapTH = ({
         mapRef.current.fitBounds(bounds, { padding: [100, 100], maxZoom: 17, animate: true });
       }
     }
-  
-    prevSiteIdRef.current = SiteId;
-    prevGroupIdRef.current = GroupId;
-  }, [SiteId, GroupId, locationList, setActiveTab]);
+    prevSearchClickedRef.current = isSearchClicked;
+  }, [isSearchClicked,locationList, setActiveTab]);
 
   // รีเซ็ต hoveredMarker เมื่อ locationList หรือ selectedMarker เปลี่ยน
   useEffect(() => {

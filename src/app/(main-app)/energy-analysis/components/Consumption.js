@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo ,useRef} from "react";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Tooltip from "@mui/material/Tooltip";
 import dayjs from "dayjs";
@@ -95,6 +95,8 @@ const DatePickerByRange = ({ range, value, onChange }) => {
 
 
 export default function Consumption() {
+  const previousRevenueRangeRef = useRef(null);
+  const previousEnergyRangeRef = useRef(null);
   const [activeTab, setActiveTab] = useState("load");
   const [lastUpdated, setLatsUpdated] = useState("");
   // const [searchLoad, setSearchLoad] = useState("");
@@ -144,7 +146,10 @@ export default function Consumption() {
   }, [activeTab]);
 
   useEffect(() => {
-    GetEnergyHistory();
+    if (previousEnergyRangeRef.current !== energyRange) {
+      GetEnergyHistory(); // เรียกเฉพาะเมื่อเปลี่ยน
+      previousEnergyRangeRef.current = energyRange;
+    }
     const interval = setInterval(() => {
       GetEnergyHistory(false);
     }, 300000);
@@ -153,7 +158,11 @@ export default function Consumption() {
   }, [activeTab, energyDate, energyRange]);
 
   useEffect(() => {
-    GetCostHistory();
+    if (previousRevenueRangeRef.current !== revenueRange) {
+      GetCostHistory(); // เรียกเฉพาะเมื่อเปลี่ยน
+      previousRevenueRangeRef.current = revenueRange;
+    }
+    
     const interval = setInterval(() => {
       GetCostHistory(false);
     }, 300000);

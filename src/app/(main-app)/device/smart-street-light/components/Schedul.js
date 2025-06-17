@@ -33,6 +33,7 @@ export default function ScheduleComponent({
   GroupId,
 }) {
   const [data, setData] = useState(scheduleData);
+  const [searchTerm, setSearchTerm] = useState("");
   const [selected, setSelected] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
@@ -324,7 +325,7 @@ export default function ScheduleComponent({
       onClickConfirmBtn:
         action == "create" ? handleExternalSave : handleExternalUpdate,
       title: "Edit/Save Schedule",
-      content: "Are you sureyou want to save this schedule ?",
+      content: "Are you sure you want to save this schedule ?",
       buttonTypeColor: "primary",
     });
   };
@@ -334,7 +335,7 @@ export default function ScheduleComponent({
       onCloseModal: handleClosePopup,
       onClickConfirmBtn: handleRemove,
       title: "Remove Schedule",
-      content: "Are you sureyou want to remove he selected items?",
+      content: "Are you sure you want to remove he selected items?",
       buttonTypeColor: "primary",
     });
   };
@@ -392,15 +393,6 @@ export default function ScheduleComponent({
     setCurrentPage(1);
   };
 
-  const indexOfLastDevice = currentPage * rowsPerPage;
-  const indexOfFirstDevice = indexOfLastDevice - rowsPerPage;
-  const currentData = sortedData.slice(indexOfFirstDevice, indexOfLastDevice);
-
-  const totalPages = Math.ceil(schedulelist.length / rowsPerPage);
-  const paginatedData = schedulelist.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
 
   const notifySuccess = (title, message) =>
     toast.success(
@@ -443,6 +435,40 @@ export default function ScheduleComponent({
   function transformTimeFormat(input) {
     return input.replace(/\((\+(\d+))\)/, (_, exp, num) => toSuperscript(exp));
   }
+ // กรองข้อมูลตามคำค้นหา
+ const filteredData = useMemo(() => {
+  return schedulelist.filter((schedule) => {
+    const searchLower = searchTerm?.toLowerCase() || ""; // ตรวจสอบ searchTerm ก่อนใช้ .toLowerCase()
+    return (
+      schedule.name?.toLowerCase()?.includes(searchLower) || // ค้นหาใน name
+      schedule.repeat?.toLowerCase()?.includes(searchLower) || // ค้นหาใน repeat
+      String(schedule.startTime)?.includes(searchTerm) || // ค้นหาใน startTime
+      String(schedule.stopTime)?.includes(searchTerm) || // ค้นหาใน stopTime
+      `${schedule.percentDimming}%`.includes(searchTerm) // ค้นหาใน percentDimming พร้อม %
+    );
+  });
+}, [schedulelist, searchTerm]);
+
+const indexOfLastDevice = currentPage * rowsPerPage;
+const indexOfFirstDevice = indexOfLastDevice - rowsPerPage;
+const currentData = filteredData.slice(indexOfFirstDevice, indexOfLastDevice);
+
+const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+
+const highlightText = (text) => {
+  if (!text || !searchTerm) return text; // ถ้าไม่มีข้อความหรือ searchTerm ให้คืนค่าข้อความเดิม
+  const textString = String(text); // แปลงข้อความเป็น string
+  const parts = textString.split(new RegExp(`(${searchTerm})`, "gi")); // แยกข้อความตาม searchTerm
+  return parts.map((part, i) =>
+    part.toLowerCase() === searchTerm.toLowerCase() ? (
+      <span key={i} className="bg-yellow-300 dark:bg-yellow-300">
+        {part}
+      </span>
+    ) : (
+      part
+    )
+  );
+};
 
   return (
     <div className="grid rounded-xl bg-white p-6 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-3">
@@ -455,20 +481,29 @@ export default function ScheduleComponent({
         </div>
 
         <div className="p-2 max-w-full mx-auto mt-10">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-base font-semibold">
-              {schedulelist.length} Schedules
-            </h2>
-            <button
-              className="flex items-center gap-2 px-4 py-2 bg-[#33BFBF] text-white rounded-lg hover:bg-teal-600"
-              onClick={() => {
-                setopenModalSchedule(true);
-                setAction("create");
-              }}
-            >
-              Add Schedule
-            </button>
-          </div>
+        <div className="flex justify-between items-center mb-4">
+  <h2 className="text-base font-semibold mb-4">
+    {schedulelist.length} Schedules
+  </h2>
+  <div className="flex items-center gap-4">
+    <input
+      type="text"
+      placeholder="ค้นหา"
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="w-56 p-1.5 border rounded-lg"
+    />
+    <button
+      className="flex items-center gap-2 px-4 py-2 bg-[#33BFBF] text-white rounded-lg hover:bg-teal-600"
+      onClick={() => {
+        setopenModalSchedule(true);
+        setAction("create");
+      }}
+    >
+      Add Schedule
+    </button>
+  </div>
+</div>
           {selected.length > 0 && (
             <div className="bg-green-100 p-2 rounded-lg mb-2 flex justify-between items-center dark:text-gray-700">
               <span>{selected.length} items selected</span>
@@ -656,102 +691,90 @@ export default function ScheduleComponent({
                 </tr>
               </thead>
               <tbody>
-                {schedulelist.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="7"
-                      className="text-center text-gray-500 dark:text-gray-400 p-5"
-                    >
-                      Schedule not found
-                    </td>
-                  </tr>
-                ) : (
-                  currentData.map((schedule, index) => (
-                    <tr
-                      key={schedule?.id}
-                      className={`border-b ${
-                        index % 2 === 0
-                          ? "bg-gray-100  dark:bg-gray-900"
-                          : "bg-white dark:bg-gray-800"
-                      } border-b border-gray-300 dark:border-gray-700`}
-                      style={{ borderBottom: "1px solid #e0e0e0" }}
-                    >
-                      <td className="p-3 w-10">
-                        <Checkbox
-                          checked={selected.includes(schedule?.id)}
-                          onChange={() => toggleSelect(schedule?.id)}
-                          disabled={schedule?.status === "active"}
-                        />
-                      </td>
-                      <td className="p-3 text-gray-900 dark:text-white">
-                        {schedule?.name}
-                      </td>
-                      <td className="p-3 text-gray-700 dark:text-gray-300 text-center">
-                        {schedule?.repeat}
-                      </td>
-                      <td className="p-3 text-gray-700 dark:text-gray-300 text-right">
-                        <div className="flex flex-col items-end">
-                          {schedule?.repeat === "once" ? (
-                            <>
-                              <span>Start: {schedule?.executionDateTime}</span>
-                              <span>
-                                Stop: {schedule?.executionEndDateTime}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <span>{schedule?.customDate}</span>
-                              <span>
-                                {schedule?.startTime && schedule?.endTime
-                                  ? `${
-                                      schedule.startTime
-                                    } - ${transformTimeFormat(
-                                      schedule.endTime
-                                    )}`
-                                  : "ยังไม่ได้กำหนด"}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </td>
-
-                      <td className="p-3 text-gray-700 dark:text-gray-300 text-right">
-                        {schedule?.percentDimming}%
-                      </td>
-                      <td className="p-3 text-center">
-                        <Switch
-                          checked={schedule?.status === "active"}
-                          onChange={() => handleToggleStatus(schedule?.id)}
-                          className={`${
-                            schedule?.status === "active"
-                              ? "bg-teal-500 dark:bg-teal-400"
-                              : "bg-gray-300 dark:bg-gray-600"
-                          } relative inline-flex h-6 w-11 items-center rounded-full`}
-                        >
-                          <span
-                            className={`${
-                              schedule?.status === "active"
-                                ? "translate-x-6"
-                                : "translate-x-1"
-                            } inline-block h-4 w-4 transform bg-white rounded-full`}
-                          />
-                        </Switch>
-                      </td>
-                      <td className="p-3 text-center">
-                        <button
-                          onClick={() => {
-                            getSchedulById(schedule?.id);
-                            setAction("update");
-                          }}
-                          className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
-                        >
-                          <CreateIcon size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
+  {currentData.length === 0 ? (
+    <tr>
+      <td colSpan="7" className="text-center text-gray-500 dark:text-gray-400 p-5">
+        Schedule not found
+      </td>
+    </tr>
+  ) : (
+    currentData.map((schedule, index) => (
+      <tr
+        key={schedule?.id}
+        className={`border-b ${
+          index % 2 === 0 ? "bg-gray-100 dark:bg-gray-900" : "bg-white dark:bg-gray-800"
+        } border-b border-gray-300 dark:border-gray-700`}
+        style={{ borderBottom: "1px solid #e0e0e0" }}
+      >
+        <td className="p-3 w-10">
+          <Checkbox
+            checked={selected.includes(schedule?.id)}
+            onChange={() => toggleSelect(schedule?.id)}
+            disabled={schedule?.status === "active"}
+          />
+        </td>
+        <td className="p-3 text-gray-900 dark:text-white">
+          {highlightText(schedule?.name)}
+        </td>
+        <td className="p-3 text-gray-700 dark:text-gray-300 text-center">
+          {highlightText(schedule?.repeat)}
+        </td>
+        <td className="p-3 text-gray-700 dark:text-gray-300 text-right">
+          <div className="flex flex-col items-end">
+            {schedule?.repeat === "once" ? (
+              <>
+                <span>Start: {highlightText(schedule?.executionDateTime)}</span>
+                <span>Stop: {highlightText(schedule?.executionEndDateTime)}</span>
+              </>
+            ) : (
+              <>
+                <span>{schedule?.customDate}</span>
+                <span>
+                  {highlightText(
+                    schedule?.startTime && schedule?.endTime
+                      ? `${schedule.startTime} - ${transformTimeFormat(schedule.endTime)}`
+                      : "ยังไม่ได้กำหนด"
+                  )}
+                </span>
+              </>
+            )}
+          </div>
+        </td>
+        <td className="p-3 text-gray-700 dark:text-gray-300 text-right">
+  {highlightText(`${schedule?.percentDimming}%`)}
+</td>
+        <td className="p-3 text-center">
+          <Switch
+            checked={schedule?.status === "active"}
+            onChange={() => handleToggleStatus(schedule?.id)}
+            className={`${
+              schedule?.status === "active"
+                ? "bg-teal-500 dark:bg-teal-400"
+                : "bg-gray-300 dark:bg-gray-600"
+            } relative inline-flex h-6 w-11 items-center rounded-full`}
+          >
+            <span
+              className={`${
+                schedule?.status === "active" ? "translate-x-6" : "translate-x-1"
+              } inline-block h-4 w-4 transform bg-white rounded-full`}
+            />
+          </Switch>
+        </td>
+        <td className="p-3 text-center">
+          <button
+            onClick={() => {
+              getSchedulById(schedule?.id);
+              setAction("update");
+            }}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
+          >
+            <CreateIcon size={16} />
+          </button>
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
             </table>
           </div>
           <div className="flex justify-between items-center mt-4">

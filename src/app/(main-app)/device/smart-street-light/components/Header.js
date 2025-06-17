@@ -42,7 +42,7 @@ const Header = () => {
   const [selectedGroupName, setSelectedGroupName] = useState("");
   const [isfirst, setIsfirst] = useState(true);
   const hasFetchedSchedule = useRef(false); // ใช้เพื่อป้องกันการเรียกซ้ำ
-
+ const [isSearchClicked, setIsSearchClicked] = useState(Date.now());
   const SelectIdSite = useSelector(
     (state) => state.smartstreetlightData.siteId
   );
@@ -154,7 +154,7 @@ const Header = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return <Dashboard Sitename={siteName} Groupname={groupName} />;
+        return <Dashboard Sitename={siteName} Groupname={groupName} isSearchClicked={isSearchClicked}/>;
       case "control":
         return (
           <DeviceControlPage
@@ -162,6 +162,7 @@ const Header = () => {
             Sitename={siteName}
             Groupname={groupName}
             SiteId={siteid}
+
           />
         );
       case "schedule":
@@ -272,6 +273,7 @@ const Header = () => {
 
   const handleSearch = () => {
     console.log("Searching with:", selectedSiteName, selectedGroupName);
+    setIsSearchClicked(Date.now()); // อัปเดตเวลาเมื่อมีการค้นหา
 
     setSiteName(selectedSiteName);
     setGroupName(selectedGroupName);

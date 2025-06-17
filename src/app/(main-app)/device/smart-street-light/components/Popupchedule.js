@@ -30,6 +30,7 @@ const SchedulePopup = forwardRef(
 
     const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
     const [selectedDevices, setSelectedDevices] = useState([]);
+    const [hasSelectedStartDate, setHasSelectedStartDate] = useState(false);
     const [dimmingLevel, setDimmingLevel] = useState(
       scheduleData?.percentDimming || 10
     );
@@ -152,6 +153,13 @@ const SchedulePopup = forwardRef(
         console.log(executionEndDateTime);
       }
     }, [isOpen]);
+
+    useEffect(() => {
+      if (action === "create") {
+        setHasSelectedStartDate(false); // reset ทุกครั้งเมื่อเริ่ม create ใหม่
+      }
+    }, [action]);
+    
 
     const handleDayChange = (day) => {
       setSelectedDays((prevState) => ({
@@ -612,7 +620,7 @@ const SchedulePopup = forwardRef(
                   onChange={(e) => {
                     const newRepeat = e.target.value;
                     setRepeatOption(newRepeat);
-
+                    setHasSelectedStartDate(false); // reset เมื่อเปลี่ยน repeat option
                     // ตรวจสอบว่า schedule มีค่าและเป็นอาเรย์ก่อน
                     if (schedule && schedule.length > 0) {
                       schedule[0] = {
@@ -667,8 +675,10 @@ const SchedulePopup = forwardRef(
                       showTime
                       value={
                         executionEndDateTime
-                          ? dayjs(executionEndDateTime)
-                          : null
+      ? action === "create"
+        ? dayjs(executionEndDateTime).add(1, "minute")
+        : dayjs(executionEndDateTime)
+      : null
                       }
                       onChange={(date) => {
                         setexecutionEndDateTime(
@@ -700,7 +710,7 @@ const SchedulePopup = forwardRef(
                       }
                       onChange={(date) => {
                         if (!date) return;
-
+                        setHasSelectedStartDate(true);
                         // ตั้งค่า Start Date
                         const startISO = date.toISOString();
                         setexecutionDateTime(startISO);
@@ -742,59 +752,57 @@ const SchedulePopup = forwardRef(
                     />
 
                     <span>-</span>
-
                     <DatePicker
-                      className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
-                      showTime
-                      disabled={!executionDateTime}
-                      value={
-                        executionEndDateTime
-                          ? dayjs(executionEndDateTime)
-                          : null
-                      }
-                      onChange={(date) => {
-                        if (!date) return;
-                        // ตั้งค่า End Date
-                        setexecutionEndDateTime(date.toISOString());
-                        console.log(
-                          "executionEndDateTime:",
-                          date.format("YYYY-MM-DD HH:mm")
-                        );
-                      }}
-                      format="YYYY/MM/DD HH:mm"
-                      allowClear={false}
-                      disabledDate={(current) => {
-                        if (!executionDateTime) return false; // ห้ามเลือก End Date จนกว่าจะเลือก Start Date
-                        return (
-                          current &&
-                          current.isBefore(dayjs(executionDateTime), "day")
-                        );
-                      }}
-                      disabledTime={(current) => {
-                        if (!executionDateTime || !current) return {};
+  className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
+  showTime
+  disabled={
+    (action === "create" && !hasSelectedStartDate) ||
+    (action === "edit" && !executionDateTime)
+  }
+  value={
+    executionEndDateTime
+      ? action === "create"
+        ? dayjs(executionEndDateTime).add(1, "minute")
+        : dayjs(executionEndDateTime)
+      : null
+  }
+  
+  onChange={(date) => {
+    if (!date) return;
+    setexecutionEndDateTime(date.toISOString());
+    console.log("executionEndDateTime:", date.format("YYYY-MM-DD HH:mm"));
+  }}
+  format="YYYY/MM/DD HH:mm"
+  allowClear={false}
+  disabledDate={(current) => {
+    if (!executionDateTime) return false;
+    return current && current.isBefore(dayjs(executionDateTime), "day");
+  }}
+  disabledTime={(current) => {
+    if (!executionDateTime || !current) return {};
 
-                        const start = dayjs(executionDateTime);
-                        if (!current.isSame(start, "day")) return {}; // อนุญาตให้เลือกวันอื่น
+    const start = dayjs(executionDateTime);
+    if (!current.isSame(start, "day")) return {};
 
-                        // ห้ามเลือกเวลาที่น้อยกว่า Start Date + 1 นาที
-                        const startHour = start.hour();
-                        const startMinute = start.minute();
+    const startHour = start.hour();
+    const startMinute = start.minute();
 
-                        return {
-                          disabledHours: () =>
-                            Array.from({ length: 24 }, (_, i) => i).filter(
-                              (hour) => hour < startHour
-                            ),
-                          disabledMinutes: (selectedHour) => {
-                            if (selectedHour < startHour) return [];
-                            return Array.from(
-                              { length: 60 },
-                              (_, i) => i
-                            ).filter((minute) => minute <= startMinute);
-                          },
-                        };
-                      }}
-                    />
+    return {
+      disabledHours: () =>
+        Array.from({ length: 24 }, (_, i) => i).filter(
+          (hour) => hour < startHour
+        ),
+      disabledMinutes: (selectedHour) => {
+        if (selectedHour < startHour) return [];
+        return Array.from({ length: 60 }, (_, i) => i).filter(
+          (minute) => minute <= startMinute
+        );
+      },
+    };
+  }}
+/>
+
+
                   </div>
                 )}
                 {(repeatOption === "everyday" ||
@@ -859,7 +867,8 @@ const SchedulePopup = forwardRef(
                       <span>-</span>
 
                       <TimePicker
-                        value={endDatetime ? dayjs(endDatetime, "HH:mm") : null}
+                        value={
+                          endDatetime ? action === "create" ? dayjs(endDatetime, "HH:mm").add(1, "minute") : dayjs(endDatetime, "HH:mm") : null}
                         onChange={(time) => {
                           if (!time) return;
                           const newEndTime = time.format("HH:mm");
@@ -923,6 +932,8 @@ const SchedulePopup = forwardRef(
                     </div>
                     <div className="flex gap-2 mt-2">
                       <TimePicker
+
+                      
                         value={
                           startDatetime ? dayjs(startDatetime, "HH:mm") : null
                         }
@@ -956,7 +967,8 @@ const SchedulePopup = forwardRef(
                       <span>-</span>
 
                       <TimePicker
-                        value={endDatetime ? dayjs(endDatetime, "HH:mm") : null}
+                        value={
+                          endDatetime ? action === "create" ? dayjs(endDatetime, "HH:mm").add(1, "minute") : dayjs(endDatetime, "HH:mm") : null}
                         onChange={(time) => {
                           if (!time) return;
                           const newEndTime = time.format("HH:mm");

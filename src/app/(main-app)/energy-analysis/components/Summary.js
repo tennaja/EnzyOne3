@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState ,useRef} from "react";
 import Card from "./Card";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { DatePicker } from "antd";
@@ -31,10 +31,10 @@ const GroupTabs = ({ range, onChange, tabs }) => {
       {tabs.map((tab) => (
         <button
           key={tab.id}
-          onClick={() => onChange(tab.id)}
+          onClick={() => onChange(tab.id)} // เรียก onChange แต่ range จะไม่เปลี่ยนถ้า tab.id เท่ากับ range
           className={`px-4 py-2 text-sm border-r last:border-r-0 border-gray-300 dark:border-gray-600 transition-all ${
             range === tab.id
-              ? "bg-teal-500 text-white"
+              ? "bg-teal-500 text-white" // แท็บที่เลือกอยู่จะมีสีแตกต่าง
               : "bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           }`}
         >
@@ -90,6 +90,8 @@ const DatePickerByRange = ({ range, value, onChange }) => {
 };
 
 export default function Summary() {
+  const previousRevenueRangeRef = useRef(null);
+  const previousEnergyRangeRef = useRef(null);
   const [energyRange, setEnergyRange] = useState("day");
   const [energyDate, setEnergyDate] = useState(dayjs());
   const [revenueRange, setRevenueRange] = useState("month");
@@ -113,8 +115,13 @@ export default function Summary() {
   }, []);
   
   useEffect(() => {
+
+    if (previousEnergyRangeRef.current !== energyRange) {
+      GetEnergyHistory(); // เรียกเฉพาะเมื่อเปลี่ยน
+      previousEnergyRangeRef.current = energyRange;
+    }
     // Fetch initial data for Energy History
-    GetEnergyHistory();
+    
   
     // Set interval to refresh Energy History every 5 minutes
     const interval = setInterval(() => {
@@ -126,17 +133,18 @@ export default function Summary() {
   }, [energyDate, energyRange]);
   
   useEffect(() => {
-    // Fetch initial data for Energy Revenue
-    GetEnergyRevenue();
-  
-    // Set interval to refresh Energy Revenue every 5 minutes
+    // ตรวจสอบว่า revenueRange เปลี่ยนจริงไหม
+    if (previousRevenueRangeRef.current !== revenueRange) {
+      GetEnergyRevenue(); // เรียกเฉพาะเมื่อเปลี่ยน
+      previousRevenueRangeRef.current = revenueRange;
+    }
+
     const interval = setInterval(() => {
-      GetEnergyRevenue(false);
-    }, 300000); // 300,000 ms = 5 minutes
-  
-    // Cleanup interval on component unmount
+      GetEnergyRevenue(false); // รีเฟรชทุก 5 นาที
+    }, 300000); // 5 นาที
+
     return () => clearInterval(interval);
-  }, [revenueDate, revenueRange]);
+  }, [revenueRange, revenueDate]);
 
 const GetSummaryOverview = async (showLoading = true) => {
    

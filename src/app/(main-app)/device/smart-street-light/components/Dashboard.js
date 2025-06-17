@@ -30,7 +30,7 @@ import ModalFail from "./PopupFali";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "./Loading";
-const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
+const Dashboard = ({ deviceData, isSearchClicked, Sitename, Groupname }) => {
   const dispatch = useDispatch();
 
   const today = dayjs(); // ใช้สำหรับคำนวณและเปรียบเทียบ
@@ -583,6 +583,7 @@ const Dashboard = ({ deviceData, FetchDevice, Sitename, Groupname }) => {
                 selectedStatus={selectedStatus} // ส่ง selectedStatus เข้าไปที่ MapTH
                 SiteId={siteIdRef.current}
                 GroupId={groupIdRef.current}
+                isSearchClicked={isSearchClicked} // ส่ง isSearchClicked เข้าไปที่ MapTH
               />
             </div>
             {activeTab === "table" ? (
