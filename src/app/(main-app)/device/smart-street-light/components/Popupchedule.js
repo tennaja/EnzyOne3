@@ -89,71 +89,72 @@ const SchedulePopup = forwardRef(
     useEffect(() => {
       if (isOpen) {
         setScheduleName(schedule?.name || "");
-
-        // แปลง executionDateTime และ startDatetime รวมกันใน setExecutionDateTime
-        const executionDate = schedule?.executionDateTime?.split(" ")[0] || ""; // ดึงวันที่จาก executionDateTime และตัดเวลาออก
-        const executionTime = schedule?.startTime || ""; // เวลาเริ่มต้น
-        setexecutionDateTime(
-          executionDate
-            ? `${executionDate} ${executionTime}`
-            : `${now.getFullYear()}/${(now.getMonth() + 1)
-                .toString()
-                .padStart(2, "0")}/${now
-                .getDate()
-                .toString()
-                .padStart(2, "0")} ${now
-                .getHours()
-                .toString()
-                .padStart(2, "0")}:${now
-                .getMinutes()
-                .toString()
-                .padStart(2, "0")}`
-        ); // รวมวันที่กับเวลา
-
-        // แปลง executionEndDateTime และ startDatetime รวมกันใน setExecutionEndDateTime
-        const endDate = schedule?.executionEndDateTime?.split(" ")[0] || ""; // ดึงวันที่จาก executionEndDateTime และตัดเวลาออก
-        const endTime = schedule?.endTime || ""; // เวลาเริ่มต้น
-        setexecutionEndDateTime(
-          endDate
-            ? `${endDate} ${endTime}`
-            : `${now.getFullYear()}/${(now.getMonth() + 1)
-                .toString()
-                .padStart(2, "0")}/${now
-                .getDate()
-                .toString()
-                .padStart(2, "0")} ${now
-                .getHours()
-                .toString()
-                .padStart(2, "0")}:${now
-                .getMinutes()
-                .toString()
-                .padStart(2, "0")}`
-        ); // รวมวันที่กับเวลา
-
+    
+        const now = dayjs();
+        const startDT = schedule?.executionDateTime
+          ? dayjs(schedule.executionDateTime, "YYYY/MM/DD HH:mm")
+          : now;
+    
+        let endDT;
+    
+        if (action === "create") {
+          // สำหรับ create ให้ default end = start + 1 นาที
+          endDT = startDT.add(1, "minute");
+        } else {
+          // สำหรับ edit หรือ อื่นๆ ใช้เวลาจาก schedule หรือ now
+          endDT = schedule?.executionEndDateTime
+            ? dayjs(schedule.executionEndDateTime, "YYYY/MM/DD HH:mm")
+            : now;
+        }
+    
+        setexecutionDateTime(startDT.toISOString());
+        setexecutionEndDateTime(endDT.toISOString());
+    
         setStartDatetime(
           schedule?.startTime ||
-            `${now.getHours().toString().padStart(2, "0")}:${now
-              .getMinutes()
-              .toString()
-              .padStart(2, "0")}`
+            `${now.hour().toString().padStart(2, "0")}:${now.minute().toString().padStart(2, "0")}`
         );
+    
+        // ดักตรงนี้ ถ้า action === create ให้ set endDatetime เป็นเวลาของ endDT (startDT+1 นาที)
         setEndDatetime(
-          schedule?.endTime?.replace(/\s*\(\+\d+\)$/, "") ||
-            `${now.getHours().toString().padStart(2, "0")}:${now
-              .getMinutes()
-              .toString()
-              .padStart(2, "0")}`
+          action === "create"
+            ? `${endDT.hour().toString().padStart(2, "0")}:${endDT.minute().toString().padStart(2, "0")}`
+            : schedule?.endTime?.replace(/\s*\(\+\d+\)$/, "") ||
+              `${now.hour().toString().padStart(2, "0")}:${now.minute().toString().padStart(2, "0")}`
         );
+    
         setRepeatOption(schedule?.repeat || "please select");
         setDimmingLevel(schedule?.percentDimming || 10);
         setSelectedDevices(
           schedule?.scheduledDevices?.map((device) => device.id) || []
         );
-
-        console.log(executionDateTime);
-        console.log(executionEndDateTime);
+    
+        console.log("executionDateTime:", executionDateTime);
+        console.log("executionEndDateTime:", executionEndDateTime);
       }
-    }, [isOpen]);
+    }, [isOpen, action, schedule]);
+    
+    // useEffect(() => {
+    //   if (!executionDateTime) return;
+    
+    //   if (action === "create") {
+    //     // ถ้ายังไม่ได้เลือก start date ก็ไม่ตั้ง end date
+    //     if (!hasSelectedStartDate) return;
+    
+    //     // ถ้า end date ยังไม่มี หรือ น้อยกว่าหรือเท่ากับ start date +1 นาที
+    //     if (
+    //       !executionEndDateTime ||
+    //       dayjs(executionEndDateTime).valueOf() <= dayjs(executionDateTime).add(1, "minute").valueOf()
+    //     ) {
+    //       setexecutionEndDateTime(dayjs(executionDateTime).add(1, "minute").toISOString());
+    //     }
+    //   } else {
+    //     // action != create ให้ตั้งค่า end date +1 นาทีเสมอถ้ายังไม่มี
+    //     if (!executionEndDateTime) {
+    //       setexecutionEndDateTime(dayjs(executionDateTime).add(1, "minute").toISOString());
+    //     }
+    //   }
+    // }, [executionDateTime, executionEndDateTime, action, hasSelectedStartDate]);
 
     useEffect(() => {
       if (action === "create") {
@@ -287,7 +288,7 @@ const SchedulePopup = forwardRef(
 
     useEffect(() => {
       setSelectedDays(updateSelectedDays());
-    }, [ scheduleData]);
+    }, [repeatOption, scheduleData]);
 
     const formatDate = (date) =>
       date
@@ -406,9 +407,30 @@ const SchedulePopup = forwardRef(
     }));
 
   
-
+    useEffect(() => {
+      if (!executionDateTime) return;
+    
+      const start = dayjs(executionDateTime);
+      const end = executionEndDateTime ? dayjs(executionEndDateTime) : null;
+    
+      if (action === "create") {
+        if (!hasSelectedStartDate) return;
+    
+        // เปรียบเทียบแบบ timestamp แทน isSameOrBefore
+        if (!end || end.valueOf() <= start.valueOf()) {
+          setexecutionEndDateTime(start.add(1, "minute").toISOString());
+        }
+      } else {
+        if (!end) {
+          setexecutionEndDateTime(start.add(1, "minute").toISOString());
+        }
+      }
+    }, [executionDateTime, executionEndDateTime, action, hasSelectedStartDate]);
+    
+    
+    
     const days = updateSelectedDays();
-
+    
     return (
       <div>
         <Modal
@@ -660,13 +682,7 @@ const SchedulePopup = forwardRef(
                     <DatePicker
                       className="p-2 w-full bg-white border shadow-default dark:border-slate-300 dark:bg-[#121212] dark:text-white dark:placeholder-gray-400"
                       showTime
-                      value={
-                        executionEndDateTime
-                          ? action === "create"
-                            ? dayjs(executionEndDateTime).add(1, "minute")
-                            : dayjs(executionEndDateTime)
-                          : null
-                      }
+                      value={executionEndDateTime ? dayjs(executionEndDateTime) : null}
                       onChange={(date) => {
                         setexecutionEndDateTime(
                           date ? date.toISOString() : null
@@ -746,17 +762,8 @@ const SchedulePopup = forwardRef(
                         (action === "create" && !hasSelectedStartDate) ||
                         (action === "edit" && !executionDateTime)
                       }
-                      value={
-                        executionEndDateTime
-                          ? action === "create"
-                            ? !hasSelectedStartDate
-                              ? !hasSelectedStartDate && isOpen ?
-                                dayjs(executionEndDateTime) :
-                                  dayjs(executionEndDateTime).add(1, "minute") :
-                                    dayjs(executionEndDateTime)
-                            : dayjs(executionEndDateTime)
-                          : null
-                      }
+                      value={executionEndDateTime ? dayjs(executionEndDateTime) : null}
+
                       onChange={(date) => {
                         if (!date) return;
                         setexecutionEndDateTime(date.toISOString());
@@ -864,14 +871,8 @@ const SchedulePopup = forwardRef(
 
                       <TimePicker
                         value={
-                          endDatetime
-                            ? action === "create"
-                              ? !hasSelectedStartDate
-                              ? !hasSelectedStartDate && isOpen ?
-                               dayjs(endDatetime, "HH:mm") :
-                                dayjs(endDatetime, "HH:mm").add(1, "minute")
-                                : dayjs(endDatetime, "HH:mm")
-                              : dayjs(endDatetime, "HH:mm")
+                          endDatetime?
+                              dayjs(endDatetime, "HH:mm")
                             : null
                         }
                         onChange={(time) => {
@@ -975,17 +976,11 @@ const SchedulePopup = forwardRef(
                       <span>-</span>
 
                       <TimePicker
-                        value={
-                          endDatetime
-                            ? action === "create"
-                              ? !hasSelectedStartDate
-                              ? !hasSelectedStartDate && isOpen ?
-                               dayjs(endDatetime, "HH:mm") :
-                                dayjs(endDatetime, "HH:mm").add(1, "minute")
-                                : dayjs(endDatetime, "HH:mm")
-                              : dayjs(endDatetime, "HH:mm")
-                            : null
-                        }
+                       value={
+                        endDatetime?
+                            dayjs(endDatetime, "HH:mm")
+                          : null
+                      }
                         onChange={(time) => {
                           if (!time) return;
                           const newEndTime = time.format("HH:mm");
