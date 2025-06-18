@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   ComposedChart,
   Bar,
@@ -13,22 +13,23 @@ import {
   CartesianGrid,
   ReferenceLine,
   Brush,
-} from 'recharts';
+} from "recharts";
 
 export default function RevenueBarChart3({ data, type }) {
+  console.log(data);
   if (!data || !data.timestamp?.length || !data.devices?.length) {
     return (
       <div
         style={{
-          width: '100%',
-          height: '400px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          width: "100%",
+          height: "400px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           fontSize: 16,
-          color: '#888',
+          color: "#888",
           borderRadius: 12,
-          border: '1px solid #ddd',
+          border: "1px solid #ddd",
         }}
       >
         No data available
@@ -36,8 +37,8 @@ export default function RevenueBarChart3({ data, type }) {
     );
   }
 
-  const deviceNames = data.devices.map(device => device.deviceName);
-  const allLegendKeys = [...deviceNames, 'baseline'];
+  const deviceNames = data.devices.map((device) => device.deviceName);
+  const allLegendKeys = [...deviceNames, "baseline"];
 
   const [hiddenKeys, setHiddenKeys] = useState(new Set());
 
@@ -47,31 +48,33 @@ export default function RevenueBarChart3({ data, type }) {
       day: date,
       fullDate: date,
     };
-    data.devices.forEach(device => {
+    data.devices.forEach((device) => {
       entry[device.deviceName] = device.history[index] ?? 0;
     });
-    entry['baseline'] = data.devices[0]?.baseline[index] ?? 0;
+    entry["baseline"] = data.devices[0]?.baseline[index] ?? 0;
     return entry;
   });
 
   const maxY = Math.max(
-    ...chartData.flatMap(item => [
-      ...deviceNames.map(name => hiddenKeys.has(name) ? 0 : item[name]),
-      hiddenKeys.has('baseline') ? 0 : item.baseline,
+    ...chartData.flatMap((item) => [
+      ...deviceNames.map((name) => (hiddenKeys.has(name) ? 0 : item[name])),
+      hiddenKeys.has("baseline") ? 0 : item.baseline,
     ])
   );
 
   const maxAbsY = Math.max(
-    ...chartData.flatMap(item => [
-      ...deviceNames.map(name => hiddenKeys.has(name) ? 0 : Math.abs(item[name])),
-      hiddenKeys.has('baseline') ? 0 : Math.abs(item.baseline),
+    ...chartData.flatMap((item) => [
+      ...deviceNames.map((name) =>
+        hiddenKeys.has(name) ? 0 : Math.abs(item[name])
+      ),
+      hiddenKeys.has("baseline") ? 0 : Math.abs(item.baseline),
     ])
   );
 
   // คำนวณ left margin
-  const getTextWidth = (text, font = '12px Roboto') => {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
+  const getTextWidth = (text, font = "12px Roboto") => {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
     context.font = font;
     return context.measureText(text).width;
   };
@@ -80,7 +83,7 @@ export default function RevenueBarChart3({ data, type }) {
   // จัดการ toggle hide/show series
   const handleLegendClick = (event) => {
     const { dataKey } = event;
-    setHiddenKeys(prev => {
+    setHiddenKeys((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(dataKey)) {
         newSet.delete(dataKey);
@@ -95,7 +98,7 @@ export default function RevenueBarChart3({ data, type }) {
   const colors = ["#FFB74D", "#81C784", "#4FC3F7", "#BA68C8", "#F06292"];
 
   return (
-    <div style={{ width: '100%', height: 420 }}>
+    <div style={{ width: "100%", height: 420 }}>
       <ResponsiveContainer width="100%" height={400}>
         <ComposedChart
           data={chartData}
@@ -103,30 +106,35 @@ export default function RevenueBarChart3({ data, type }) {
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="day" />
-          <YAxis domain={[0, maxY]} tickFormatter={v => v.toLocaleString()} />
-          <Tooltip formatter={(value, name) => [`${Number(value).toLocaleString()} ฿`, name]} />
+          <YAxis domain={[0, maxY]} tickFormatter={(v) => v.toLocaleString()} />
+          <Tooltip
+            formatter={(value, name) => [
+              `${Number(value).toLocaleString()} ฿`,
+              name,
+            ]}
+          />
 
           <Legend
             verticalAlign="bottom"
             height={36}
             onClick={handleLegendClick}
-            wrapperStyle={{ cursor: 'pointer' }}
+            wrapperStyle={{ cursor: "pointer" }}
             payload={[
               ...deviceNames.map((name, i) => ({
                 id: name,
                 value: name,
-                type: 'square',
+                type: "square",
                 color: colors[i % colors.length],
                 inactive: hiddenKeys.has(name),
                 dataKey: name,
               })),
               {
-                id: 'baseline',
-                value: 'Baseline',
-                type: 'line',
-                color: '#D32F2F',
-                inactive: hiddenKeys.has('baseline'),
-                dataKey: 'baseline',
+                id: "baseline",
+                value: "Baseline",
+                type: "line",
+                color: "#D32F2F",
+                inactive: hiddenKeys.has("baseline"),
+                dataKey: "baseline",
               },
             ]}
           />
@@ -147,7 +155,7 @@ export default function RevenueBarChart3({ data, type }) {
           )}
 
           {/* Baseline Line */}
-          {!hiddenKeys.has('baseline') && (
+          {!hiddenKeys.has("baseline") && (
             <Line
               type="monotone"
               dataKey="baseline"
@@ -160,8 +168,8 @@ export default function RevenueBarChart3({ data, type }) {
             />
           )}
 
-         {/* Conditionally Render Brush */}
-         {/* <Brush
+          {/* Conditionally Render Brush */}
+          {/* <Brush
             dataKey="day"
             height={30}
             stroke="#8884d8"
@@ -171,14 +179,14 @@ export default function RevenueBarChart3({ data, type }) {
           /> */}
 
           <Brush
-                                                              dataKey="day"
-                                                              height={30}
-                                                              stroke="#8884d8"
-                                                              startIndex={chartData.length <= 1 ? 0 : undefined}
-                                                              endIndex={chartData.length - 1}
-                                                              travellerWidth={chartData.length <= 1 ? 0 : undefined}
-                                                              disabled={chartData.length <= 1}
-                                                            />
+            dataKey="day"
+            height={30}
+            stroke="#8884d8"
+            startIndex={chartData.length <= 1 ? 0 : undefined}
+            endIndex={chartData.length - 1}
+            travellerWidth={chartData.length <= 1 ? 0 : undefined}
+            disabled={chartData.length <= 1}
+          />
 
           <text
             x={120}

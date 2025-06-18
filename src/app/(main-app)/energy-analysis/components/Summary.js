@@ -1,5 +1,5 @@
 "use client";
-import { useState ,useRef} from "react";
+import { useState } from "react";
 import Card from "./Card";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { DatePicker } from "antd";
@@ -25,25 +25,27 @@ const allTabs = [
 
 const revenueTabs = allTabs.filter((tab) => tab.id !== "day");
 
-const GroupTabs = ({ range, onChange, tabs }) => {
-  return (
-    <div className="inline-flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          onClick={() => onChange(tab.id)} // เรียก onChange แต่ range จะไม่เปลี่ยนถ้า tab.id เท่ากับ range
-          className={`px-4 py-2 text-sm border-r last:border-r-0 border-gray-300 dark:border-gray-600 transition-all ${
-            range === tab.id
-              ? "bg-teal-500 text-white" // แท็บที่เลือกอยู่จะมีสีแตกต่าง
-              : "bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-          }`}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  );
-};
+const GroupTabs = ({ range, onChange, tabs }) => (
+  <div className="inline-flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+    {tabs.map((tab) => (
+      <button
+        key={tab.id}
+        onClick={() => {
+          if (tab.id !== range) {
+            onChange(tab.id);
+          }
+        }}
+        className={`px-4 py-2 text-sm border-r last:border-r-0 border-gray-300 dark:border-gray-600 transition-all ${
+          range === tab.id
+            ? "bg-teal-500 text-white"
+            : "bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+        }`}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+);
 
 
 const DatePickerByRange = ({ range, value, onChange }) => {
@@ -90,8 +92,6 @@ const DatePickerByRange = ({ range, value, onChange }) => {
 };
 
 export default function Summary() {
-  const previousRevenueRangeRef = useRef(null);
-  const previousEnergyRangeRef = useRef(null);
   const [energyRange, setEnergyRange] = useState("day");
   const [energyDate, setEnergyDate] = useState(dayjs());
   const [revenueRange, setRevenueRange] = useState("month");
@@ -116,10 +116,9 @@ export default function Summary() {
   
   useEffect(() => {
 
-    if (previousEnergyRangeRef.current !== energyRange) {
+   
       GetEnergyHistory(); // เรียกเฉพาะเมื่อเปลี่ยน
-      previousEnergyRangeRef.current = energyRange;
-    }
+     
     // Fetch initial data for Energy History
     
   
@@ -134,10 +133,9 @@ export default function Summary() {
   
   useEffect(() => {
     // ตรวจสอบว่า revenueRange เปลี่ยนจริงไหม
-    if (previousRevenueRangeRef.current !== revenueRange) {
+   
       GetEnergyRevenue(); // เรียกเฉพาะเมื่อเปลี่ยน
-      previousRevenueRangeRef.current = revenueRange;
-    }
+      
 
     const interval = setInterval(() => {
       GetEnergyRevenue(false); // รีเฟรชทุก 5 นาที

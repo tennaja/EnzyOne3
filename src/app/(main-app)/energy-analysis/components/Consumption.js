@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo ,useRef} from "react";
+import { useState, useEffect} from "react";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Tooltip from "@mui/material/Tooltip";
 import dayjs from "dayjs";
@@ -38,7 +38,11 @@ const GroupTabs = ({ range, onChange, tabs }) => (
     {tabs.map((tab) => (
       <button
         key={tab.id}
-        onClick={() => onChange(tab.id)}
+        onClick={() => {
+          if (tab.id !== range) {
+            onChange(tab.id);
+          }
+        }}
         className={`px-4 py-2 text-sm border-r last:border-r-0 border-gray-300 dark:border-gray-600 transition-all ${
           range === tab.id
             ? "bg-teal-500 text-white"
@@ -50,6 +54,7 @@ const GroupTabs = ({ range, onChange, tabs }) => (
     ))}
   </div>
 );
+
 
 const DatePickerByRange = ({ range, value, onChange }) => {
   if (range === "lifetime") {
@@ -95,8 +100,7 @@ const DatePickerByRange = ({ range, value, onChange }) => {
 
 
 export default function Consumption() {
-  const previousRevenueRangeRef = useRef(null);
-  const previousEnergyRangeRef = useRef(null);
+  
   const [activeTab, setActiveTab] = useState("load");
   const [lastUpdated, setLatsUpdated] = useState("");
   // const [searchLoad, setSearchLoad] = useState("");
@@ -128,6 +132,7 @@ export default function Consumption() {
   const [sortDirectionMeter, setSortDirectionMeter] = useState("asc");
   const [currentPageMeter, setCurrentPageMeter] = useState(1);
   const [rowsPerPageMeter, setRowsPerPageMeter] = useState(20);
+
   const [totalSummary, setTotalSummary] = useState({
     power: "0.00",
     energy: "0.00",
@@ -135,6 +140,7 @@ export default function Consumption() {
     offPeak: "0.00",
   });
   const [loading, setLoading] = useState(false);
+
 
   useEffect(() => {
     GetConsumptionDeviceList();
@@ -146,29 +152,35 @@ export default function Consumption() {
   }, [activeTab]);
 
   useEffect(() => {
-    if (previousEnergyRangeRef.current !== energyRange) {
+   
       GetEnergyHistory(); // เรียกเฉพาะเมื่อเปลี่ยน
-      previousEnergyRangeRef.current = energyRange;
-    }
+     
     const interval = setInterval(() => {
       GetEnergyHistory(false);
     }, 300000);
 
     return () => clearInterval(interval);
-  }, [activeTab, energyDate, energyRange]);
+  }, [energyRange,activeTab, energyDate]);
+
+  
+
+ 
 
   useEffect(() => {
-    if (previousRevenueRangeRef.current !== revenueRange) {
-      GetCostHistory(); // เรียกเฉพาะเมื่อเปลี่ยน
-      previousRevenueRangeRef.current = revenueRange;
-    }
-    
+    // เรียก GetCostHistory เมื่อ revenueRange, activeTab หรือ revenueDate เปลี่ยนจริง ๆ
+    GetCostHistory();
+  
     const interval = setInterval(() => {
       GetCostHistory(false);
     }, 300000);
-
+  
     return () => clearInterval(interval);
-  }, [activeTab, revenueDate, revenueRange]);
+  }, [revenueRange, activeTab, revenueDate]);
+  
+  
+  
+  
+  
 
   useEffect(() => {
     GetDropdownDeviceList();
@@ -512,7 +524,7 @@ export default function Consumption() {
     </div>
   );
 
-  const renderRevenueTrend = (title) => (
+  const renderRevenueTrend = (title,data) => (
     <div className="grid rounded-xl bg-white p-5 shadow-default dark:border-slate-800 dark:bg-dark-box dark:text-slate-200 mt-4">
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center">
@@ -550,13 +562,13 @@ export default function Consumption() {
       <div className="text-lg mb-4">
         <span className="text-sm">Total Cost: </span>
         <span className="font-bold text-xl">
-          {formatNumberWithK(costHistoryData?.cost)}
+          {formatNumberWithK(data?.cost)}
         </span>{" "}
         ฿
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4">
-        <RevenueBarChart3 data={costHistoryData} type={revenueRange}/>
+        <RevenueBarChart3 data={data} type={revenueRange}/>
       </div>
     </div>
   );
@@ -1361,12 +1373,12 @@ const totalSummary = {
       {activeTab === "load" ? (
         <>
           {renderEnergyTrend("Energy Load Consumption")}
-          {renderRevenueTrend("Consumption Cost")}
+          {renderRevenueTrend("Consumption Cost",costHistoryData)}
         </>
       ) : (
         <>
           {renderEnergyTrend("Energy  Meter Consumption")}
-          {renderRevenueTrend("Consumption Cost")}
+          {renderRevenueTrend("Consumption Cost",costHistoryData)}
         </>
       )}
       {renderHeatmapSection()}

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo ,useRef} from "react";
+import { useState, useEffect, useMemo} from "react";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Tooltip from "@mui/material/Tooltip";
 import dayjs from "dayjs";
@@ -37,7 +37,11 @@ const GroupTabs = ({ range, onChange, tabs }) => (
     {tabs.map((tab) => (
       <button
         key={tab.id}
-        onClick={() => onChange(tab.id)}
+        onClick={() => {
+          if (tab.id !== range) {
+            onChange(tab.id);
+          }
+        }}
         className={`px-4 py-2 text-sm border-r last:border-r-0 border-gray-300 dark:border-gray-600 transition-all ${
           range === tab.id
             ? "bg-teal-500 text-white"
@@ -93,8 +97,7 @@ const DatePickerByRange = ({ range, value, onChange }) => {
 };
 
 export default function Production() {
-   const previousRevenueRangeRef = useRef(null);
-    const previousEnergyRangeRef = useRef(null);
+
   const [searchLoad, setSearchLoad] = useState("");
   const [energyRange, setEnergyRange] = useState("day");
   const [energyDate, setEnergyDate] = useState(dayjs());
@@ -160,10 +163,9 @@ export default function Production() {
   }, []);
 
   useEffect(() => {
-    if (previousEnergyRangeRef.current !== energyRange) {
+   
       GetEnergyHistory(); // เรียกเฉพาะเมื่อเปลี่ยน
-      previousEnergyRangeRef.current = energyRange;
-    }
+  
     const interval = setInterval(() => {
       GetEnergyHistory(false);
     }, 300000);
@@ -172,10 +174,9 @@ export default function Production() {
   }, [energyDate, energyRange]);
 
   useEffect(() => {
-    if (previousRevenueRangeRef.current !== revenueRange) {
+    
       GetEnergyRevenue(); // เรียกเฉพาะเมื่อเปลี่ยน
-      previousRevenueRangeRef.current = revenueRange;
-    }
+   
     const interval = setInterval(() => {
       GetEnergyRevenue(false);
     }, 300000);
